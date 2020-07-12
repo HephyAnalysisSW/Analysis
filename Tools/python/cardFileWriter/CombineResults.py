@@ -159,7 +159,7 @@ class CombineResults:
 
         if not self.fitResultStatOnly:
             print "Stat-only fit result not availabe, creating it!"
-            self.fitStatOnly()
+            self.runFitDiagnostics( statOnly=True ) # run stat only fit diagnostics
 
         if not self.tStatOnlyRootFile:
             self.tStatOnlyRootFile = ROOT.TFile( self.fitResultStatOnly, "READ")
@@ -452,19 +452,28 @@ class CombineResults:
 
         return r_lin
 
-    def plotPOIScan( self ):
+    def plotPOIScan( self, rMin=0, rMax=2, points=200, addLumi=None ):
         # https://indico.cern.ch/event/747340/contributions/3198653/attachments/1744339/2823486/HComb-Tutorial-FitDiagnostics.pdf
+        # addLumi is the part of the string that identifies all luminosity nuisances (e.g. addLumi='Luminosity')
+        # uncertainty is not additionally split into lumi if addLumi=None
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
-        cmd  = "cd %s;combine -M MultiDimFit --algo none --rMin -1 --rMax 4 %s -m 125 -n bestfit --saveWorkspace"%(uniqueDirname,self.rootWorkSpace)
-        cmd += ";combine -M MultiDimFit --algo grid --points 50 --rMin -1 --rMax 4 -m 125 -n stat higgsCombinebestfit.MultiDimFit.mH125.root --snapshotName MultiDimFit --profilingMode none"
-        cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH125.root --others 'higgsCombinestat.MultiDimFit.mH125.root:Freeze all:2' --breakdown syst,stat"
-        cmd += ";mv scan.pdf %s/scanPOI.pdf"%(self.plotDirectory)
-        cmd += ";mv scan.png %s/scanPOI.png"%(self.plotDirectory)
-        cmd += ";mv scan.root %s/scanPOI.root"%(self.plotDirectory)
+        params     = [ key for key in self.getPulls().keys() if key != "r" and not ("prop" in key and "_bin0" in key) ]
+        statParams = ",".join( params )
+
+        cmd  = "cd %s;combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n bestfit --saveWorkspace %s "%(uniqueDirname,points,rMin,rMax,self.rootWorkSpace)
+        cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n stat --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,statParams)
+        if addLumi:
+            lumiParams = ",".join( [p for p in params if addLumi in p] )
+            cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n lumi --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,lumiParams)
+            cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI_wLumi --others  higgsCombinelumi.MultiDimFit.mH120.root:Syst+Stat:4 higgsCombinestat.MultiDimFit.mH120.root:Stat:2 --breakdown lumi,syst,stat"
+            cmd += ";mv scanPOI_wLumi.* %s/"%(self.plotDirectory)
+        else:
+            cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI --others higgsCombinestat.MultiDimFit.mH120.root:StatOnly:2 --breakdown syst,stat"
+            cmd += ";mv scanPOI.* %s/"%(self.plotDirectory)
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -597,17 +606,13 @@ class CombineResults:
 
     def tableNuisanceReport( self ):
         # create table report of nuisance parameter ranges
-        print "WARNING: creating nuisance report from txt cardfile, have to run the fit again wiht the txt file!"
-
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating "+uniqueDirname
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'mlfitNormsToText.py'), os.path.join(uniqueDirname, 'mlfitNormsToText.py'))
 
-        cmd  = "cd %s;combine --saveWorkspace -M AsymptoticLimits %s"%(uniqueDirname,self.txtCard)
-        cmd += ";combine higgsCombineTest.AsymptoticLimits.mH120.root -M FitDiagnostics --saveNormalizations --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall"
-        cmd += ";python mlfitNormsToText.py fitDiagnostics.root --uncertainties > nuisancesTable.txt"
+        cmd = "cd %s;python mlfitNormsToText.py %s --uncertainties > nuisancesTable.txt"%(uniqueDirname,self.fitResult)
         cmd += ";mv nuisancesTable.txt %s/"%(self.plotDirectory)
         print "Executing command: %s"%cmd
         os.system(cmd)
@@ -1139,7 +1144,7 @@ class CombineResults:
         if self.year == "combined":
             cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_dc_2016=1,mask_dc_2017=1,mask_dc_2018=1"
         else:
-            cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode=none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_Bin0=1"
+            cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_Bin0=1"
         print "Executing command: %s"%cmd
         os.system(cmd)
 
