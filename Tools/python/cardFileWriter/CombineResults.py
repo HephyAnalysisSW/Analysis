@@ -40,11 +40,12 @@ logger = logging.getLogger(__name__)
 
 class CombineResults:
 
-    def __init__( self, cardFile, plotDirectory, year, bkgOnly=False, isSearch=False, createMissingInputs=False ):
+    def __init__( self, cardFile, plotDirectory, year, bkgOnly=False, isSearch=False, createMissingInputs=False, rebinnedCardFile=None ):
 
         if not isinstance( cardFile, str ):
             raise ValueError( "CardFile input needs to be a string with the path to the cardFile" )
-        if not cardFile.endswith(".txt") or "shapeCard" in cardFile.split("/")[-1] or not os.path.exists( cardFile ):
+#        if not cardFile.endswith(".txt") or "shapeCard" in cardFile.split("/")[-1] or not os.path.exists( cardFile ):
+        if not cardFile.endswith(".txt") or not os.path.exists( cardFile ):
             raise ValueError( "Please provide the path to the *.txt cardfile! Got: %s"%cardFile )
 
         self.year          = str(year)
@@ -55,6 +56,11 @@ class CombineResults:
         self.txtCard16    = None
         self.txtCard17    = None
         self.txtCard18    = None
+        self.txtCardRebinned = None
+        self.txtCardRebinned16 = None
+        self.txtCardRebinned17 = None
+        self.txtCardRebinned18 = None
+        if rebinnedCardFile: self.txtCardRebinned = rebinnedCardFile
         if self.year == "combined":
             self.txtCard16    = self.txtCard.replace("COMBINED","2016")
             self.txtCard17    = self.txtCard.replace("COMBINED","2017")
@@ -65,6 +71,10 @@ class CombineResults:
             self.shapeRootFile16 = None
             self.shapeRootFile17 = None
             self.shapeRootFile18 = None
+            if rebinnedCardFile:
+                self.txtCardRebinned16    = self.txtCardRebinned.replace("COMBINED","2016")
+                self.txtCardRebinned17    = self.txtCardRebinned.replace("COMBINED","2017")
+                self.txtCardRebinned18    = self.txtCardRebinned.replace("COMBINED","2018")
 
         # txt file for fits from shape, may be mandatory
         self.shapeCard      = cardFile.replace(".txt","_shapeCard.txt" )
@@ -264,22 +274,21 @@ class CombineResults:
                                 dataHist.SetBinError(i+1, math.sqrt(h.Eval(i+0.5)))
                             h = dataHist.Clone()
                         elif nBins and n == nBins:
-                            h.GetXaxis().SetRangeUser(0, n)
+#                            h.GetXaxis().SetRangeUser(0, n)
                             if hist == "total_covar":
-                                h.GetYaxis().SetRangeUser(0, n)
-
-#                                covarHist = ROOT.TH2F(hist, hist, n, 0, n, n, 0, n)
-#                                for i in range(n):
-#                                    for j in range(n):
-#                                        covarHist.SetBinContent( i+1, j+1, h.GetBinContent(i+1, j+1) )
-#                                        covarHist.SetBinError(   i+1, j+1, h.GetBinError(i+1, j+1)   )
-#                                h = covarHist.Clone()
-#                            else:
-#                                mcHist = ROOT.TH1F(hist, hist, n, 0, n)
-#                                for i in range(n):
-#                                    mcHist.SetBinContent( i+1, h.GetBinContent(i+1) )
-#                                    mcHist.SetBinError(   i+1, h.GetBinError(i+1)   )
-#                                h = mcHist.Clone()
+#                                h.GetYaxis().SetRangeUser(0, n)
+                                covarHist = ROOT.TH2F(hist, hist, n, 0, n, n, 0, n)
+                                for i in range(n):
+                                    for j in range(n):
+                                        covarHist.SetBinContent( i+1, j+1, h.GetBinContent(i+1, j+1) )
+                                        covarHist.SetBinError(   i+1, j+1, h.GetBinError(i+1, j+1)   )
+                                h = covarHist.Clone()
+                            else:
+                                mcHist = ROOT.TH1F(hist, hist, n, 0, n)
+                                for i in range(n):
+                                    mcHist.SetBinContent( i+1, h.GetBinContent(i+1) )
+                                    mcHist.SetBinError(   i+1, h.GetBinError(i+1)   )
+                                h = mcHist.Clone()
                         
                         result[fit][d][hist] = copy.deepcopy(h)
             tRootFile.cd()
@@ -401,7 +410,7 @@ class CombineResults:
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
-        cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics %s --saveNormalizations --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s"%(self.rootWorkSpace, "--profilingMode none" if statOnly else "", options)
+        cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, "--profilingMode none")
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -447,7 +456,6 @@ class CombineResults:
         r_lin = self.__extractPOIResult( logFile )
 
         print "Extracted lin-test (preFit r=%f) result: %s"%(factor, r_lin)
-        print logFile
         shutil.rmtree( uniqueDirname )
 
         return r_lin
@@ -670,10 +678,16 @@ class CombineResults:
 
         binLabels = []
         if self.year == "combined":
-            cardfiles = [self.txtCard16, self.txtCard17, self.txtCard18]
+            if self.txtCardRebinned:
+                cardfiles = [self.txtCardRebinned16, self.txtCardRebinned17, self.txtCardRebinned18]
+            else:
+                cardfiles = [self.txtCard16, self.txtCard17, self.txtCard18]
             tags = ["2016 ", "2017 ", "2018 "]
         else:
-            cardfiles = [self.txtCard]
+            if self.txtCardRebinned:
+                cardfiles = [self.txtCardRebinned]
+            else:
+                cardfiles = [self.txtCard]
             tags = [self.year+" "]
         for c, card in enumerate(cardfiles):
             with open( card ) as f:
@@ -831,7 +845,7 @@ class CombineResults:
         # uncertainties from shape.root card
         # return safed uncertainties if available
         key = "postFit" if postFit else "preFit"
-        if self.uncertainties[key] and False:
+        if self.uncertainties[key]:
             if bin or estimate or nuisance or systOnly:
                 return self.__filterDict( self.uncertainties[key], bin=bin, estimate=estimate, nuisance=nuisance, systOnly=systOnly )
             else:
@@ -858,8 +872,8 @@ class CombineResults:
                     if not est in uncertainties[_bin].keys(): uncertainties[_bin][est] = {}
                     err = shapeH.GetBinError( i_bin+1 ) / shapeH.GetBinContent( i_bin+1 ) if shapeH.GetBinContent( i_bin+1 ) and mcStat else 0
                     if postFit and mcStat:
-#                        err *= pulls["prop_binBin0_bin"+str(i_bin)].sigma
-                        err = err**pulls["prop_binBin0_bin"+str(i_bin)].sigma
+                        err *= pulls["prop_binBin0_bin"+str(i_bin)].sigma
+#                        err = err**pulls["prop_binBin0_bin"+str(i_bin)].sigma
                     shapeH.SetBinContent( i_bin+1, err )
                     uncertainties[_bin][est][unc] = err
                 if not "histo" in uncertainties.keys(): uncertainties["histo"] = {}
@@ -869,9 +883,9 @@ class CombineResults:
                 shapeH.Add(shapes[est],-1)
                 shapeH.Divide(shapes[est])
                 if postFit:
-#                    shapeH.Scale(pulls[unc].sigma)
-                    for i_bin in range(shapeH.GetNbinsX()):
-                        shapeH.SetBinContent(i_bin+1, shapeH.GetBinContent(i_bin+1)**pulls[unc].sigma)
+                    shapeH.Scale(pulls[unc].sigma)
+#                    for i_bin in range(shapeH.GetNbinsX()):
+#                        shapeH.SetBinContent(i_bin+1, shapeH.GetBinContent(i_bin+1)**pulls[unc].sigma)
                 for i_bin in range(shapeH.GetNbinsX()):
                     _bin = "Bin"+str(i_bin)
                     if not _bin in uncertainties.keys(): uncertainties[_bin] = {}
@@ -893,7 +907,7 @@ class CombineResults:
         # uncertainties from txt card
         # return safed uncertainties if available
         key = "postFit" if postFit else "preFit"
-        if self.uncertainties[key] and False:
+        if self.uncertainties[key]:
             if bin or estimate or nuisance or systOnly:
                 return self.__filterDict( self.uncertainties[key], bin=bin, estimate=estimate, nuisance=nuisance, systOnly=systOnly )
             else:
@@ -921,8 +935,8 @@ class CombineResults:
                     except:
                         uncertainties[_bin][est][unc] = 0
                     if postFit and uncertainties[_bin][est][unc]:
-#                        uncertainties[_bin][est][unc] *= pulls[unc].sigma
-                        uncertainties[_bin][est][unc] = uncertainties[_bin][est][unc]**pulls[unc].sigma
+                        uncertainties[_bin][est][unc] *= pulls[unc].sigma
+#                        uncertainties[_bin][est][unc] = uncertainties[_bin][est][unc]**pulls[unc].sigma
 
         self.uncertainties[key] = uncertainties
 
@@ -1142,9 +1156,9 @@ class CombineResults:
         # run fit with masked (muted) card
         print "run FitDiagnostics stat only"
         if self.year == "combined":
-            cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_dc_2016=1,mask_dc_2017=1,mask_dc_2018=1"
+            cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --setParameters mask_dc_2016=1,mask_dc_2017=1,mask_dc_2018=1"
         else:
-            cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_Bin0=1"
+            cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --setParameters mask_Bin0=1"
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -1170,7 +1184,6 @@ class CombineResults:
 
     def __regionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, statOnly=False, addRateUncertainty=True ):
 
-#        if statOnly or not postFit: addStatOnlyHistos = False
         hists    = {}
         key    = "postFit" if postFit else "preFit"
         subkey = self.__getSubKey( plotBins=plotBins )
@@ -1266,7 +1279,7 @@ class CombineResults:
 
         if bkgSubstracted:
             for dir, histList in histDict.iteritems():
-                tot        = "total" if "total" in hists[dir].keys() else "total_overall"
+                tot = "total" if "total" in hists[dir].keys() else "total_overall"
 
                 # remove error on total background
                 for b in range(hists[dir]["total_background"].GetNbinsX()):
@@ -1275,10 +1288,16 @@ class CombineResults:
                 # use total - bkg as signal to get the full uncertainty
                 hists[dir] = {"data":hists[dir]["data"], "signal":hists[dir][tot].Clone(),"total":hists[dir][tot].Clone(),"total_background":hists[dir]["total_background"]}
 
+                for i in range( hists[dir]["signal"].GetNbinsX() ):
+                    print statOnly, i, hists[dir]["signal"].GetBinError(i+1) / hists[dir]["signal"].GetBinContent(i+1), hists[dir][tot].GetBinError(i+1) / hists[dir][tot].GetBinContent(i+1)
+                print
+                print
+                print
                 hists[dir]["data"].Add( hists[dir]["total_background"], -1 )
                 hists[dir]["signal"].Add( hists[dir]["total_background"], -1 )
                 hists[dir]["total_background"].Scale(0)
-
+                for i in range( hists[dir]["signal"].GetNbinsX() ):
+                    print statOnly, i, hists[dir]["signal"].GetBinError(i+1) / hists[dir]["signal"].GetBinContent(i+1), hists[dir][tot].GetBinError(i+1) / hists[dir][tot].GetBinContent(i+1)
         return hists
 
     def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, bkgSubstracted=False, directory="total"):
@@ -1309,7 +1328,7 @@ class CombineResults:
             for i in range( bins ):
                 proc_list = []
                 key = directory + "_Bin%i"%i 
-                if directory == "total":
+                if directory == "total" or "Bin0":
                     key = "Bin%i"%i
                 elif directory != "total" and any( ["Bin" in k for k in binProcesses.keys()]):
                     key = directory + "_Bin%i"%i
@@ -1336,7 +1355,11 @@ class CombineResults:
 
                 # sort each bin
                 proc_list.sort( key=lambda h: -h.Integral() )
-                histoList[0] += copy.deepcopy(proc_list)
+
+                # sort each bin
+#                histoList[0] += copy.copy(proc_list)
+                histoList[0] += proc_list
+
         else:
             histoList = [ [p_h for p, p_h in regionHistos.iteritems() if p in binProcesses["Bin0"] ] ]
             histoList[0].sort( key=lambda h: -regionHistos[p].Integral() )
@@ -1354,14 +1377,12 @@ class CombineResults:
                 ratioHistos += [ ((i_n)*2,0),((i_n)*2+1,0) ]
                 i_n         += 1
 
-
         for i in range( regionHistos["signal"].GetNbinsX() ):
             for h_list in histoList:
                 for h in h_list:
                     # make that more dynamic FIXME
                     h.GetXaxis().SetBinLabel( i+1, regionHistos["signal"].GetXaxis().GetBinLabel( i+1 ) )
                     h.LabelsOption("v","X") #"vu" for 45 degree labels
-
 
         return histoList, ratioHistos
         
@@ -1371,59 +1392,35 @@ class CombineResults:
 
     def getImpactPlot( self, expected=False, printPNG=False, cores=1 ):
 
-        cardName      = self.txtCard.split("/")[-1].split(".")[0]
-        shapeName     = self.shapeCard.split("/")[-1]
-        if self.year != "combined":
-            shapeRootName = self.shapeRootFile.split("/")[-1]
-        rootCardName  = self.rootWorkSpace.split("/")[-1]
-
-        # assuming you have combine in the same release!!! #FIXME
-        combineReleaseLocation = os.path.join( os.environ["CMSSW_BASE"], "src" )
-        combineDirname = os.path.join( combineReleaseLocation, str(self.year), cardName, "expected" if expected else "observed" )
-        if not os.path.isdir(combineDirname): os.makedirs(combineDirname)
-
-        newShapeFilePath     = os.path.join( combineDirname, shapeName )
-        shutil.copyfile( self.shapeCard,     newShapeFilePath )
-        if self.year != "combined":
-            newShapeRootFilePath = os.path.join( combineDirname, shapeRootName )
-            shutil.copyfile( self.shapeRootFile, newShapeRootFilePath )
-
-        # use scram if combineReleaseLocation is a different release than current working directory
-        # echo is just a placeholder
-        if os.environ["CMSSW_BASE"] in combineReleaseLocation: scram = "echo ''"
-        else:                                                  scram = "eval `scramv1 runtime -sh`"
-
-        if self.bkgOnly:
-            prepWorkspace = "text2workspace.py %s --X-allow-no-signal -m 125"%shapeName
-            if self.isSearch:
-                robustFit  = "combineTool.py -M Impacts -d %s -m 125 --expectSignal 0 --doInitialFit --robustFit 1 --rMin -0.01 --rMax 0.01"%rootCardName
-                impactFits = "combineTool.py -M Impacts -d %s -m 125 --expectSignal 0 --robustFit 1 --doFits --parallel %i --rMin -0.01 --rMax 0.01"%( rootCardName, cores )
-            else:
-                robustFit  = "combineTool.py -M Impacts -d %s -m 125 --expectSignal 1 --doInitialFit --robustFit 1 --rMin 0.99 --rMax 1.01"%rootCardName
-                impactFits = "combineTool.py -M Impacts -d %s -m 125 --expectSignal 1 --robustFit 1 --doFits --parallel %i --rMin 0.99 --rMax 1.01"%( rootCardName, cores )
-        else:
-            prepWorkspace = "text2workspace.py %s -m 125"%shapeName
-            robustFit     = "combineTool.py -M Impacts -d %s -m 125 --doInitialFit --robustFit 1 --rMin 0 --rMax 5"%rootCardName
-            impactFits    = "combineTool.py -M Impacts -d %s -m 125 --robustFit 1 --doFits --parallel %s --rMin 0 --rMax 5"%( rootCardName, cores )
-
-        extractImpact  = "combineTool.py -M Impacts -d %s -m 125 -o impacts.json"%rootCardName
-        plotImpacts    = "plotImpacts.py -i impacts.json -o impacts"
-        combineCommand = ";".join( [ "cd %s"%combineDirname, scram, prepWorkspace, robustFit, impactFits, extractImpact, plotImpacts ] )
-
-        print "Executing command: %s"%cmd
-        os.system(combineCommand)
+        ustr          = str(uuid.uuid4())
+        uniqueDirname = os.path.join("/tmp", ustr)
+        print "Creating %s"%uniqueDirname
+        os.makedirs(uniqueDirname)
 
         plotName = "impacts"
         if self.bkgOnly: plotName += "_bkgOnly"
         if expected:     plotName += "_expected"
 
-        shutil.copyfile( combineDirname+"/impacts.pdf", "%s/%s.pdf"%(self.plotDirectory, plotName) )
+        if self.bkgOnly: options = "--freezeParameters r --setParameters r=%i"%(0 if self.isSearch else 1)
+        else:            options = "--rMin 0 --rMax 10"
+
+        cd             = "cd %s"%uniqueDirname
+        robustFit      = "combineTool.py -M Impacts -m 125 -d %s --doInitialFit --robustFit 1 %s"%(self.rootWorkSpace, options)
+        impactFits     = "combineTool.py -M Impacts -m 125 -d %s --robustFit 1 --doFits --parallel %i %s"%( self.rootWorkSpace, cores, options )
+        extractImpact  = "combineTool.py -M Impacts -m 125 -d %s -o impacts.json"%self.rootWorkSpace
+        plotImpacts    = "plotImpacts.py -i impacts.json -o %s"%plotName
+        cmd            = ";".join( [ cd, robustFit, impactFits, extractImpact, plotImpacts ] )
+
+        print "Executing command: %s"%cmd
+        os.system(cmd)
+
+        shutil.copyfile( uniqueDirname+"/%s.pdf"%plotName, "%s/"%self.plotDirectory )
         if printPNG: # useful to get a visible plot in the www directory, for nothing else
             os.system("convert -trim %s/%s.pdf -density 150 -verbose -quality 100 -flatten -sharpen 0x1.0 -geometry 1600x1600 %s/%s.png"%( self.plotDirectory, plotName, self.plotDirectory, plotName) )
             copyIndexPHP( self.plotDirectory )
 
         logger.info("Impact plot created at %s/%s.pdf"%(self.plotDirectory, plotName) )
-        shutil.rmtree( combineDirname )
+        shutil.rmtree( uniqueDirname )
 
     def getCorrelationHisto( self, systOnly=False ):
 
