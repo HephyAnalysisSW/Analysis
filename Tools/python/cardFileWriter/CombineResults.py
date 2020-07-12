@@ -1414,7 +1414,7 @@ class CombineResults:
         print "Executing command: %s"%cmd
         os.system(cmd)
 
-        shutil.copyfile( uniqueDirname+"/%s.pdf"%plotName, "%s/"%self.plotDirectory )
+        shutil.copyfile( uniqueDirname+"/%s.pdf"%plotName, "%s/%s.pdf"%(self.plotDirectory,plotName) )
         if printPNG: # useful to get a visible plot in the www directory, for nothing else
             os.system("convert -trim %s/%s.pdf -density 150 -verbose -quality 100 -flatten -sharpen 0x1.0 -geometry 1600x1600 %s/%s.png"%( self.plotDirectory, plotName, self.plotDirectory, plotName) )
             copyIndexPHP( self.plotDirectory )
