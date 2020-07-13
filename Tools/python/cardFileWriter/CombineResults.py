@@ -44,7 +44,6 @@ class CombineResults:
 
         if not isinstance( cardFile, str ):
             raise ValueError( "CardFile input needs to be a string with the path to the cardFile" )
-#        if not cardFile.endswith(".txt") or "shapeCard" in cardFile.split("/")[-1] or not os.path.exists( cardFile ):
         if not cardFile.endswith(".txt") or not os.path.exists( cardFile ):
             raise ValueError( "Please provide the path to the *.txt cardfile! Got: %s"%cardFile )
 
@@ -139,6 +138,7 @@ class CombineResults:
         self.rateParameter       = {"preFit":None, "postFit":None}
         self.estimates           = {"preFit":None, "postFit":None}
         self.uncertainties       = {"preFit":None, "postFit":None}
+        self.uncertaintiesShape  = {"preFit":None, "postFit":None}
         self.pulls               = {"preFit":None, "postFit":None}
         self.covarianceHistos    = {"preFit":None, "postFit":None}
         self.regionHistos        = {"preFit":{"all":None}, "postFit":{"all":None}}
@@ -243,15 +243,14 @@ class CombineResults:
 
         for dir in self.channels:
 
+            if not dir in self.tShapeFile.keys():
+                self.tShapeFile[dir] = ROOT.TFile( self.shapeRootFile[dir], "READ")
+
+            shapes = [ x.GetName() for x in self.tShapeFile[dir].GetListOfKeys() ]
+
             result[dir] = {}
-            if not self.tShapeFile:
-                self.tShapeFile = ROOT.TFile( self.shapeRootFile[dir], "READ")
-
-            shapes = [ x.GetName() for x in self.tShapeFile.GetListOfKeys() ]
-
-            result = {}
             for shape in shapes:
-                result[dir][shape] = copy.deepcopy( self.tShapeFile.Get(shape) )
+                result[dir][shape] = copy.deepcopy( self.tShapeFile[dir].Get(shape) )
         self.shapeInputs = result
 
         if key: return self.shapeInputs[key]
@@ -408,19 +407,14 @@ class CombineResults:
         if directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
 
-        yields           = self.getEstimates( postFit=postFit )[directory]
+        uncBin           = bin.replace(directory+"_","")
+        yields           = self.getEstimates( postFit=postFit )[directory][uncBin]
         processes        = self.getProcessesPerBin( bin=bin )[bin]
-        unc              = self.getUncertaintiesFromTxtCard(   bin=bin, postFit=postFit )[directory][bin]
+        unc              = self.getUncertaintiesFromTxtCard(   bin=uncBin, postFit=postFit )[directory][uncBin]
 
-        rateParamInfo    = self.getRateParameterFromTxtCard()
+        rateParamInfo    = self.getRateParameterInfo()
         rateParamInfo    = { nuisance:rateParamInfo[nuisance][bin] } if nuisance in rateParamInfo.keys() and bin in rateParamInfo[nuisance].keys() else {}
         rateParam        = { key:val.sigma/val.val if val.val else 0 for key, val in self.getRateParameter( postFit=postFit ).iteritems() }
-
-        bin    = directory + "_" + bin
-        for key, y in yields.iteritems():
-            if bin in y.keys():
-                yields = y[bin]
-                break
 
         y, yup, ydown, sig = 0, 0, 0, 0
         # does not work for total directory, but total is not used
@@ -664,7 +658,24 @@ class CombineResults:
         shutil.rmtree( uniqueDirname )
 
 
-    def getRateParameterFromTxtCard( self ):
+    def getRateParameter( self, rateParameter=None, postFit=False ):
+        # return safed rate parameter if available
+        key = "postFit" if postFit else "preFit"
+        if self.rateParameter[key]:
+            if rateParameter: return self.rateParameter[key][rateParameter]
+            else:             return self.rateParameter[key]
+
+        rateParamList = self.getRateParameterInfo().keys()
+        pulls         = self.getPulls( postFit=postFit )
+        rateParams    = { par:pulls[par] for par in rateParamList if par in pulls.keys() }
+
+        self.rateParameter[key] = rateParams
+
+        if rateParameter: return self.rateParameter[key][rateParameter]
+        else:             return self.rateParameter[key]
+
+
+    def getRateParameterInfo( self ):
         # returns a dictionary with all rate parameters
         # the dict contains a dict of all affected cards (e.g. for combined cards)
         # which again contains a list of processes that are affected
@@ -689,34 +700,8 @@ class CombineResults:
                         rateParams[param] = { bin:proc }
         return rateParams
 
-    def getRateParameterFromShapeCard( self ):
-        # not yet working
-        # returns a dictionary with all rate parameters
-        # the dict contains a dict of all affected cards (e.g. for combined cards)
-        # which again contains a list of processes that are affected
-
-        if not self.shapeCard:
-            raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
-
-        estimates = self.getProcessList( unique=True )
-        rateParams = {}
-        with open( self.shapeCard ) as f:
-            for line in f:
-                if "extArg" in line or "rateParam" in line:
-                    param, _, bin, proc = line.split()[:4]
-                    proc = [ p for p in estimates if proc.replace("*","") in p ] if "*" in proc else [proc]
-                    if param in rateParams.keys():
-                        if bin in rateParams[param].keys():
-                            rateParams[param][bin] += proc
-                            rateParams[param][bin]  = list( set( rateParams[param][bin] ) )
-                        else:
-                            rateParams[param][bin] = proc
-                    else:
-                        rateParams[param] = { bin:proc }
-        return rateParams
-
     def getNuisanceYields( self, nuisance, postFit=False ):
-        return { dir:{ b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b.replace(dir+"_",""), directory=dir, postFit=postFit ) for b in self.getBinList( unique=True, directory=dir ) } for dir in self.channels }
+        return { dir:{ b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b, directory=dir, postFit=postFit ) for b in self.getBinList( unique=True, directory=dir ) } for dir in self.channels }
 
     def getBinList( self, unique=True, directory=None ):
         # get either the bin names for each process according to the cardfile ( Bin0 Bin0 Bin0 ... Bin1 Bin1 ...)
@@ -906,7 +891,7 @@ class CombineResults:
         # return safed binList if available
         if self.processes:
             if bin: return {bin:self.processes[bin]}
-            return self.processes
+            return copy.copy(self.processes)
 
         i           = 0
         bins        = self.getBinList( unique=True )
@@ -930,8 +915,9 @@ class CombineResults:
                     procDict.update( {bins[i]:procList} )
                     break
         self.processes = procDict
+
         if bin: return {bin:self.processes[bin]}
-        return self.processes
+        return copy.copy(self.processes)
 
     def getPulls( self, nuisance=None, postFit=False, statOnly=False ):
 
@@ -960,32 +946,16 @@ class CombineResults:
         else:        return pulls
 
 
-    def getRateParameter( self, rateParameter=None, postFit=False ):
-        # return safed rate parameter if available
-        key = "postFit" if postFit else "preFit"
-        if self.rateParameter[key]:
-            if rateParameter: return self.rateParameter[key][rateParameter]
-            else:             return self.rateParameter[key]
-
-        rateParamList = self.getRateParameterFromTxtCard().keys()
-        pulls         = self.getPulls( postFit=postFit )
-        rateParams    = { par:pulls[par] for par in rateParamList if par in pulls.keys() }
-
-        self.rateParameter[key] = rateParams
-
-        if rateParameter: return self.rateParameter[key][rateParameter]
-        else:             return self.rateParameter[key]
-
-
     def getUncertaintiesFromShapeCard( self, bin=None, estimate=None, nuisance=None, postFit=False ):
         # uncertainties from shape.root card
         # return safed uncertainties if available
+        # not yet working for flat uncertainties and rate parameters -> getUncertaintiesFromTxtCard
         key = "postFit" if postFit else "preFit"
-        if self.uncertainties[key]:
+        if self.uncertaintiesShape[key]:
             if bin or estimate or nuisance:
-                return self.__filterDict( self.uncertainties[key], bin=bin, estimate=estimate, nuisance=nuisance )
+                return {dir:self.__filterDict( self.uncertaintiesShape[key][dir], bin=bin, estimate=estimate, nuisance=nuisance ) for dir in self.channels}
             else:
-                return self.uncertainties[key]
+                return self.uncertaintiesShape[key]
 
         pulls  = self.getPulls( postFit=postFit )
         allEst = self.getProcessList( unique=True )
@@ -1002,30 +972,33 @@ class CombineResults:
                 unc = unc[0] if unc else "stat"
                 est = shape.replace("_"+unc+"Up","")
                 shapeH = shapeHisto.Clone()
+                if "Lumi" in shape: print shape
                 if unc == "stat":
                     # stat unc
                     for i_bin in range(shapeH.GetNbinsX()):
-                        _bin = "Bin"+str(i_bin)
+#                        _bin = dir + "_Bin%i"%i_bin if dir != "Bin0" else "Bin%i"%i_bin
+                        _bin = "Bin%i"%i_bin
                         if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
                         if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
                         err = shapeH.GetBinError( i_bin+1 ) / shapeH.GetBinContent( i_bin+1 ) if shapeH.GetBinContent( i_bin+1 ) and mcStat else 0
                         if postFit and mcStat:
-                            err *= pulls["prop_binBin0_bin"+str(i_bin)].sigma
-#                            err = err**pulls["prop_binBin0_bin"+str(i_bin)].sigma
+                            err *= pulls["prop_bin%s_bin"%dir+str(i_bin)].sigma
+#                            err = err**pulls["prop_bin%s_bin"%dir+str(i_bin)].sigma
                         shapeH.SetBinContent( i_bin+1, err )
                         uncertainties[dir][_bin][est][unc] = err
                     if not "histo" in uncertainties[dir].keys(): uncertainties[dir]["histo"] = {}
                     if not est in uncertainties[dir]["histo"].keys(): uncertainties[dir]["histo"][est] = {}
                     uncertainties[dir]["histo"][est][unc] = shapeH.Clone()
                 else:
-                    shapeH.Add(shapes[est],-1)
-                    shapeH.Divide(shapes[est])
+                    shapeH.Add(shapes[dir][est],-1)
+                    shapeH.Divide(shapes[dir][est])
                     if postFit:
                         shapeH.Scale(pulls[unc].sigma)
 #                       for i_bin in range(shapeH.GetNbinsX()):
 #                            shapeH.SetBinContent(i_bin+1, shapeH.GetBinContent(i_bin+1)**pulls[unc].sigma)
                     for i_bin in range(shapeH.GetNbinsX()):
-                        _bin = "Bin"+str(i_bin)
+#                        _bin = dir + "_Bin%i"%i_bin if dir != "Bin0" else "Bin%i"%i_bin
+                        _bin = "Bin%i"%i_bin
                         if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
                         if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
                         uncertainties[dir][_bin][est][unc] = shapeH.GetBinContent( i_bin+1 )
@@ -1033,12 +1006,12 @@ class CombineResults:
                     if not est in uncertainties[dir]["histo"].keys(): uncertainties[dir]["histo"][est] = {}
                     uncertainties[dir]["histo"][est][unc] = shapeH.Clone()
         
-        self.uncertainties[key] = uncertainties
+        self.uncertaintiesShape[key] = uncertainties
 
         if bin or estimate or nuisance:
-            return {dir:self.__filterDict( self.uncertainties[key][dir], bin=bin, estimate=estimate, nuisance=nuisance ) for dir in self.channels}
+            return {dir:self.__filterDict( self.uncertaintiesShape[key][dir], bin=bin, estimate=estimate, nuisance=nuisance ) for dir in self.channels}
         else:
-            return self.uncertainties[key]
+            return self.uncertaintiesShape[key]
 
 
     def getUncertaintiesFromTxtCard( self, bin=None, estimate=None, nuisance=None, postFit=False ):
@@ -1051,7 +1024,7 @@ class CombineResults:
         key = "postFit" if postFit else "preFit"
         if self.uncertainties[key]:
             if bin or estimate or nuisance:
-                return self.__filterDict( self.uncertainties[key], bin=bin, estimate=estimate, nuisance=nuisance )
+                return {dir:self.__filterDict( self.uncertainties[key][dir], bin=bin, estimate=estimate, nuisance=nuisance ) for dir in self.channels}
             else:
                 return self.uncertainties[key]
 
@@ -1060,7 +1033,6 @@ class CombineResults:
         rateParams    = self.getRateParameter()
         pulls         = self.getPulls( postFit=postFit )
         binList       = self.getBinList( unique=False )
-        print binList
         uncertainties = {}
 
         with open( self.txtCard ) as f:
@@ -1070,7 +1042,7 @@ class CombineResults:
                 if unc not in allUnc: continue
                 if unc in rateParams.keys(): continue # remove rate parameters as they would be 0 anyway
                 for i_bin, _bin in enumerate(binList):
-                    dir = [ch for ch in self.channels if ch in _bin or ch == "Bin0"][0]
+                    dir = [ch for ch in self.channels if _bin.startswith(ch) or ch == "Bin0"][0]
                     _bin = _bin.replace(dir+"_","") if dir != "Bin0" else _bin
                     est = allEst[i_bin]
                     if not dir in uncertainties.keys(): uncertainties[dir] = {}
@@ -1087,7 +1059,7 @@ class CombineResults:
         self.uncertainties[key] = uncertainties
 
         if bin or estimate or nuisance:
-            return {dir:self.__filterDict( self.uncertainties[dir][key], bin=bin, estimate=estimate, nuisance=nuisance ) for dir in self.channels}
+            return {dir:self.__filterDict( self.uncertainties[key][dir], bin=bin, estimate=estimate, nuisance=nuisance ) for dir in self.channels}
         else:
             return self.uncertainties[key]
 
@@ -1120,7 +1092,7 @@ class CombineResults:
 
             # stupid restructuring to make it compatible w/ other functions
             for b in yields[dir].keys():
-                for est in tmp.keys():
+                for est in tmp[dir].keys():
                     yields[dir][b][est] = tmp[dir][est][b]
 
         self.estimates[key] = yields
@@ -1137,7 +1109,6 @@ class CombineResults:
             nuisances = [ n for n in nuisances if not "prop" in n ] + ["stat"]
 
         allEst   = self.getProcessList( unique=True )
-#        yields   = self.__getShapeObject( key=None )
         rateParams = self.getRateParameter( postFit=True ).keys()
         nuisanceHistos = {}
 
@@ -1198,6 +1169,8 @@ class CombineResults:
             nuisanceHistos[dir] = {}
             for i_n, nuisance in enumerate(nuisances):
                 nuisanceYields  = self.getNuisanceYields( nuisance, postFit=postFit )[dir]
+                print nuisanceYields.keys()
+                print nuisanceYields
                 for i in range(nuisanceHistUp.GetNbinsX()):
                     if self.combinedCard: key = dir+"_Bin"+str(i)
                     else:                 key = "Bin"+str(i)
@@ -1315,7 +1288,7 @@ class CombineResults:
     def getRegionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, addStatOnlyHistos=False, addRateUncertainty=True ):
         hists = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=nuisances, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=False, addRateUncertainty=addRateUncertainty )
         if addStatOnlyHistos:
-            hists_stat = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=nuisances, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=True,  addRateUncertainty=False )
+            hists_stat = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=None, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=True,  addRateUncertainty=False )
             for dir, dic in hists_stat.iteritems():
                 for h_key, h in dic.iteritems():
                     hists[dir][h_key+"_stat"] = h.Clone()
@@ -1325,7 +1298,7 @@ class CombineResults:
     def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, bkgSubstracted=False, directory=None ):
         # get the list of histograms and the ratio list for plotting a region plot
 
-        if bkgSubstracted: return [ [regionHistos["signal"]], [regionHistos["data"]] ], [(1,0),(0,0)]
+        if bkgSubstracted: return [ [regionHistos["signal"]], [regionHistos["data"]] ], [(0,0),(1,0)]
 
         if directory and directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
@@ -1342,7 +1315,7 @@ class CombineResults:
                 regionHistos[p].notInLegend = True
     
 
-        nuisances    = self.getNuisancesList() + ["total"]
+        nuisances    = self.getNuisancesList() + ["totalUnc","MCStat","stat"]
         binProcesses = self.getProcessesPerBin()
         ratioHistos  = []
         bins         = len(self.getBinLabels()[self.channels[0]])
