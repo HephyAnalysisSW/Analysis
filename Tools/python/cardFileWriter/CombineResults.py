@@ -192,7 +192,8 @@ class CombineResults:
             elif not key:                             return self.fitResults
 
         if not self.fitResult:
-            raise ValueError( "Root file of fit result not found! Running in limited mode, thus cannot get the object needed!" )
+            print "Fit result not availabe, creating it!"
+            self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         if not self.tRootFile:
             self.tRootFile = ROOT.TFile( self.fitResult, "READ")
@@ -216,6 +217,10 @@ class CombineResults:
 
         if not self.shapeRootFile:
             raise ValueError( "Shape root file as input not found! Running in limited mode, thus cannot get the object needed!" )
+
+        if not self.fitResult:
+            print "Fit result not availabe, creating it!"
+            self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         if not self.tShapeFile:
             self.tShapeFile = ROOT.TFile( self.shapeRootFile, "READ")
@@ -395,6 +400,9 @@ class CombineResults:
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
+        if not self.shapeRootFile:
+            raise ValueError( "Shape root file as input not found! Running in limited mode, thus cannot get the object needed!" )
+
         cmd = "cd "+uniqueDirname+";combine --saveWorkspace -M MultiDimFit %s %s"%(options, self.shapeCard)
         print "Executing command: %s"%cmd
         os.system(cmd)
@@ -409,6 +417,10 @@ class CombineResults:
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
+
+        if not self.rootWorkSpace:
+            print "Workspace not availabe, creating it!"
+            self.createWorkspace() # run the fit from card inputs
 
         cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, "--profilingMode none")
         print "Executing command: %s"%cmd
@@ -432,6 +444,9 @@ class CombineResults:
         print "Make sure you run on expected observations!"
         print "Scaling signal events by 1./%f = %f"%(factor,1./factor)
         print
+
+        if not self.shapeRootFile or not self.shapeCard:
+            raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
@@ -469,6 +484,10 @@ class CombineResults:
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
+        if not self.rootWorkSpace:
+            print "Workspace not availabe, creating it!"
+            self.createWorkspace() # run the fit from card inputs
+
         params     = [ key for key in self.getPulls().keys() if key != "r" and not ("prop" in key and "_bin0" in key) ]
         statParams = ",".join( params )
 
@@ -494,6 +513,9 @@ class CombineResults:
         # the dict contains a dict of all affected cards (e.g. for combined cards)
         # which again contains a list of processes that are affected
 
+        if not self.txtCard:
+            raise ValueError( "Input txt cards not found! Running in limited mode, thus cannot get the object needed!" )
+
         binList   = self.getBinList( unique=False )
         estimates = self.getProcessList( unique=True )
         unc       = 0
@@ -518,6 +540,9 @@ class CombineResults:
         # returns a dictionary with all rate parameters
         # the dict contains a dict of all affected cards (e.g. for combined cards)
         # which again contains a list of processes that are affected
+
+        if not self.shapeCard:
+            raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
 
         binList   = self.getBinList( unique=False )
         estimates = self.getProcessList( unique=True )
@@ -620,6 +645,10 @@ class CombineResults:
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'mlfitNormsToText.py'), os.path.join(uniqueDirname, 'mlfitNormsToText.py'))
 
+        if not self.fitResult:
+            print "Fit result not availabe, creating it!"
+            self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
+
         cmd = "cd %s;python mlfitNormsToText.py %s --uncertainties > nuisancesTable.txt"%(uniqueDirname,self.fitResult)
         cmd += ";mv nuisancesTable.txt %s/"%(self.plotDirectory)
         print "Executing command: %s"%cmd
@@ -629,6 +658,10 @@ class CombineResults:
 
     def htmlNuisanceReport( self ):
         # create html report of nuisance parameter ranges
+
+        if not self.shapeCard:
+            raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
+
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating "+uniqueDirname
@@ -655,6 +688,11 @@ class CombineResults:
 
     def printCorrelations( self, nuisance, nMax=10 ):
         # print out correlations of nuisance
+
+        if not self.fitResult:
+            print "Fit result not availabe, creating it!"
+            self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
+
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Printing first %i correlations of %s"%(nMax, nuisance)
@@ -689,6 +727,10 @@ class CombineResults:
             else:
                 cardfiles = [self.txtCard]
             tags = [self.year+" "]
+
+        if not all( cardfiles ):
+            raise ValueError( "Input cards not found! Running in limited mode, thus cannot get the object needed!" )
+
         for c, card in enumerate(cardfiles):
             with open( card ) as f:
                 for line in f:
@@ -795,9 +837,6 @@ class CombineResults:
         return self.processes
 
     def getPulls( self, nuisance=None, postFit=False, statOnly=False ):
-
-        if not self.fitResult:
-            raise ValueError( "Root file of fit result not found! Running in limited mode, thus cannot get the object needed!" )
 
         # return safed pulls if available
         key = "postFit" if postFit else "preFit"
@@ -906,6 +945,10 @@ class CombineResults:
     def getUncertaintiesFromTxtCard( self, bin=None, estimate=None, nuisance=None, postFit=False, systOnly=False ):
         # uncertainties from txt card
         # return safed uncertainties if available
+
+        if not self.txtCard:
+            raise ValueError( "Input txt card not found! Running in limited mode, thus cannot get the object needed!" )
+
         key = "postFit" if postFit else "preFit"
         if self.uncertainties[key]:
             if bin or estimate or nuisance or systOnly:
@@ -1071,6 +1114,9 @@ class CombineResults:
         return nuisanceHistos
 
     def createRebinnedResults( self, rebinningCardFile, postfit=False ):
+
+        if not self.txtCard:
+            raise ValueError( "Input txt card not found! Running in limited mode, thus cannot get the object needed!" )
 
         # create environment
         ustr          = str(uuid.uuid4())
@@ -1404,6 +1450,10 @@ class CombineResults:
         if self.bkgOnly: options = "--freezeParameters r --setParameters r=%i"%(0 if self.isSearch else 1)
         else:            options = "--rMin 0 --rMax 10"
 
+        if not self.rootWorkSpace:
+            print "Workspace not availabe, creating it!"
+            self.createWorkspace() # run the fit from card inputs
+
         cd             = "cd %s"%uniqueDirname
         robustFit      = "combineTool.py -M Impacts -m 125 -d %s --doInitialFit --robustFit 1 %s"%(self.rootWorkSpace, options)
         impactFits     = "combineTool.py -M Impacts -m 125 -d %s --robustFit 1 --doFits --parallel %i %s"%( self.rootWorkSpace, cores, options )
@@ -1425,7 +1475,8 @@ class CombineResults:
     def getCorrelationHisto( self, systOnly=False ):
 
         if not self.fitResult:
-            raise ValueError( "Root file of fit result not found! Running in limited mode, thus cannot get the object needed!" )
+            print "Fit result not availabe, creating it!"
+            self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         if self.correlationHisto:
             if systOnly:
@@ -1460,7 +1511,8 @@ class CombineResults:
         # get the TH2D covariance matrix plot
 
         if not self.fitResult:
-            raise ValueError( "Root file of fit result not found! Running in limited mode, thus cannot get the object needed!" )
+            print "Fit result not availabe, creating it!"
+            self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         key = "postFit" if postFit else "preFit"
         if self.covarianceHistos[key]:
