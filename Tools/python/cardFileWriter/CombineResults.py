@@ -49,7 +49,6 @@ class CombineResults:
             raise ValueError( "Please provide the path to the *.txt cardfile! Got: %s"%cardFile )
 
         self.year          = str(year)
-        self.channels      = ["dc_2016","dc_2017","dc_2018"] if self.year == "combined" else ["Bin0"]
         self.bkgOnly       = bkgOnly
         self.isSearch      = isSearch # for searches, the bkgOnly impact plots are with mu=0, for measurements mu=1
         self.txtCard      = cardFile # try to get rid of the txt cardfile!
@@ -61,7 +60,13 @@ class CombineResults:
         self.txtCardRebinned17 = None
         self.txtCardRebinned18 = None
         if rebinnedCardFile: self.txtCardRebinned = rebinnedCardFile
-        if self.year == "combined":
+
+        self.channels     = self.__getChannelsFromCard( self.txtCard ) #["dc_2016","dc_2017","dc_2018"] if self.year == "combined" else ["Bin0"]
+        self.combinedCard = len(self.channels) > 1
+
+        print self.channels
+
+        if self.combinedCard:
             self.txtCard16    = self.txtCard.replace("COMBINED","2016")
             self.txtCard17    = self.txtCard.replace("COMBINED","2017")
             self.txtCard18    = self.txtCard.replace("COMBINED","2018")
@@ -82,7 +87,7 @@ class CombineResults:
             logger.warning( "Shape card not found: %s"%self.shapeCard )
             logger.warning( "Continuing with limited options!" )
             self.shapeCard = None
-        elif self.year == "combined":
+        elif self.combinedCard:
             self.shapeCard16    = self.shapeCard.replace("COMBINED","2016")
             self.shapeCard17    = self.shapeCard.replace("COMBINED","2017")
             self.shapeCard18    = self.shapeCard.replace("COMBINED","2018")
@@ -93,7 +98,7 @@ class CombineResults:
             logger.warning( "Root file with initial shape distributions not found: %s"%self.shapeRootFile )
             logger.warning( "Continuing with limited options!" )
             self.shapeRootFile = None
-        elif self.year == "combined":
+        elif self.combinedCard:
             self.shapeRootFile16    = self.shapeRootFile.replace("COMBINED","2016")
             self.shapeRootFile17    = self.shapeRootFile.replace("COMBINED","2017")
             self.shapeRootFile18    = self.shapeRootFile.replace("COMBINED","2018")
@@ -158,6 +163,16 @@ class CombineResults:
 
 #    def __private( self ):
 #    def public( self ):
+
+    def __getChannelsFromCard( self, card ):
+
+        with open( card, "r" ) as f:
+            header = f.readlines()[0]
+
+        if not header.startswith("Combination"): return ["Bin0"]
+
+        return [ item.split("=")[0] for item in header.split() if "=" in item ]
+
 
     def __getStatOnlyFitObject( self, key=None ):
         """ get the statOnly fit objects
@@ -570,7 +585,7 @@ class CombineResults:
         return subkey
 
     def getNuisanceYields( self, nuisance, postFit=False, directory="total" ):
-        return { b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b, postFit=postFit, directory=directory ) for b in self.getBinList( unique=True, directory=directory if self.year == "combined" and directory != "total" else None ) }
+        return { b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b, postFit=postFit, directory=directory ) for b in self.getBinList( unique=True, directory=directory if self.combinedCard and directory != "total" else None ) }
 
     def __getNuisanceBinYield( self, nuisance, bin, postFit=False, directory="total" ):
         yields           = self.getEstimates( postFit=postFit, directory=directory )
@@ -581,7 +596,7 @@ class CombineResults:
         rateParamInfo    = { nuisance:rateParamInfo[nuisance][bin] } if nuisance in rateParamInfo.keys() and bin in rateParamInfo[nuisance].keys() else {}
         rateParam        = { key:val.sigma/val.val if val.val else 0 for key, val in self.getRateParameter( postFit=postFit ).iteritems() }
 
-        if directory != "total" and self.year != "combined":
+        if directory != "total" and not self.combinedCard:
             bin = directory + "_" + bin
         elif directory == "total":
             bin = "Bin0_" + bin.split("_")[-1]
@@ -715,7 +730,7 @@ class CombineResults:
                 return self.binLabels
 
         binLabels = []
-        if self.year == "combined":
+        if self.combinedCard:
             if self.txtCardRebinned:
                 cardfiles = [self.txtCardRebinned16, self.txtCardRebinned17, self.txtCardRebinned18]
             else:
@@ -1094,9 +1109,9 @@ class CombineResults:
             for i_n, nuisance in enumerate(nuisances):
                 nuisanceYields  = self.getNuisanceYields( nuisance, postFit=postFit, directory=directory )
                 for i in range(nuisanceHistUp.GetNbinsX()):
-                    if self.year == "combined" and directory != "total":
+                    if self.combinedCard and directory != "total":
                         key = directory+"_Bin"+str(i)
-                    elif self.year == "combined" and directory == "total":
+                    elif self.combinedCard and directory == "total":
                         key = binList[i]
                     else:
                         key = "Bin"+str(i)
@@ -1126,7 +1141,7 @@ class CombineResults:
 
         resPath      = self.txtCard.replace(".txt","/")
         if not os.path.isdir(resPath): os.makedirs(resPath)
-        if self.year == "combined":
+        if self.combinedCard:
             if not os.path.isdir(resPath.replace("COMBINED","2016")): os.makedirs(resPath.replace("COMBINED","2016"))
             if not os.path.isdir(resPath.replace("COMBINED","2017")): os.makedirs(resPath.replace("COMBINED","2017"))
             if not os.path.isdir(resPath.replace("COMBINED","2018")): os.makedirs(resPath.replace("COMBINED","2018"))
@@ -1139,7 +1154,7 @@ class CombineResults:
 
         # combine fit card and muted card
         print "combining cards for muted fit"
-        if self.year == "combined":
+        if self.combinedCard:
             cmd  = "cd "+uniqueDirname+";combineCards.py fit_dc_2016=%s fit_dc_2017=%s fit_dc_2018=%s dc_2016=%s dc_2017=%s dc_2018=%s > combinedCard.txt; text2workspace.py combinedCard.txt --channel-masks"%(self.shapeCard.replace("COMBINED","2016"), self.shapeCard.replace("COMBINED","2017"), self.shapeCard.replace("COMBINED","2018"), rebinningCardFile.replace(".txt","_shapeCard.txt").replace("COMBINED","2016"), rebinningCardFile.replace(".txt","_shapeCard.txt").replace("COMBINED","2017"), rebinningCardFile.replace(".txt","_shapeCard.txt").replace("COMBINED","2018"))
         else:
             cmd  = "cd "+uniqueDirname+";combineCards.py fit=%s Bin0=%s > combinedCard.txt; text2workspace.py combinedCard.txt --channel-masks"%(self.shapeCard, rebinningCardFile.replace(".txt","_shapeCard.txt"))
@@ -1163,7 +1178,7 @@ class CombineResults:
 
         # run fit with masked (muted) card
         print "run FitDiagnostics"
-        if self.year == "combined":
+        if self.combinedCard:
             cmd = "cd "+uniqueDirname+";combine combinedCard.root --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_dc_2016=1,mask_dc_2017=1,mask_dc_2018=1"
         else:
             cmd = "cd "+uniqueDirname+";combine combinedCard.root --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters mask_Bin0=1"
@@ -1172,7 +1187,7 @@ class CombineResults:
 
         # copy cards to final location
         logger.info("Putting combined card into dir %s", resPath)
-        if self.year == "combined":
+        if self.combinedCard:
             shutil.copyfile(rebinningCardFile.replace("COMBINED","2016"),                                  resTxtFile.replace("COMBINED","2016"))
             shutil.copyfile(rebinningCardFile.replace(".txt","_shapeCard.txt").replace("COMBINED","2016"), resShapeFile.replace("COMBINED","2016"))
             shutil.copyfile(rebinningCardFile.replace(".txt","_shape.root").replace("COMBINED","2016"),    resShapeRoot.replace("COMBINED","2016"))
@@ -1201,7 +1216,7 @@ class CombineResults:
 
         # run fit with masked (muted) card
         print "run FitDiagnostics stat only"
-        if self.year == "combined":
+        if self.combinedCard:
             cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --setParameters mask_dc_2016=1,mask_dc_2017=1,mask_dc_2018=1"
         else:
             cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --setParameters mask_Bin0=1"
@@ -1275,7 +1290,7 @@ class CombineResults:
                     hists[dir]["data"].legendText   = "data"
                     hists[dir]["data"].legendOption = "p"
 
-                if self.year == "combined":
+                if self.combinedCard:
                     k = "data" if "data" in hist else hist
                     hists[dir][k].GetXaxis().SetRangeUser(0, int(hists[dir][k].GetNbinsX()/3.))
 
@@ -1366,7 +1381,7 @@ class CombineResults:
         nuisances    = self.getNuisancesList( systOnly=False ) + ["totalSyst"]
         binProcesses = self.getProcessesPerBin()
         ratioHistos  = []
-        bins         = len(self.getBinLabels()) if self.year != "combined" else int(len(self.getBinLabels())/3.)
+        bins         = len(self.getBinLabels()) if not self.combinedCard else int(len(self.getBinLabels())/3.)
         i_n          = 0
 
         if sorted:
