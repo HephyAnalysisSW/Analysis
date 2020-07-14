@@ -1,21 +1,31 @@
-# Still to do
-# signal on top of histlist for signalregions
-# cardfile manipulations
-# cleanup
-
 """ 
-Extracting pre- and post-fit information.
+Extracting pre- and post-fit information, perform fits, create workspace, run fitdiagnostics, apply fit results to other data cards, and much more.
+
+
 Parts stolen from:
 https://github.com/HephySusySW/Workspace/blob/94X-master/DegenerateStopAnalysis/python/tools/sysTools.py
-and
 https://github.com/HephySusySW/Workspace/blob/94X-master/DegenerateStopAnalysis/python/tools/degTools.py
+https://indico.cern.ch/event/747340/contributions/3198653/attachments/1744339/2823486/HComb-Tutorial-FitDiagnostics.pdf
+https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/nonstandard/
+https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/commonstatsmethods/
 
 install dependencies from combineHarvester
 https://github.com/cms-analysis/CombineHarvester
 git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
 git clone https://github.com/cms-analysis/CombineHarvester.git CombineHarvester
 
-Uses information of the *.txt, *.shapeCard.txt, shapeCard_FD.root files
+Initialize with the txt cardfile, but provide also the shape cardfile, the root file containing the input shapes, and if possible the workspace and fit diagnostics root file
+the txt cardfile is only needed for a few additional informations, whould be nice to get rid of that
+all fits and diagnostics are performed on the shape card file and workspace
+
+naming for the input paths:
+txt card file:              PATH/NAME.txt (required)
+shape card file:            PATH/NAME_shapeCard.txt (not required, but should be provided)
+input shapes:               PATH/NAME_shape.root (not required, but should be provided)
+workspace:                  PATH/NAME_shapeCard.root (can be created with this class)
+fitDiagnostics:             PATH/NAME_shapeCard_FD.root (can be created with this class)
+fitDiagnostics (statOnly):  PATH/NAME_shapeCard_staOnly_FD.root (can be created with this class)
+
 """
 
 # Standard imports
@@ -27,6 +37,7 @@ import uuid
 
 import ROOT
 ROOT.gROOT.SetBatch(True)
+#ROOT.gSystem.RedirectOutput("/dev/null")
 
 from Analysis.Tools.u_float import u_float
 
@@ -41,6 +52,17 @@ logger = logging.getLogger(__name__)
 class CombineResults:
 
     def __init__( self, cardFile, plotDirectory, year, bkgOnly=False, isSearch=False, createMissingInputs=False, rebinnedCardFile=None ):
+        # cardFile: initialize with txt cardfile, but provide other cards with the proper naming
+        # plotDirectory: some results are copied to the plotDirectory when executing the function
+        # year: 2016, 2017, 2018 or 'combined'
+        # isSearch: False for measurements, true for searches
+        # createMissingInputs: if true, all needed missing data is created when initializing the class object
+        # rebinnedCardFile: when initializing the class object with a card from the output of CombineResults.createRebinnedResults(), provide here the card on which you performed the rebinning (fixme: get rid of that)
+        # e.g. newCard = CombineResults.createRebinnedResults( oldCard )
+        # CombineResults( cardFile = newCard, rebinnedCardFile = oldCard )
+
+        if isSearch:
+            print "ATTENTION: MAY NOT WORK PROPERLY FOR SEARCHES, please check the output and provide feedback"
 
         if not isinstance( cardFile, str ):
             raise ValueError( "CardFile input needs to be a string with the path to the cardFile" )
@@ -53,6 +75,7 @@ class CombineResults:
         self.txtCard         = cardFile # try to get rid of the txt cardfile!
         self.txtCardRebinned = rebinnedCardFile # add the original card if you created the CombineResults object with a rebinned card
 
+        # if it is a combined card: search the txt card for information on initial cards and the directory structure
         self.channels     = self.__getChannelsFromCard( self.txtCard )
         self.combinedCard = len(self.channels) > 1
         self.years        = { y:y.replace("dc_","") for y in self.channels } if self.combinedCard else {self.channels[0]:self.year}
@@ -65,6 +88,7 @@ class CombineResults:
             self.shapeCard = None
 
         # input shapes created with cardfile writer in the same step as the shapeFile, may be mandatory
+        # look for information on the path to the input rootfiles in the shapeCard
         self.shapeRootFile = self.__getShapeDirectoriesFromCard( self.shapeCard ) if self.shapeCard else { dir:None for dir in self.channels }
         if not all(self.shapeRootFile.values()) or not all( map( os.path.exists, self.shapeRootFile.values() ) ):
             logger.warning( "Root file with initial shape distributions not found!" )
@@ -149,6 +173,8 @@ class CombineResults:
 #    def public( self ):
 
     def __getChannelsFromCard( self, card ):
+        """ if it is a combined card: search the txt card for information on initial cards and the directory structure
+        """
 
         with open( card, "r" ) as f:
             header = f.readlines()[0]
@@ -159,6 +185,8 @@ class CombineResults:
 
 
     def __getShapeDirectoriesFromCard( self, card ):
+        """ look for information on the path to the input shape rootfiles in the shapeCard
+        """
 
         with open( card, "r" ) as f:
             lines = f.readlines()
@@ -224,8 +252,9 @@ class CombineResults:
         else:   return self.fitResults
 
     def __getShapeObject( self, key=None ):
-        """ get the fit objects
+        """ get the shape objects from the input shape root file
         """
+
         # return safed fitResult if available
         if self.shapeInputs:
             if key and key in self.shapeInputs.keys(): return self.shapeInputs[key]
@@ -259,6 +288,7 @@ class CombineResults:
     def __rewriteRebinnedFile( self, rootFile, postfit=False, statOnly=False, nBins=None ):
         """ rewrite the rootfile from rebinning in the style of the combine output
         """
+
         tRootFile = ROOT.TFile( rootFile, "READ" )
 
         result = {}
@@ -349,7 +379,9 @@ class CombineResults:
         return { key:val for key, val in filterDict.items() if key==var}
             
     def __filterDict( self, filterDict, bin=None, estimate=None, nuisance=None ):
-        # remove estimate sub dictionaries
+        """ filter dicts of dicts for the output
+        """
+
         filterDict = self.__filter( filterDict, var=bin )
         if not isinstance( filterDict, dict ): return filterDict
         for b, b_dict in filterDict.items():
@@ -360,7 +392,9 @@ class CombineResults:
         return filterDict
 
     def __reduceHistogram( self, fromHisto, plotBins ):
-        # remove single bins from a histogram
+        """ remove single bins from a histogram
+        """
+
         newH = ROOT.TH1F( str(uuid.uuid4()), str(uuid.uuid4()), len(plotBins), 0, len(plotBins))
         j = 0
         for i in range( fromHisto.GetNbinsX() ):
@@ -372,7 +406,9 @@ class CombineResults:
         return newH
 
     def __copyHistoSettings( self, fromHist, toHist, plotBins=None ):
-        # copy all our settings of a histogram when cloning it
+        """ copy all our settings of a histogram when cloning it
+        """
+
         for var in [attr for attr in dir(fromHist) if not callable(getattr(fromHist, attr)) and not attr.startswith("__")]:
             try: setattr( toHist, var, getattr( h, var ) )
             except: pass
@@ -385,7 +421,6 @@ class CombineResults:
 
         j = 0
         for i in range( fromHist.GetNbinsX() ):
-            # make that more dynamic FIXME
             if plotBins and i not in plotBins: continue
             toHist.GetXaxis().SetBinLabel( j+1, fromHist.GetXaxis().GetBinLabel( i+1 ) )
             j += 1
@@ -393,6 +428,10 @@ class CombineResults:
         toHist.LabelsOption("v","X")
 
     def __extractPOIResult( self, logFile ):
+        """ extract the POI result from the logger output of the --justFit combine fit
+            Simple to use (and fast) for the case where one just needs the r-value (stat-only, linearity test,...)
+        """
+
         with open(logFile) as f:
             resultCount = 0
             for line in f:
@@ -400,9 +439,11 @@ class CombineResults:
                 if resultCount == 2 and '<none>' in line and line.split()[0] == "r":
                     init_val, r_stat, _, err_stat = tuple( line.split()[1:5] )
                     break
-        return u_float(float(r_stat), float(err_stat))#*float(init_val)
+        return u_float(float(r_stat), float(err_stat))
 
     def __getNuisanceBinYield( self, nuisance, bin, directory, postFit=False ):
+        """ get the bin yield of a +-1 sigma up variation of a certain nuisance
+        """
 
         if directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
@@ -433,6 +474,14 @@ class CombineResults:
 
 
     def __regionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, statOnly=False, addRateUncertainty=True ):
+        """ get a dictionary of histograms containing all region bins of the fit
+            plot only certain bins with e.g. plotBins = [0, 5, 9]
+            add additional +-1 sigma variation histograms of certain nuisances with 'nuisances'
+            perform background substraction with bkgSubstracted=True
+            each bin contains the label (from the txtcard), use the labelFormater = e.g. lambda label: label[1] to format the label in the histogram
+            statOnly=True for getting the output of the statonly fit, if this fit was not performed yet, it will be then
+            addRateUncertainty=True for adding the uncertainties from rate parameters to the total uncertainty (as it is not done in combine)
+        """
 
         hists    = {}
         key    = "postFit" if postFit else "preFit"
@@ -483,7 +532,7 @@ class CombineResults:
                     k = "data" if "data" in hist else hist
                     hists[dir][k].GetXaxis().SetRangeUser(0, int(hists[dir][k].GetNbinsX()/3.))
 
-            if nuisances and not bkgSubstracted: # currently no single-nuisance plots with bkg substracted histograms #FIXME
+            if nuisances:
                 if isinstance( nuisances, str ): nuisances = [nuisances]
                 hists[dir].update( self.getNuisanceHistosFromShapeCard( postFit=postFit, plotBins=None, nuisances=nuisances, directory=dir )[dir] )
 
@@ -536,15 +585,27 @@ class CombineResults:
                     hists[dir]["total_background"].SetBinError(b+1, 0)
 
                 # use total - bkg as signal to get the full uncertainty
-                hists[dir] = {"data":hists[dir]["data"], "signal":hists[dir][tot].Clone(),"total":hists[dir][tot].Clone(),"total_background":hists[dir]["total_background"]}
+                safe = ["data","signal",tot,"total_background"]
+                if nuisances: safe += nuisances
+                for key in hists[dir].keys():
+                    if key not in safe: del hists[dir][key]
+                hists[dir]["signal"] = hists[dir][tot].Clone()
 
                 hists[dir]["data"].Add( hists[dir]["total_background"], -1 )
                 hists[dir]["signal"].Add( hists[dir]["total_background"], -1 )
+                if nuisances:
+                    for n in nuisances:
+                        hists[dir][n]["up"].Add( hists[dir]["total_background"], -1 )
+                        hists[dir][n]["down"].Add( hists[dir]["total_background"], -1 )
+
                 hists[dir]["total_background"].Scale(0)
 
         return hists
 
     def createWorkspace( self, options="" ):
+        """ do the fit and create workspace if it is not done yet
+        """
+
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating %s"%uniqueDirname
@@ -563,6 +624,9 @@ class CombineResults:
         shutil.rmtree(uniqueDirname)
 
     def runFitDiagnostics( self, options="", statOnly=False ):
+        """ run fitdiagnostics if it is not done yet
+        """
+
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating %s"%uniqueDirname
@@ -588,6 +652,10 @@ class CombineResults:
         shutil.rmtree( uniqueDirname )
 
     def runLinearityTest( self, factor ):
+        """ get the r value of a fit with scaled signal yield
+            signal yield is scaled by 1/factor, the r value should then be == factor
+            only a good idea for fits with expected observation (sum of MC)
+        """
 
         print
         print "Running linearity test!"
@@ -626,9 +694,12 @@ class CombineResults:
         return r_lin
 
     def plotPOIScan( self, rMin=0, rMax=2, points=200, addLumi=None ):
-        # https://indico.cern.ch/event/747340/contributions/3198653/attachments/1744339/2823486/HComb-Tutorial-FitDiagnostics.pdf
-        # addLumi is the part of the string that identifies all luminosity nuisances (e.g. addLumi='Luminosity')
-        # uncertainty is not additionally split into lumi if addLumi=None
+        """ https://indico.cern.ch/event/747340/contributions/3198653/attachments/1744339/2823486/HComb-Tutorial-FitDiagnostics.pdf
+            create plot of likelihood with r value + splitted uncertainties (stat, syst, lumi if addLumi)
+            addLumi is the part of the string that identifies all luminosity nuisances (e.g. addLumi='Luminosity')
+            uncertainty is only split in stat+syst if addLumi=None
+        """
+
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating %s"%uniqueDirname
@@ -659,7 +730,9 @@ class CombineResults:
 
 
     def getRateParameter( self, rateParameter=None, postFit=False ):
-        # return safed rate parameter if available
+        """ return safed rate parameter if available
+        """
+
         key = "postFit" if postFit else "preFit"
         if self.rateParameter[key]:
             if rateParameter: return self.rateParameter[key][rateParameter]
@@ -676,9 +749,10 @@ class CombineResults:
 
 
     def getRateParameterInfo( self ):
-        # returns a dictionary with all rate parameters
-        # the dict contains a dict of all affected cards (e.g. for combined cards)
-        # which again contains a list of processes that are affected
+        """ returns a dictionary with all rate parameters
+            the dict contains a dict of all affected cards (e.g. for combined cards)
+            which again contains a list of processes that are affected
+        """
 
         if not self.txtCard:
             raise ValueError( "Input txt cards not found! Running in limited mode, thus cannot get the object needed!" )
@@ -701,16 +775,20 @@ class CombineResults:
         return rateParams
 
     def getNuisanceYields( self, nuisance, postFit=False ):
+        """ return a dictionary with each bin containing the yield with the +-1sigma variation of a certain nuisance
+        """
         return { dir:{ b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b, directory=dir, postFit=postFit ) for b in self.getBinList( unique=True, directory=dir ) } for dir in self.channels }
 
     def getBinList( self, unique=True, directory=None ):
-        # get either the bin names for each process according to the cardfile ( Bin0 Bin0 Bin0 ... Bin1 Bin1 ...)
-        # or only the unique ones (Bin0 Bin1 ...)
-        # ordered list of bins
-        # return safed binList if available
+        """ get either the bin names for each process according to the cardfile ( Bin0 Bin0 Bin0 ... Bin1 Bin1 ...)
+            or only the unique ones (Bin0 Bin1 ...)
+            ordered list of bins
+        """
+
         if directory and directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
 
+        # return safed binList if available
         if self.binList:
             binList = [ b for b in self.binList if directory in b ] if directory and self.combinedCard else self.binList
             if unique:
@@ -739,7 +817,9 @@ class CombineResults:
         return binList
 
     def tableNuisanceReport( self ):
-        # create table report of nuisance parameter ranges
+        """ create table report of nuisance parameter ranges in the plotDirectory
+        """
+
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
         print "Creating "+uniqueDirname
@@ -750,7 +830,7 @@ class CombineResults:
             print "Fit result not availabe, creating it!"
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
-        cmd = "cd %s;python mlfitNormsToText.py %s --uncertainties > nuisancesTable.txt"%(uniqueDirname,self.fitResult)
+        cmd  = "cd %s;python mlfitNormsToText.py %s --uncertainties > nuisancesTable.txt"%(uniqueDirname,self.fitResult)
         cmd += ";mv nuisancesTable.txt %s/"%(self.plotDirectory)
         print "Executing command: %s"%cmd
         os.system(cmd)
@@ -758,7 +838,8 @@ class CombineResults:
         shutil.rmtree( uniqueDirname )
 
     def htmlNuisanceReport( self ):
-        # create html report of nuisance parameter ranges
+        """ create html report of nuisance parameter ranges in the plotDirectory
+        """
 
         if not self.shapeCard:
             raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
@@ -787,8 +868,9 @@ class CombineResults:
 
         shutil.rmtree( uniqueDirname )
 
-    def printCorrelations( self, nuisance, nMax=10 ):
-        # print out correlations of nuisance
+    def printCorrelations( self, nuisance, nMax=100 ):
+        """ print correlations of one nuisance to nMax other nuisances
+        """
 
         if not self.fitResult:
             print "Fit result not availabe, creating it!"
@@ -805,9 +887,10 @@ class CombineResults:
         shutil.rmtree( uniqueDirname )
 
     def getBinLabels( self, labelFormater=None ):
-        # labelFormater applies a function to the labels to format is accordingly
-
-        # return safed binList if available
+        """ return bin labels extracted from the txt card
+            labelFormater applies a function to the labels to format is accordingly
+        """
+        # return safed labels if available
         if self.binLabels:
             if labelFormater: return { dir:map( labelFormater, self.binLabels[dir] ) for dir in self.channels }
             else:             return self.binLabels
@@ -837,7 +920,8 @@ class CombineResults:
         return binLabels
 
     def getNuisancesList( self ):
-        # get a list of nuisances in the cardfile
+        """ get a list of nuisances in the cardfile
+        """
 
         if self.nuisances:
             return self.nuisances
@@ -858,10 +942,11 @@ class CombineResults:
         return self.nuisances
 
     def getProcessList( self, unique=True ):
-        # get either the process names for each bin according to the cardfile ( MC1 MC2 MC3 ... MC1 MC2 ...)
-        # or only the unique ones (MC1 MC2 ...)
-        # ordered list of processes over all bins
-        # return safed binList if available
+        """ get either the process names for each bin according to the cardfile ( MC1 MC2 MC3 ... MC1 MC2 ...)
+            or only the unique ones (MC1 MC2 ...)
+            ordered list of processes over all bins
+        """
+
         if self.processList:
             if unique:
                 processList = list(set(self.processList))
@@ -886,7 +971,8 @@ class CombineResults:
         return self.processList
 
     def getProcessesPerBin( self, bin=None ):
-        # get a dictionary with a list of processes for each bin
+        """ get a dictionary with a list of processes for each bin
+        """
 
         # return safed binList if available
         if self.processes:
@@ -920,6 +1006,9 @@ class CombineResults:
         return copy.copy(self.processes)
 
     def getPulls( self, nuisance=None, postFit=False, statOnly=False ):
+        """ get a dictionary with all pulls and sigmas pre/postfit
+            get the statOnly fitresults if statOnly=True, perform stat only fit if not available yet
+        """
 
         # return safed pulls if available
         key = "postFit" if postFit else "preFit"
@@ -947,9 +1036,11 @@ class CombineResults:
 
 
     def getUncertaintiesFromShapeCard( self, bin=None, estimate=None, nuisance=None, postFit=False ):
-        # uncertainties from shape.root card
-        # return safed uncertainties if available
-        # not yet working for flat uncertainties and rate parameters -> getUncertaintiesFromTxtCard
+        """ uncertainties from shape.root card
+            return safed uncertainties if available
+            not yet working for flat uncertainties and rate parameters -> getUncertaintiesFromTxtCard
+        """
+
         key = "postFit" if postFit else "preFit"
         if self.uncertaintiesShape[key]:
             if bin or estimate or nuisance:
@@ -972,18 +1063,17 @@ class CombineResults:
                 unc = unc[0] if unc else "stat"
                 est = shape.replace("_"+unc+"Up","")
                 shapeH = shapeHisto.Clone()
-                if "Lumi" in shape: print shape
                 if unc == "stat":
                     # stat unc
                     for i_bin in range(shapeH.GetNbinsX()):
-#                        _bin = dir + "_Bin%i"%i_bin if dir != "Bin0" else "Bin%i"%i_bin
                         _bin = "Bin%i"%i_bin
                         if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
                         if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
                         err = shapeH.GetBinError( i_bin+1 ) / shapeH.GetBinContent( i_bin+1 ) if shapeH.GetBinContent( i_bin+1 ) and mcStat else 0
                         if postFit and mcStat:
-                            err *= pulls["prop_bin%s_bin"%dir+str(i_bin)].sigma
-#                            err = err**pulls["prop_bin%s_bin"%dir+str(i_bin)].sigma
+#                            err *= pulls["prop_bin%s_bin"%dir+str(i_bin)].sigma
+                            # log normal calculation
+                            err = ((1+err)**pulls["prop_bin%s_bin"%dir+str(i_bin)].sigma)-1
                         shapeH.SetBinContent( i_bin+1, err )
                         uncertainties[dir][_bin][est][unc] = err
                     if not "histo" in uncertainties[dir].keys(): uncertainties[dir]["histo"] = {}
@@ -993,11 +1083,11 @@ class CombineResults:
                     shapeH.Add(shapes[dir][est],-1)
                     shapeH.Divide(shapes[dir][est])
                     if postFit:
-                        shapeH.Scale(pulls[unc].sigma)
-#                       for i_bin in range(shapeH.GetNbinsX()):
-#                            shapeH.SetBinContent(i_bin+1, shapeH.GetBinContent(i_bin+1)**pulls[unc].sigma)
+#                        shapeH.Scale(pulls[unc].sigma)
+                        # log normal calculation
+                        for i_bin in range(shapeH.GetNbinsX()):
+                            shapeH.SetBinContent(i_bin+1, ((1+shapeH.GetBinContent(i_bin+1))**pulls[unc].sigma)-1)
                     for i_bin in range(shapeH.GetNbinsX()):
-#                        _bin = dir + "_Bin%i"%i_bin if dir != "Bin0" else "Bin%i"%i_bin
                         _bin = "Bin%i"%i_bin
                         if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
                         if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
@@ -1015,8 +1105,9 @@ class CombineResults:
 
 
     def getUncertaintiesFromTxtCard( self, bin=None, estimate=None, nuisance=None, postFit=False ):
-        # uncertainties from txt card
-        # return safed uncertainties if available
+        """ uncertainties from txt card
+            return safed uncertainties if available
+        """
 
         if not self.txtCard:
             raise ValueError( "Input txt card not found! Running in limited mode, thus cannot get the object needed!" )
@@ -1053,8 +1144,9 @@ class CombineResults:
                     except:
                         uncertainties[dir][_bin][est][unc] = 0
                     if postFit and uncertainties[dir][_bin][est][unc]:
-                        uncertainties[dir][_bin][est][unc] *= pulls[unc].sigma
-#                        uncertainties[_bin][est][unc] = uncertainties[_bin][est][unc]**pulls[unc].sigma
+#                        uncertainties[dir][_bin][est][unc] *= pulls[unc].sigma
+                        # log normal calculation
+                        uncertainties[dir][_bin][est][unc] = ((1+uncertainties[dir][_bin][est][unc])**pulls[unc].sigma)-1
 
         self.uncertainties[key] = uncertainties
 
@@ -1064,9 +1156,15 @@ class CombineResults:
             return self.uncertainties[key]
 
     def getObservation( self, bin=None ):
+        """ return data observation in a dictionary
+        """
+
         return {dir:{ b:b_dict["data"] for b, b_dict in o.iteritems() } for dir, o in self.getEstimates( postFit=False, bin=bin, estimate="data" ).iteritems()}
 
     def getEstimates( self, bin=None, estimate=None, postFit=False ):
+        """ return pre/postfit estimates in a dictionary
+        """
+
         key    = "postFit" if postFit else "preFit"
         if self.estimates[key]:
             ests = self.estimates[key]
@@ -1101,6 +1199,9 @@ class CombineResults:
         return all
 
     def getNuisanceHistosFromShapeCard( self, postFit=False, plotBins=None, nuisances=None, directory=None ):
+        """ return a histogram of the nuisance with +- 1 sigma variation
+            be careful: the quadratic sum of each postfit nuisance does not give you the full uncertainty due to (anti-)corrlations
+        """
 
         if directory and directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
@@ -1155,6 +1256,9 @@ class CombineResults:
         return nuisanceHistos
 
     def getNuisanceHistos( self, postFit=False, plotBins=None, nuisances=None, directory=None ):
+        """ return a histogram of the nuisance with +- 1 sigma variation
+            be careful: the quadratic sum of each postfit nuisance does not give you the full uncertainty due to (anti-)corrlations
+        """
 
         if directory and directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
@@ -1169,8 +1273,6 @@ class CombineResults:
             nuisanceHistos[dir] = {}
             for i_n, nuisance in enumerate(nuisances):
                 nuisanceYields  = self.getNuisanceYields( nuisance, postFit=postFit )[dir]
-                print nuisanceYields.keys()
-                print nuisanceYields
                 for i in range(nuisanceHistUp.GetNbinsX()):
                     if self.combinedCard: key = dir+"_Bin"+str(i)
                     else:                 key = "Bin"+str(i)
@@ -1187,7 +1289,17 @@ class CombineResults:
 
         return nuisanceHistos
 
-    def createRebinnedResults( self, rebinningCardFile, postfit=False ):
+    def createRebinnedResults( self, rebinningCardFile ):
+        """ apply the fitresults of the current workspace on another data-card (rebinningCardFile)
+            be careful: the MC stat uncertainty constraints and pulls are not applied, output is a bit more conservative (no MC stat constraints, no pulls)
+            also be carful: if a nuisance of the current card is not available in the rebinningCardfile it will not be applied
+            function adds the new card to the current card and performs a fit with the new card masked (not considered in the fit)
+            masking applies all pulls/constraints, but does not consider the regions in the fit
+            rewrite the output so that combineResults can handle it
+            e.g. Results = CombineResults( cardFile=initialCard, plotDirectory=pd, year=y )
+            newCard = Results.createRebinnedResults( rebinningCard )
+            newResult = CombineResults( cardFile=newCard, plotDirectory=pd, year=y, rebinnedCardFile=rebinningCard )
+        """
 
         if not self.txtCard:
             raise ValueError( "Input txt card not found! Running in limited mode, thus cannot get the object needed!" )
@@ -1200,6 +1312,10 @@ class CombineResults:
 
         resPath      = self.txtCard.replace(".txt","/")
         if not os.path.isdir(resPath): os.makedirs(resPath)
+        if self.combinedCard:
+            for dir in self.channels:
+                if not os.path.isdir( resPath.replace("COMBINED",self.years[dir]) ): os.makedirs( resPath.replace("COMBINED",self.years[dir]) )
+
         optionsFit  = ""
         optionsMask = ""
         optionsTxtFit  = ""
@@ -1228,7 +1344,8 @@ class CombineResults:
             optionsTxtMask += "%s=%s "%(self.channels[0],rebinningCardFile)
             mask           += "mask_Bin0=1"
 
-        f            = "masked_" + rebinningCardFile.split("/")[-1]
+#        f            = "masked_" + rebinningCardFile.split("/")[-1]
+        f            = rebinningCardFile.split("/")[-1]
         resTxtFile   = os.path.join( resPath, f )
         resShapeFile = os.path.join( resPath, f.replace(".txt","_shapeCard.txt") )
         resShapeRoot = os.path.join( resPath, f.replace(".txt","_shape.root") )
@@ -1256,8 +1373,8 @@ class CombineResults:
 
         shutil.copyfile(rebinningCardFile,                                  resTxtFile)
         shutil.copyfile(rebinningCardFile.replace(".txt","_shapeCard.txt"), resShapeFile)
-        shutil.copyfile(uniqueDirname+"/txtCard.txt",         resTxtFile.replace(  "masked","masked_fit"))
-        shutil.copyfile(uniqueDirname+"/combinedCard.txt",    resShapeFile.replace("masked","masked_fit"))
+        shutil.copyfile(uniqueDirname+"/txtCard.txt",         resTxtFile.replace(  ".txt","_fit.txt"))
+        shutil.copyfile(uniqueDirname+"/combinedCard.txt",    resShapeFile.replace(".txt","_fit.txt"))
         shutil.copyfile(uniqueDirname+"/combinedCard.root",   resShapeFile.replace(".txt",".root"))
         shutil.copyfile(uniqueDirname+"/fitDiagnostics.root", resShapeFile.replace(".txt","_FD.root"))
 
@@ -1280,12 +1397,27 @@ class CombineResults:
         shutil.rmtree(uniqueDirname)
 
         # rewrite content in a similar way to the combine fit results
-        self.__rewriteRebinnedFile( resShapeFile.replace(".txt","_FD.root"), postfit=postfit, nBins=nBins )
-        self.__rewriteRebinnedFile( resShapeFile.replace(".txt","_statOnly_FD.root"), postfit=postfit, nBins=nBins, statOnly=True )
+        self.__rewriteRebinnedFile( resShapeFile.replace(".txt","_FD.root"), postfit=True, nBins=nBins )
+        self.__rewriteRebinnedFile( resShapeFile.replace(".txt","_statOnly_FD.root"), postfit=True, nBins=nBins, statOnly=True )
 
         return resTxtFile
 
     def getRegionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, addStatOnlyHistos=False, addRateUncertainty=True ):
+        """ get a dictionary of histograms containing all region bins of the fit
+            plot only certain bins with e.g. plotBins = [0, 5, 9]
+            add additional +-1 sigma variation histograms of certain nuisances with 'nuisances'
+            perform background substraction with bkgSubstracted=True
+            each bin contains the label (from the txtcard), use the labelFormater = e.g. lambda label: label[1] to format the label in the histogram
+            statOnly=True for getting the output of the statonly fit, if this fit was not performed yet, it will be then
+            addRateUncertainty=True for adding the uncertainties from rate parameters to the total uncertainty (as it is not done in combine)
+        """
+
+        if nuisances:
+            if isinstance( nuisances, str ): nuisances = [nuisances]
+            allNuisances = self.getNuisancesList() + ["totalUnc","MCStat","stat"]
+            if any( [ n not in allNuisances for n in nuisances ] ):
+                raise ValueError( "Any of the provided nuisances %s unknown!"%", ".join(nuisances) )
+
         hists = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=nuisances, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=False, addRateUncertainty=addRateUncertainty )
         if addStatOnlyHistos:
             hists_stat = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=None, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=True,  addRateUncertainty=False )
@@ -1296,9 +1428,26 @@ class CombineResults:
         return hists
 
     def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, bkgSubstracted=False, directory=None ):
-        # get the list of histograms and the ratio list for plotting a region plot
+        """ get the list of histograms and the ratio list for plotting a region plot using RootTools
+            e.g.
+                plots, ratioHistos = Results.getRegionHistoList( ... )
+                you get: plots: [ [MCHistos], [NuisanceHistos], [dataHistos] ], ratioHistos: [ (0,0), (1,0), (2,0) ]
+                plotting.draw( Plot.fromHisto( plotName, plots ), ..., ratio = { "histos":ratioHistos } )
+            with sorted=True each MC in each bin will be a separated histogram sorted by the yield
+        """
 
-        if bkgSubstracted: return [ [regionHistos["signal"]], [regionHistos["data"]] ], [(0,0),(1,0)]
+        nuisances    = self.getNuisancesList() + ["totalUnc","MCStat","stat"]
+
+        if bkgSubstracted:
+            histList =  [ [ [regionHistos["signal"]] ], [(0,0)] ]
+            i = 0
+            for n in nuisances:
+                if n in regionHistos.keys():
+                    histList[0] +=  [ [regionHistos[n]["up"]], [regionHistos[n]["down"]] ]
+                    histList[1] +=  [ (len(histList[0])-2,0), (len(histList[0])-1,0) ]
+            histList[0] +=  [ [regionHistos["data"]] ]
+            histList[1] +=  [ (len(histList[0])-1,0) ]
+            return tuple(histList)
 
         if directory and directory not in self.channels:
             raise ValueError( "Directory %s unknown!"%dir )
@@ -1315,7 +1464,6 @@ class CombineResults:
                 regionHistos[p].notInLegend = True
     
 
-        nuisances    = self.getNuisancesList() + ["totalUnc","MCStat","stat"]
         binProcesses = self.getProcessesPerBin()
         ratioHistos  = []
         bins         = len(self.getBinLabels()[self.channels[0]])
@@ -1379,11 +1527,9 @@ class CombineResults:
 
         return histoList, ratioHistos
         
-
-    def setPlotDirectory( self, plotDirectory ):
-        self.plotDirectory = plotDirectory
-
     def getImpactPlot( self, expected=False, printPNG=False, cores=1 ):
+        """ create the impact plot of the current workspace, it no workspace is provided it will be created
+        """
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp", ustr)
@@ -1420,6 +1566,8 @@ class CombineResults:
         shutil.rmtree( uniqueDirname )
 
     def getCorrelationHisto( self ):
+        """ get the correlation matrix from the current fitdiagnostics output, it no FD output is provided it will be created
+        """
 
         if not self.fitResult:
             print "Fit result not availabe, creating it!"
@@ -1440,7 +1588,8 @@ class CombineResults:
         return self.correlationHisto
 
     def getCovarianceHisto( self, labelFormater=None, postFit=False ):
-        # get the TH2D covariance matrix plot
+        """ get the cov matrix from the current fitdiagnostics output, it no FD output is provided it will be created
+        """
 
         if not self.fitResult:
             print "Fit result not availabe, creating it!"
