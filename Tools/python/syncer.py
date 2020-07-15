@@ -50,8 +50,9 @@ def write_sync_files_txt():
     scp_cmd_filename = 'file_sync_storage.txt'
     with file( scp_cmd_filename, 'w' ) as outfile:
         for filename in file_sync_storage:
-            if 'www' in filename:
-                outfile.write('{filename}\n'.format(filename=filename))
+            if 'www/' in filename:
+                # for rsync cmd with relative path
+                outfile.write('{filename}\n'.format(filename=filename.replace('www/','www/./')))
             else:
                 print "Will not sync %s" % filename
     print "Written %s" % scp_cmd_filename 
