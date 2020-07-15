@@ -1,3 +1,15 @@
+'''
+Wraps output functions and intercepts filenames.
+All you have to do in your script is
+import Analysis.Tools.syncer
+and the filenames written via
+    TCanvas::Print
+    pickle.dump
+go to 
+    file_sync_storage.txt
+which can then be synced.
+'''
+
 # Logger
 import logging
 logger = logging.getLogger(__name__)
