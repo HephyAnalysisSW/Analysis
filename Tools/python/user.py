@@ -29,6 +29,8 @@ elif os.environ['USER'] in ['robert.schoefbeck']:
     plot_directory         = "/mnt/hephy/cms/robert.schoefbeck/StopsDileptonLegacy/plots"
     cache_directory        = "/mnt/hephy/cms/robert.schoefbeck/caches/"
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/schoef/'
+    remote_host            = 'schoef@lxplus.cern.ch'
+    remote_www_directory   = '/eos/user/s/schoef/www'
 elif os.environ['USER'] in ['schoef']:
     plot_directory         = "/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/"
     cache_directory        = "/afs/hephy.at/data/rschoefbeck01/cache/"
