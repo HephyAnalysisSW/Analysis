@@ -12,29 +12,29 @@ class myTCanvas( ROOT.TCanvas ):
     def Print( self, *args):
         logger.debug( "Appending file %s", args[0] )
         file_sync_storage.append( args[0] )
-         
+        # call original Print method 
         super(myTCanvas, self).Print(*args)
+# what could possibly go wrong.
 ROOT.TCanvas = myTCanvas 
 
 # pickle dump
 import pickle
-
+# that's the old dump method
 pickle._dump = pickle.dump
 def syncer_pickle_dump( *args ):
-    # first argument is file handle!
+    # second argument is file handle!
     if len(args)>1:
         file_sync_storage.append( args[1].name )
     else:
         logger.warning( "Pickle dump called with less than two arguments... shouldn't happen." )
     pickle._dump(*args)
-
+# that's the new dump method
 pickle.dump = syncer_pickle_dump
-     
 
 # What happens on exit 
-def sync_files():
-        # No logger here, since already unloaded!
-        # write outfile.sh because we can't scp in the container with kerberos authentication
+def write_sync_files_txt():
+    # No logger here, since it is already unloaded!
+    # write outfile.sh because we can't scp in the container with kerberos authentication
     scp_cmd_filename = 'file_sync_storage.txt'
     with file( scp_cmd_filename, 'w' ) as outfile:
         for filename in file_sync_storage:
@@ -45,4 +45,4 @@ def sync_files():
     print "Written %s" % scp_cmd_filename 
 
 import atexit
-atexit.register( sync_files )
+atexit.register( write_sync_files_txt )
