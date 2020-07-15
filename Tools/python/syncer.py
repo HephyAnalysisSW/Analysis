@@ -29,7 +29,7 @@ class myTCanvas( ROOT.TCanvas ):
 # what could possibly go wrong.
 ROOT.TCanvas = myTCanvas 
 
-# pickle dump
+# Wrap pickle dump
 import pickle
 # that's the old dump method
 pickle._dump = pickle.dump
@@ -46,7 +46,7 @@ pickle.dump = syncer_pickle_dump
 # What happens on exit 
 def write_sync_files_txt():
     # No logger here, since it is already unloaded!
-    # write outfile.sh because we can't scp in the container with kerberos authentication
+    # write file_sync_storage.txt because we can't scp in the container with kerberos authentication
     scp_cmd_filename = 'file_sync_storage.txt'
     if len(file_sync_storage)>0:
         with file( scp_cmd_filename, 'w' ) as outfile:
