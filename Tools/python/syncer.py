@@ -48,14 +48,15 @@ def write_sync_files_txt():
     # No logger here, since it is already unloaded!
     # write outfile.sh because we can't scp in the container with kerberos authentication
     scp_cmd_filename = 'file_sync_storage.txt'
-    with file( scp_cmd_filename, 'w' ) as outfile:
-        for filename in file_sync_storage:
-            if 'www/' in filename:
-                # for rsync cmd with relative path
-                outfile.write('{filename}\n'.format(filename=filename.replace('www/','www/./')))
-            else:
-                print "Will not sync %s" % filename
-    print "Written %s" % scp_cmd_filename 
+    if len(file_sync_storage)>0:
+        with file( scp_cmd_filename, 'w' ) as outfile:
+            for filename in file_sync_storage:
+                if 'www/' in filename:
+                    # for rsync cmd with relative path
+                    outfile.write('{filename}\n'.format(filename=filename.replace('www/','www/./')))
+                else:
+                    print "Will not sync %s" % filename
+        print "Analysis.Tools.syncer: Written %i files to %s for rsync." % (len(file_sync_storage), scp_cmd_filename)
 
 import atexit
 atexit.register( write_sync_files_txt )
