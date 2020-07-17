@@ -2,7 +2,7 @@
 import os, sys
 import subprocess
 
-redir       = "root://hephyse.oeaw.ac.at:11001/"
+redir       = "root://hephyse.oeaw.ac.at/"
 hostname    = os.getenv("HOSTNAME")
 
 

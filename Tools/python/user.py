@@ -9,7 +9,8 @@ if os.environ['USER'] in ['llechner']:
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/llechner/'
 elif os.environ['USER'] in ['lukas.lechner']:
     plot_directory         = "/mnt/hephy/cms/lukas.lechner/www/TTGammaEFT/"
-    cache_directory        = "/mnt/hephy/cms/lukas.lechner/TTGammaEFT/cache/"
+    cache_directory        = "/users/lukas.lechner/public/cache/"
+#    cache_directory        = "/mnt/hephy/cms/lukas.lechner/TTGammaEFT/cache/"
     cern_proxy_certificate = "/users/lukas.lechner/private/.proxy"
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/llechner/'
 elif os.environ['USER'] in ['rosmarie.schoefbeck']:
@@ -33,6 +34,8 @@ elif os.environ['USER'] in ['robert.schoefbeck']:
     plot_directory         = "/mnt/hephy/cms/robert.schoefbeck/StopsDileptonLegacy/plots"
     cache_directory        = "/mnt/hephy/cms/robert.schoefbeck/caches/"
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/schoef/'
+    remote_host            = 'schoef@lxplus.cern.ch'
+    remote_www_directory   = '/eos/user/s/schoef/www'
 elif os.environ['USER'] in ['schoef']:
     plot_directory         = "/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/"
     cache_directory        = "/afs/hephy.at/data/rschoefbeck01/cache/"

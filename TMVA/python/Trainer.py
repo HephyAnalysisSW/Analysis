@@ -8,6 +8,7 @@ ROOT.gROOT.SetBatch(True)
 import random
 import ctypes
 import copy
+import shutil
 
 from array                 import array
 from root_numpy            import ROOT_VERSION
@@ -51,8 +52,8 @@ class Trainer:
         self.output_directory    = os.path.join( output_directory, self.label )
         self.dataFile            = os.path.join( self.output_directory, self.label + ".root" )
         self.mvaOutFile          = os.path.join( self.output_directory, self.label + "_MVAOutput.root" )
-        #self.mvaWeightDir        = os.path.join( self.output_directory, "weights" )
-        self.mvaWeightDir        = "weights" #os.path.join( self.output_directory, "weights" )
+        self.mvaWeightDir        = self.output_directory
+        self.tmp_mvaWeightDir    = "weights" 
         self.max_nEvents_trainings = None
         self.plot_directory      = os.path.join( plot_directory, "MVA", self.label )
 
@@ -67,6 +68,9 @@ class Trainer:
 
         if not os.path.isdir( self.mvaWeightDir ):
             os.makedirs( self.mvaWeightDir )
+
+        if not os.path.isdir( self.tmp_mvaWeightDir ):
+            os.makedirs( self.tmp_mvaWeightDir )
 
     def createTestAndTrainingSample( self, read_variables=[], sequence = [], weightString="1", overwrite = False):
         ''' Creates a single background and a single signal sample for training purposes
@@ -261,7 +265,7 @@ class Trainer:
         rootGDirectory = ROOT.gDirectory.CurrentDirectory().GetName()+":/"
 
         ROOT.TMVA.Tools.Instance()
-        ROOT.TMVA.gConfig().GetIONames().fWeightFileDir = self.mvaWeightDir 
+        ROOT.TMVA.gConfig().GetIONames().fWeightFileDir = self.tmp_mvaWeightDir 
         ROOT.TMVA.gConfig().GetVariablePlotting().fNbinsXOfROCCurve = 200
         ROOT.TMVA.gConfig().GetVariablePlotting().fMaxNumOfAllowedVariablesForScatterPlots = 2
         
@@ -296,6 +300,8 @@ class Trainer:
 
         data_tree.IsA().Destructor(data_tree)
         del data_tree
+        for method in self.methods:
+            shutil.copy( os.path.join( self.tmp_mvaWeightDir, "TMVAClassification_%s.weights.xml" % method["name"] ), os.path.join( self.mvaWeightDir, "TMVAClassification_%s.weights.xml" % method["name"] ) )
 
     def plotEvaluation( self ):
 

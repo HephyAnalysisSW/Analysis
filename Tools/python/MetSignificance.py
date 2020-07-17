@@ -35,7 +35,7 @@ def extractEra(sampleName):
 
 class MetSignificance:
 
-    def __init__( self, sample, year, output_directory ):
+    def __init__( self, sample, year, output_directory, runOnUL=False ):
 
         if year not in [ 2016, 2017, 2018 ]:
             raise Exception("MetSignificance for year %i not known"%year)
@@ -43,6 +43,7 @@ class MetSignificance:
         logger.info("Preparing nanoAOD postprocessing")
         logger.info("Will put files into directory %s", output_directory)
 
+        self.runOnUL          = runOnUL
         self.year             = year
         self.output_directory = output_directory
         self.isData           = sample.isData
@@ -77,8 +78,8 @@ class MetSignificance:
         logger.info("Using JERs: %s", self.JER)
 
         self.unclEnThreshold = 15
-        self.vetoEtaRegion   = (2.65, 3.14) if self.year == 2017 else (10,10)
-        self.METCollection   = "METFixEE2017" if self.year == 2017 else "MET"
+        self.vetoEtaRegion   = (2.65, 3.14) if self.year == 2017 and not self.runOnUL else (10,10)
+        self.METCollection   = "METFixEE2017" if self.year == 2017 and not self.runOnUL else "MET"
 
         # set the params for MET Significance calculation
         self.metSigParams = metSigParamsMC if not self.isData else metSigParamsData
@@ -94,7 +95,7 @@ class MetSignificance:
     
             JMECorrector = createJMECorrector( isMC=(not self.isData), dataYear=self.year, runPeriod=self.era, jesUncert="Total", jetType = "AK4PFchs", metBranchName=self.METCollection, applySmearing=False )
             self.modules.append( JMECorrector() )
-            self.modules.append( METSigProducer(self.JER, self.metSigParams, METCollection=self.METCollection, useRecorr=True, calcVariations=(not self.isData), jetThreshold=self.jetThreshold, vetoEtaRegion=self.vetoEtaRegion) )
+#            self.modules.append( METSigProducer(self.JER, self.metSigParams, METCollection=self.METCollection, useRecorr=True, calcVariations=(not self.isData), jetThreshold=self.jetThreshold, vetoEtaRegion=self.vetoEtaRegion) )
 
             p = PostProcessor( self.output_directory, [f], cut=cut, modules=self.modules, postfix="%s_%s"%(self.postfix, file_hash))
             p.run()

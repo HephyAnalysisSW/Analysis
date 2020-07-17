@@ -23,12 +23,6 @@ if __name__ == "__main__":
     argParser.add_argument( '--overwrite', action='store_true',                                                    help="overwrite Database?")
     args      = argParser.parse_args()
 
-    # Logger
-    import Analysis.Tools.logger as logger
-    import RootTools.core.logger as logger_rt
-    logger    = logger.get_logger(    args.logLevel, logFile = None )
-    logger_rt = logger_rt.get_logger( args.logLevel, logFile = None )
-
 else:
     # Logger
     import logging
@@ -55,6 +49,7 @@ class puProfile:
 
     def cachedTemplate( self, selection, weight = '(1)', save = True, overwrite = False):
         key = {"selection":selection, "weight":weight, "source":self.source_sample.name}
+        #key = (selection, weight, self.source_sample.name)
         if (self.cache and self.cache.contains(key)) and not overwrite:
             result = self.cache.get(key)
             logger.info( "Loaded MC PU profile from %s"%(self.cache.database_file) )
@@ -86,9 +81,16 @@ if __name__ == "__main__":
     #from Samples.nanoAOD.Fall17_nanoAODv6 import *
     #from Samples.nanoAOD.Fall17_private           import *
     from Analysis.Tools.user                      import plot_directory
+
+    # Logger
+    import Analysis.Tools.logger as logger
+    import RootTools.core.logger as logger_rt
+    logger    = logger.get_logger(    args.logLevel, logFile = None )
+    logger_rt = logger_rt.get_logger( args.logLevel, logFile = None )
+
     
     if args.overwrite: os.remove( cache_directory + "/puProfiles/puProfiles_v2.sql" )
-    for sample in allSamples:
+    for sample in [TTLep_pow_ext]:
         logger.info( "Working on samples %s", sample.name )
         puProfiles = puProfile( source_sample=sample, cacheDir=cache_directory + "/puProfiles/" )
 
