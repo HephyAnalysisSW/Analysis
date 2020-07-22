@@ -446,7 +446,7 @@ class cardFileWriter:
           filename = fname if fname else os.path.join(uniqueDirname, ustr+".txt")
           self.writeToFile(filename)
 
-        combineCommand  = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine -M MultiDimFit -n Nominal --saveNLL --forceRecreateNLL --freezeParameters r "+filename
+        combineCommand  = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine -M MultiDimFit -n Nominal --saveNLL --forceRecreateNLL --freezeParameters r %s %s"%(options,filename)
         os.system(combineCommand)
         nll = self.readNLLFile(uniqueDirname+"/higgsCombineNominal.MultiDimFit.mH120.root")
         nll["bestfit"] = nll["nll"]
@@ -454,7 +454,7 @@ class cardFileWriter:
 
         return nll
 
-    def calcNuisances(self, fname=None, options="",bonly=False):
+    def calcNuisances(self, fname=None, options="", outputFileAddon = "", bonly=False):
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
@@ -474,7 +474,7 @@ class cardFileWriter:
 
         assert os.path.exists(filename), "File not found: %s"%filename
 
-        combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties "+filename
+        combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s %s"%(options,filename)
         combineCommand +=";python diffNuisances.py  fitDiagnostics.root &> nuisances.txt"
         combineCommand +=";python diffNuisances.py -a fitDiagnostics.root &> nuisances_full.txt"
         if bonly:
@@ -486,12 +486,13 @@ class cardFileWriter:
         print combineCommand
         os.system(combineCommand)
 
-        shutil.copyfile(uniqueDirname+'/fitDiagnostics.root', fname.replace('.txt','_FD.root'))
+        if outputFileAddon: outputFileAddon = "_"+outputFileAddon
+        shutil.copyfile(uniqueDirname+'/fitDiagnostics.root', fname.replace('.txt','%s_FD.root'%(outputFileAddon)))
 
-        tempResFile      = uniqueDirname+"/nuisances.txt"
-        tempResFileFull  = uniqueDirname+"/nuisances_full.txt"
-        tempResFile2     = uniqueDirname+"/nuisances.tex"
-        tempResFile2Full = uniqueDirname+"/nuisances_full.tex"
+        tempResFile      = uniqueDirname+"/nuisances%s.txt"%(outputFileAddon)
+        tempResFileFull  = uniqueDirname+"/nuisances%s_full.txt"%(outputFileAddon)
+        tempResFile2     = uniqueDirname+"/nuisances%s.tex"%(outputFileAddon)
+        tempResFile2Full = uniqueDirname+"/nuisances%s_full.tex"%(outputFileAddon)
         shutil.copyfile(tempResFile, resultFilename)
         shutil.copyfile(tempResFileFull, resultFilenameFull)
         shutil.copyfile(tempResFile2, resultFilename2)
@@ -507,7 +508,7 @@ class cardFileWriter:
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
-        combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M ProfileLikelihood --uncapped 1 --significance --rMin -5 "+fname
+        combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M ProfileLikelihood --uncapped 1 --significance --rMin -5 %s %s"%(options,fname)
         os.system(combineCommand)
         try:
             res= self.readResFile(uniqueDirname+"/higgsCombineTest.ProfileLikelihood.mH120.root")
