@@ -72,7 +72,7 @@ class Trainer:
         if not os.path.isdir( self.tmp_mvaWeightDir ):
             os.makedirs( self.tmp_mvaWeightDir )
 
-    def createTestAndTrainingSample( self, read_variables=[], sequence = [], weightString="1", overwrite = False):
+    def createTestAndTrainingSample( self, read_variables=[], sequence = [], weightString="1", overwrite = False, mva_variables = None):
         ''' Creates a single background and a single signal sample for training purposes
         '''
         self.read_variables = read_variables
@@ -150,26 +150,29 @@ class Trainer:
 
         random.shuffle(sig_bkg_list)
 
+        # Write external variables if needed
+        mva_variables_ = self.mva_variables if mva_variables is None else mva_variables
+
         def filler( event ):
             # get a random reader
             event.isTraining = isTraining
             event.isSignal   = isSignal
             # write mva variables
-            for name, func in self.mva_variables.iteritems():
+            for name, func in mva_variables_.iteritems():
 #                setattr( event, name, func(reader.event) )
                 setattr( event, name, func(reader.event, sample=None) )
         # Create a maker. Maker class will be compiled. 
         maker = TreeMaker(
             sequence  = [ filler ],
-            variables = map(TreeVariable.fromString, ["isTraining/I", "isSignal/I"] + ["%s/F"%var for var in self.mva_variable_names] ), 
+            variables = map(TreeVariable.fromString, ["isTraining/I", "isSignal/I"] + ["%s/F"%var for var in mva_variables_.keys()] ), 
             treeName = "Events"
             )
 
         maker.start()
 #        # Do the thing
-#        reader.start()
-#
+
         counter = 0
+        logger.info( "Starting event loop" )
         while len(sig_bkg_list):
             # determine random sample
             i_sample = sig_bkg_list.pop(0) 
