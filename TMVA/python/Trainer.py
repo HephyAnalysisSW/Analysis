@@ -403,7 +403,7 @@ class Trainer:
             method["FOM"]["central"].Draw("same")
         l.Draw()
         for extension in ["pdf", "png", "root"]:
-            c1.Print( os.path.join( plot_directory, "FOM_"+self.label+"."+extension) )
+            c1.Print( os.path.join( plot_directory, "FOM_"+self.label+"_"+method["name"]+"."+extension) )
 
     def getFOMPlot( self, bgDisc, sigDisc ):
 

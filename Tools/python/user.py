@@ -18,6 +18,10 @@ elif os.environ['USER'] in ['rosmarie.schoefbeck']:
     cache_directory        = "/users/rosmarie.schoefbeck/public/cache/"
     cern_proxy_certificate = "/users/rosmarie.schoefbeck/private/.proxy"
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/llechner/'
+elif os.environ['USER'] in ['janik.andrejkovic']:
+    plot_directory         = "/mnt/hephy/cms/janik.andrejkovic/www/"
+    cache_directory        = "/users/janik.andrejkovic/public/tWZ/cache/"
+    cern_proxy_certificate = "/users/janik.andrejkovic/private/.proxy"
 elif os.environ['USER'] in ['dspitzba', 'dspitzbart']:
     plot_directory         = "/afs/hephy.at/user/d/dspitzbart/www/stopsDileptonLegacy/"
     cache_directory        = "/afs/hephy.at/data/dspitzbart01/cache/"
