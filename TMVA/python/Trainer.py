@@ -32,7 +32,7 @@ else:
 # example methods
 
 class Trainer:
-    def __init__( self, signal, backgrounds, mva_variables, output_directory, plot_directory, label="MVA", fractionTraining=0.5):
+    def __init__( self, signal, backgrounds, mva_variables, output_directory, label="MVA", fractionTraining=0.5):
 
         # Samples
         self.signal              = signal      # Sample object
@@ -55,13 +55,9 @@ class Trainer:
         self.mvaWeightDir        = self.output_directory
         self.tmp_mvaWeightDir    = "weights" 
         self.max_nEvents_trainings = None
-        self.plot_directory      = os.path.join( plot_directory, "MVA", self.label )
 
         randomSeed = 1
         random.seed( randomSeed )
-
-        if not os.path.isdir( self.plot_directory ):
-            os.makedirs( self.plot_directory )
 
         if not os.path.isdir( self.output_directory ):
             os.makedirs( self.output_directory )
@@ -72,7 +68,7 @@ class Trainer:
         if not os.path.isdir( self.tmp_mvaWeightDir ):
             os.makedirs( self.tmp_mvaWeightDir )
 
-    def createTestAndTrainingSample( self, read_variables=[], sequence = [], weightString="1", overwrite = False):
+    def createTestAndTrainingSample( self, read_variables=[], sequence = [], weightString="1", overwrite = False, mva_variables = None):
         ''' Creates a single background and a single signal sample for training purposes
         '''
         self.read_variables = read_variables
@@ -150,26 +146,29 @@ class Trainer:
 
         random.shuffle(sig_bkg_list)
 
+        # Write external variables if needed
+        mva_variables_ = self.mva_variables if mva_variables is None else mva_variables
+
         def filler( event ):
             # get a random reader
             event.isTraining = isTraining
             event.isSignal   = isSignal
             # write mva variables
-            for name, func in self.mva_variables.iteritems():
+            for name, func in mva_variables_.iteritems():
 #                setattr( event, name, func(reader.event) )
                 setattr( event, name, func(reader.event, sample=None) )
         # Create a maker. Maker class will be compiled. 
         maker = TreeMaker(
             sequence  = [ filler ],
-            variables = map(TreeVariable.fromString, ["isTraining/I", "isSignal/I"] + ["%s/F"%var for var in self.mva_variable_names] ), 
+            variables = map(TreeVariable.fromString, ["isTraining/I", "isSignal/I"] + ["%s/F"%var for var in mva_variables_.keys()] ), 
             treeName = "Events"
             )
 
         maker.start()
 #        # Do the thing
-#        reader.start()
-#
+
         counter = 0
+        logger.info( "Starting event loop" )
         while len(sig_bkg_list):
             # determine random sample
             i_sample = sig_bkg_list.pop(0) 
@@ -303,7 +302,10 @@ class Trainer:
         for method in self.methods:
             shutil.copy( os.path.join( self.tmp_mvaWeightDir, "TMVAClassification_%s.weights.xml" % method["name"] ), os.path.join( self.mvaWeightDir, "TMVAClassification_%s.weights.xml" % method["name"] ) )
 
-    def plotEvaluation( self ):
+    def plotEvaluation( self, plot_directory ):
+
+        if not os.path.isdir( plot_directory ):
+            os.makedirs( plot_directory )
 
         nbinsFine = 2000
 
@@ -352,7 +354,7 @@ class Trainer:
                 Plot.fromHisto(name = "discriminator_"+method["name"], 
                     histos = [[ method["h_sig_test"]], [ method["h_sig_train"]], [method["h_bkg_test"]], [method["h_bkg_train"]] ], 
                     texX = "Discriminator "+method["name"], texY = ""),
-                plot_directory = self.plot_directory,  
+                plot_directory = plot_directory,  
                 logX = False, logY = False, sorting = False,
                 legend = ( (0.2, 0.75, 0.8, 0.9), 2),
                 scaling = {1:0, 2:0, 3:0},
@@ -401,7 +403,7 @@ class Trainer:
             method["FOM"]["central"].Draw("same")
         l.Draw()
         for extension in ["pdf", "png", "root"]:
-            c1.Print( os.path.join( self.plot_directory, "FOM_"+self.label+"."+extension) )
+            c1.Print( os.path.join( plot_directory, "FOM_"+self.label+"_"+method["name"]+"."+extension) )
 
     def getFOMPlot( self, bgDisc, sigDisc ):
 

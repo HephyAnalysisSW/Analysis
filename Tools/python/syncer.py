@@ -27,6 +27,12 @@ file_sync_storage = []
 
 # Wrap TCanvas class Print function
 import ROOT
+#ROOT.TCanvas._Print = ROOT.TCanvas.Print
+#def Print( *args):
+#    logger.debug( "Appending file %s", args[0] )
+#    file_sync_storage.append( args[0] )
+#    # call original Print method 
+#    super(myTCanvas, self).Print(*args)
 class myTCanvas( ROOT.TCanvas ):
     # recall the argument
     def Print( self, *args):
