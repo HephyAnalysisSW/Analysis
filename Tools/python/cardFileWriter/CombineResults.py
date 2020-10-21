@@ -302,16 +302,23 @@ class CombineResults:
             try:    result[fit].SetName(fit)
             except: pass
 
-        if statOnly:
-            fits_dir   = ["shapes_prefit", "shapes_fit_s"] if postfit else ["shapes_prefit"]
+        if not postfit:
+            fits_dir   = ["shapes_prefit"]
+        elif statOnly: # or len(self.channels)>1:
+            fits_dir   = ["shapes_prefit", "shapes_fit_s"]
         else:
-            fits_dir   = ["shapes_prefit", "shapes_fit_b", "shapes_fit_s"] if postfit else ["shapes_prefit"]
+            fits_dir   = ["shapes_prefit", "shapes_fit_b", "shapes_fit_s"]
 
         for fit in fits_dir:
             result[fit] = {}
             for d in self.channels:
                 result[fit][d] = {}
                 dir         = tRootFile.Get( fit+"/"+d )
+                try:
+                    dir.GetListOfKeys()
+                except:
+                    print "Missing directory %s/%s in root file %s! Continuing..."%(fit, d, rootFile)
+                    continue
                 histList    = [ x.GetName() for x in dir.GetListOfKeys() if x.GetName() != "data" ] + ["data"]
                 n           = nBins if nBins and nBins <= dir.Get(histList[0]).GetNbinsX() else dir.Get(histList[0]).GetNbinsX()
                 # histograms have too many bins from the masked fit, remove those
@@ -339,7 +346,7 @@ class CombineResults:
                             h = mcHist.Clone()
                         
                     result[fit][d][hist] = copy.deepcopy(h)
-            tRootFile.cd()
+#                tRootFile.cd()
 
         tRootFile.Close()
         del tRootFile
@@ -347,7 +354,7 @@ class CombineResults:
         tRootFile = ROOT.TFile( rootFile, "RECREATE" )
 
         for fit in fits:
-            result[fit].Write()
+            if result[fit]: result[fit].Write()
 
         for dir in fits_dir:
             tRootFile.mkdir(dir+"/")
@@ -602,7 +609,7 @@ class CombineResults:
         print "Executing command: %s"%cmd
         os.system(cmd)
 
-        self.rootWorkSpace = cardFile.replace(".txt","_shapeCard.root" )
+        self.rootWorkSpace = self.txtCard.replace(".txt","_shapeCard.root" )
         shutil.copyfile(uniqueDirname+"/higgsCombineTest.MultiDimFit.mH120.root", self.rootWorkSpace)
 
         shutil.rmtree(uniqueDirname)
@@ -620,7 +627,11 @@ class CombineResults:
             print "Workspace not availabe, creating it!"
             self.createWorkspace() # run the fit from card inputs
 
-        cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, "--profilingMode none" if statOnly else "")
+        addOptions = ""
+        if not self.isSearch: addOptions += " --customStartingPoint --setParameters r=1" #set r=1 for bkg only fit
+        if statOnly: addOptions += " --profilingMode none"
+
+        cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics --robustFit 1 --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, addOptions)
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -693,7 +704,8 @@ class CombineResults:
             print "Workspace not availabe, creating it!"
             self.createWorkspace() # run the fit from card inputs
 
-        params     = [ key for key in self.getPulls().keys() if key != "r" and not ("prop" in key and "_bin0" in key) ]
+#        params     = [ key for key in self.getPulls().keys() if key != "r" and not ("prop" in key and "_bin0" in key) ]
+        params     = [ key for key in self.getPulls().keys() if key != "r" and key!="JEC_HF" ]
         statParams = ",".join( params )
 
         cmd  = "cd %s;combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n bestfit --saveWorkspace %s "%(uniqueDirname,points,rMin,rMax,self.rootWorkSpace)
@@ -998,9 +1010,9 @@ class CombineResults:
 
         # return safed pulls if available
         key = "postFit" if postFit else "preFit"
-        if self.pulls[key] and not statOnly:
-            if nuisance: return self.pulls[key][nuisance]
-            else:        return self.pulls[key]
+#        if self.pulls[key] and not statOnly:
+#            if nuisance: return self.pulls[key][nuisance]
+#            else:        return self.pulls[key]
 
         dirName = "fit_b" if self.bkgOnly else "fit_s"
         if statOnly: fit = self.__getStatOnlyFitObject( key=dirName )
@@ -1060,7 +1072,7 @@ class CombineResults:
                         if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
                         if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
                         err = shapeH.GetBinError( i_bin+1 ) / shapeH.GetBinContent( i_bin+1 ) if shapeH.GetBinContent( i_bin+1 ) and withMCStat else 0
-                        if postFit and withMCStat:
+                        if postFit and withMCStat and "prop_bin%s_bin%i"%(dir,i_bin) in pulls.keys():
                             # log normal calculation
                             err = ((1+err)**pulls["prop_bin%s_bin%i"%(dir,i_bin)].sigma)-1
                         propH = shapeH.Clone()
@@ -1274,7 +1286,7 @@ class CombineResults:
 
         return nuisanceHistos
 
-    def createRebinnedResults( self, rebinningCardFile ):
+    def createRebinnedResults( self, rebinningCardFile, skipStatOnly=False ):
         """ apply the fitresults of the current workspace on another data-card (rebinningCardFile)
             be careful: the MC stat uncertainty constraints and pulls are not applied, output is a bit more conservative (no MC stat constraints, no pulls)
             also be carful: if a nuisance of the current card is not available in the rebinningCardfile it will not be applied
@@ -1335,12 +1347,17 @@ class CombineResults:
         resShapeRoot = os.path.join( resPath, f.replace(".txt","_shape.root") )
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'diffNuisances.py'), os.path.join(uniqueDirname, 'diffNuisances.py'))
 
+        addOptions = ""
+        if not self.isSearch:
+            addOptions = " --customStartingPoint" #set r=1 for bkg only fit
+            mask += ",r=1"
+
         # combine fit card and muted card
         print "combining cards for muted fit"
         cmd  = "cd "+uniqueDirname+";combineCards.py %s %s > combinedCard.txt; text2workspace.py combinedCard.txt --channel-masks"%(optionsFit, optionsMask)
         cmd += ";text2workspace.py combinedCard.txt --channel-masks"
         cmd += ";combineCards.py %s %s > txtCard.txt"%(optionsTxtFit, optionsTxtMask)
-        cmd += ";combine combinedCard.root -M FitDiagnostics --robustHesse 1 --forceRecreateNLL --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties --setParameters %s"%mask
+        cmd += ";combine combinedCard.root -M FitDiagnostics --robustHesse 1 --forceRecreateNLL --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s --setParameters %s"%(addOptions, mask)
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -1374,15 +1391,14 @@ class CombineResults:
         print "run FitDiagnostics stat only"
         cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --setParameters %s"%mask
         print "Executing command: %s"%cmd
-        os.system(cmd)
-
-        shutil.copyfile(uniqueDirname+"/fitDiagnostics.root", resShapeFile.replace(".txt","_statOnly_FD.root"))
+        if not skipStatOnly:
+            os.system(cmd)
+            shutil.copyfile(uniqueDirname+"/fitDiagnostics.root", resShapeFile.replace(".txt","_statOnly_FD.root"))
 
         shutil.rmtree(uniqueDirname)
-
         # rewrite content in a similar way to the combine fit results
-        self.__rewriteRebinnedFile( resShapeFile.replace(".txt","_FD.root"), postfit=True, nBins=nBins )
-        self.__rewriteRebinnedFile( resShapeFile.replace(".txt","_statOnly_FD.root"), postfit=True, nBins=nBins, statOnly=True )
+        self.__rewriteRebinnedFile( copy.deepcopy(resShapeFile.replace(".txt","_FD.root")), postfit=True, nBins=nBins )
+        self.__rewriteRebinnedFile( copy.deepcopy(resShapeFile.replace(".txt","_statOnly_FD.root")), postfit=True, nBins=nBins, statOnly=True )
 
         return resTxtFile
 
@@ -1450,7 +1466,7 @@ class CombineResults:
 
         binProcesses = self.getProcessesPerBin()
         ratioHistos  = []
-        bins         = len(self.getBinLabels()[self.channels[0]])
+        bins         = regionHistos["signal"].GetNbinsX() #len(self.getBinLabels()[self.channels[0]])
         i_n          = 0
 
         if sorted:
@@ -1485,7 +1501,7 @@ class CombineResults:
                 histoList[0] += proc_list
 
         else:
-            histoList = [ [p_h for p, p_h in regionHistos.iteritems() if p in binProcesses["Bin0"] ] ]
+            histoList = [ [p_h for p, p_h in regionHistos.iteritems() if p in binProcesses[binProcesses.keys()[0]] ] ]
             histoList[0].sort( key=lambda h: -regionHistos[p].Integral() )
 
         # add data histos
@@ -1524,7 +1540,7 @@ class CombineResults:
         if expected:     plotName += "_expected"
 
         if self.bkgOnly: options = "--freezeParameters r --setParameters r=%i"%(0 if self.isSearch else 1)
-        else:            options = "--rMin 0 --rMax 10"
+        else:            options = "--rMin 0 --rMax 2"
 
         if not self.rootWorkSpace:
             print "Workspace not availabe, creating it!"
