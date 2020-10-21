@@ -74,12 +74,12 @@ class PhotonElectronVetoEfficiency:
         else:
             sf = self.mult( [ self.getPartialSF( effMap, pt, abs(eta) ) for effMap in self.g_sf ] )
 
-        return (1+sf.sigma*sigma)*sf.val
+        return sf.val + sigma*sf.sigma
 
 
 if __name__ == "__main__":
 
-    sigma = 0
+    sigma = 1
     print "2016"
     LSF = PhotonElectronVetoEfficiency(year=2016)
     print LSF.getSF(20, 1, sigma=sigma)
