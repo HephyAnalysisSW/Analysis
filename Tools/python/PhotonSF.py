@@ -1,5 +1,5 @@
 import ROOT
-import os
+import os, sys
 
 from Analysis.Tools.helpers import getObjFromFile
 from Analysis.Tools.u_float import u_float
@@ -46,6 +46,13 @@ class PhotonSF:
             logger.warning( "Photon eta out of bounds: %3.2f (need %3.2f <= eta <=% 3.2f)", eta, self.g_etaMin, self.g_etaMax )
             eta = self.g_etaMin + 0.01
 
+        # correct for issues in the definition of the barrel EC gap in the scalefactor maps
+        if eta >= 1.444 and eta <= 1.4443:
+            eta = 1.4439
+        if eta >= -1.4443 and eta <= -1.444:
+            eta = -1.4439
+
+
         if   pt >= self.g_ptMax: pt = self.g_ptMax - 1
         elif pt <= self.g_ptMin: pt = self.g_ptMin + 1
 
@@ -56,70 +63,72 @@ class PhotonSF:
 
 if __name__ == "__main__":
 
-    sigma = 1
+    sigma = 0
     print "2016"
     LSF = PhotonSF(year=2016)
-    print LSF.getSF(10, 1, sigma=sigma)
-    print LSF.getSF(10, -1, sigma=sigma)
-    print LSF.getSF(10, 1, sigma=sigma)
-    print LSF.getSF(10, -1, sigma=sigma)
+    LSF.getSF(25, 1.4442, sigma=sigma)
+    LSF.getSF(25, -1.4442, sigma=sigma)
+    LSF.getSF(25, 1, sigma=sigma)
+    LSF.getSF(25, -1, sigma=sigma)
+    LSF.getSF(25, 0.3, sigma=sigma)
+    LSF.getSF(25, -0.3, sigma=sigma)
 
-    print LSF.getSF(200, 1, sigma=sigma)
-    print LSF.getSF(200, -1, sigma=sigma)
-    print LSF.getSF(200, 1, sigma=sigma)
-    print LSF.getSF(200, -1, sigma=sigma)
+    LSF.getSF(150, 1.4442, sigma=sigma)
+    LSF.getSF(150, -1.4442, sigma=sigma)
+    LSF.getSF(150, 1, sigma=sigma)
+    LSF.getSF(150, -1, sigma=sigma)
+    LSF.getSF(150, 0.3, sigma=sigma)
+    LSF.getSF(150, -0.3, sigma=sigma)
 
-    print LSF.getSF(10, 2.5, sigma=sigma)
-    print LSF.getSF(10, -2.5, sigma=sigma)
-    print LSF.getSF(10, 2.5, sigma=sigma)
-    print LSF.getSF(10, -2.5, sigma=sigma)
-
-    print LSF.getSF(200, 2.5, sigma=sigma)
-    print LSF.getSF(200, -2.5, sigma=sigma)
-    print LSF.getSF(200, 2.5, sigma=sigma)
-    print LSF.getSF(200, -2.5, sigma=sigma)
+    LSF.getSF(220, 1.4442, sigma=sigma)
+    LSF.getSF(220, -1.4442, sigma=sigma)
+    LSF.getSF(220, 1, sigma=sigma)
+    LSF.getSF(220, -1, sigma=sigma)
+    LSF.getSF(220, 0.3, sigma=sigma)
+    LSF.getSF(220, -0.3, sigma=sigma)
 
     print "2017"
     LSF = PhotonSF(year=2017)
-    print LSF.getSF(10, 1, sigma=sigma)
-    print LSF.getSF(10, -1, sigma=sigma)
-    print LSF.getSF(10, 1, sigma=sigma)
-    print LSF.getSF(10, -1, sigma=sigma)
+    LSF.getSF(25, 1.4442, sigma=sigma)
+    LSF.getSF(25, -1.4442, sigma=sigma)
+    LSF.getSF(25, 1, sigma=sigma)
+    LSF.getSF(25, -1, sigma=sigma)
+    LSF.getSF(25, 0.3, sigma=sigma)
+    LSF.getSF(25, -0.3, sigma=sigma)
 
-    print LSF.getSF(200, 1, sigma=sigma)
-    print LSF.getSF(200, -1, sigma=sigma)
-    print LSF.getSF(200, 1, sigma=sigma)
-    print LSF.getSF(200, -1, sigma=sigma)
+    LSF.getSF(150, 1.4442, sigma=sigma)
+    LSF.getSF(150, -1.4442, sigma=sigma)
+    LSF.getSF(150, 1, sigma=sigma)
+    LSF.getSF(150, -1, sigma=sigma)
+    LSF.getSF(150, 0.3, sigma=sigma)
+    LSF.getSF(150, -0.3, sigma=sigma)
 
-    print LSF.getSF(10, 2.5, sigma=sigma)
-    print LSF.getSF(10, -2.5, sigma=sigma)
-    print LSF.getSF(10, 2.5, sigma=sigma)
-    print LSF.getSF(10, -2.5, sigma=sigma)
-
-    print LSF.getSF(200, 2.5, sigma=sigma)
-    print LSF.getSF(200, -2.5, sigma=sigma)
-    print LSF.getSF(200, 2.5, sigma=sigma)
-    print LSF.getSF(200, -2.5, sigma=sigma)
+    LSF.getSF(220, 1.4442, sigma=sigma)
+    LSF.getSF(220, -1.4442, sigma=sigma)
+    LSF.getSF(220, 1, sigma=sigma)
+    LSF.getSF(220, -1, sigma=sigma)
+    LSF.getSF(220, 0.3, sigma=sigma)
+    LSF.getSF(220, -0.3, sigma=sigma)
 
     print "2018"
     LSF = PhotonSF(year=2018)
-    print LSF.getSF(10, 1, sigma=sigma)
-    print LSF.getSF(10, -1, sigma=sigma)
-    print LSF.getSF(10, 1, sigma=sigma)
-    print LSF.getSF(10, -1, sigma=sigma)
+    LSF.getSF(25, 1.4442, sigma=sigma)
+    LSF.getSF(25, -1.4442, sigma=sigma)
+    LSF.getSF(25, 1, sigma=sigma)
+    LSF.getSF(25, -1, sigma=sigma)
+    LSF.getSF(25, 0.3, sigma=sigma)
+    LSF.getSF(25, -0.3, sigma=sigma)
 
-    print LSF.getSF(200, 1, sigma=sigma)
-    print LSF.getSF(200, -1, sigma=sigma)
-    print LSF.getSF(200, 1, sigma=sigma)
-    print LSF.getSF(200, -1, sigma=sigma)
+    LSF.getSF(150, 1.4442, sigma=sigma)
+    LSF.getSF(150, -1.4442, sigma=sigma)
+    LSF.getSF(150, 1, sigma=sigma)
+    LSF.getSF(150, -1, sigma=sigma)
+    LSF.getSF(150, 0.3, sigma=sigma)
+    LSF.getSF(150, -0.3, sigma=sigma)
 
-    print LSF.getSF(10, 2.5, sigma=sigma)
-    print LSF.getSF(10, -2.5, sigma=sigma)
-    print LSF.getSF(10, 2.5, sigma=sigma)
-    print LSF.getSF(10, -2.5, sigma=sigma)
-
-    print LSF.getSF(200, 2.5, sigma=sigma)
-    print LSF.getSF(200, -2.5, sigma=sigma)
-    print LSF.getSF(200, 2.5, sigma=sigma)
-    print LSF.getSF(200, -2.5, sigma=sigma)
-
+    LSF.getSF(220, 1.4442, sigma=sigma)
+    LSF.getSF(220, -1.4442, sigma=sigma)
+    LSF.getSF(220, 1, sigma=sigma)
+    LSF.getSF(220, -1, sigma=sigma)
+    LSF.getSF(220, 0.3, sigma=sigma)
+    LSF.getSF(220, -0.3, sigma=sigma)
