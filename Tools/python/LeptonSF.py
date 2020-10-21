@@ -233,7 +233,7 @@ class LeptonSF:
 
                 sf = self.mult( [ self.getPartialSF( effMap, pt, eta ) for effMap in self.ele ] )
 
-        return (1+sf.sigma*sigma)*sf.val
+        return sf.val + sigma*sf.sigma
 
 
 if __name__ == "__main__":
