@@ -1427,7 +1427,7 @@ class CombineResults:
 
         return hists
 
-    def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, bkgSubstracted=False, directory=None ):
+    def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, addNuisanceHistos=[], bkgSubstracted=False, directory=None ):
         """ get the list of histograms and the ratio list for plotting a region plot using RootTools
             e.g.
                 plots, ratioHistos = Results.getRegionHistoList( ... )
@@ -1436,17 +1436,16 @@ class CombineResults:
             with sorted=True each MC in each bin will be a separated histogram sorted by the yield
         """
 
-        nuisances    = self.getNuisancesList() + ["totalUnc","MCStat","stat"]
+        nuisances    = self.getNuisancesList() + ["totalUnc","MCStat","stat"] + addNuisanceHistos
 
         if bkgSubstracted:
             histList =  [ [ [regionHistos["signal"]] ], [(0,0)] ]
-            i = 0
+            histList[0] +=  [ [regionHistos["data"]] ]
+            histList[1] +=  [ (len(histList[0])-1,0) ]
             for n in nuisances:
                 if n in regionHistos.keys():
                     histList[0] +=  [ [regionHistos[n]["up"]], [regionHistos[n]["down"]] ]
                     histList[1] +=  [ (len(histList[0])-2,0), (len(histList[0])-1,0) ]
-            histList[0] +=  [ [regionHistos["data"]] ]
-            histList[1] +=  [ (len(histList[0])-1,0) ]
             return tuple(histList)
 
         if directory and directory not in self.channels:
@@ -1604,7 +1603,7 @@ class CombineResults:
             dirName = "shapes_prefit"
 
         fit = self.__getFitObject( key=dirName )
-        matrix = copy.deepcopy( fit.Get("overall_total_covar") )
+        matrix = copy.deepcopy( fit.Get(directory+"/total_covar") )
         matrix.LabelsOption("v","X")
 
         # set labels
@@ -1648,7 +1647,7 @@ class CombineResults:
 
 
 
-    def sumNuisanceHistos( self, hists, addStatUnc=False, postFit=False ):
+    def sumNuisanceHistos( self, hists, nuisances=[], addStatUnc=False, postFit=False, bkgSubstracted=False ):
         """ sum histograms using correlation matrix if postFit, sum quadratically for preFit
             hists = { "total":TH1F, Nuisance1:{"up":TH1F, "down":TH1F}, Nuisance2:{"up":TH1F, "down":TH1F} } (as in the getRegionsPlot output)
         """
@@ -1664,7 +1663,7 @@ class CombineResults:
         if not "total_stat" in hists.keys() and addStatUnc:
             raise ValueError( "Total Stat Histogram not found! Please add it using getRegionHistos() with addStatOnlyHistos=True" )
 
-        allNuisances = self.getNuisancesList()
+        allNuisances = self.getNuisancesList() if not nuisances else nuisances
 
         unKnown = [n for n in hists.keys() if not n in allNuisances + ["total"] ]
         if unKnown:
@@ -1675,18 +1674,20 @@ class CombineResults:
         if addStatUnc:
             summedNuisances += ["totalStat"]
             statUp = hists["total_stat"].Clone()
+            statDown = hists["total_stat"].Clone()
             for i in range( statUp.GetNbinsX() ):
-                statUp.SetBinContent( i+1, hists["total"].GetBinContent( i+1 ) + statUp.GetBinError( i+1 ) )
-            hists["totalStat"] = {"up":statUp}
+                statUp.SetBinContent( i+1, hists["signal" if bkgSubstracted else "total"].GetBinContent( i+1 ) + statUp.GetBinError( i+1 ) )
+                statDown.SetBinContent( i+1, hists["signal" if bkgSubstracted else "total"].GetBinContent( i+1 ) - statUp.GetBinError( i+1 ) )
+            hists["totalStat"] = {"up":statUp, "down":statDown}
 
         for i_n, ni in enumerate(summedNuisances):
             if "up" not in hists[ni].keys():
                 raise ValueError( "Nuisance histograms not given in the format hists = { 'total':TH1F, Nuisance1:{'up':TH1F, 'down':TH1F}, Nuisance2:{'up':TH1F, 'down':TH1F} } for nuisance: %s"%ni )
-            hists[ni]["up"].Add( hists["total"], -1 )
+            hists[ni]["up"].Add( hists["signal" if bkgSubstracted else "total"], -1 )
 
         print "Summing uncertainties of the nuisances:: %s"%", ".join(summedNuisances)
 
-        totalRelUp = hists["total"].Clone()
+        totalRelUp = hists["signal" if bkgSubstracted else "total"].Clone()
         totalRelUp.Scale(0)
 
         for i_n, ni in enumerate(summedNuisances):
@@ -1707,19 +1708,19 @@ class CombineResults:
         totalRelDown.Scale( -1 )
 
         totalUp = totalRelUp.Clone()
-        totalUp.Add( hists["total"] )
+        totalUp.Add( hists["signal" if bkgSubstracted else "total"] )
 
         totalDown = totalRelDown.Clone()
-        totalDown.Add( hists["total"] )
+        totalDown.Add( hists["signal" if bkgSubstracted else "total"] )
 
-        totalUp.legendText      = "total err (+1#sigma)"
-        totalDown.legendText    = "total err (+1#sigma)"
-        totalRelUp.legendText   = "total err (+1#sigma)"
-        totalRelDown.legendText = "total err (+1#sigma)"
+        totalUp.legendText      = "summed err (+1#sigma)"
+        totalDown.legendText    = "summed err (+1#sigma)"
+        totalRelUp.legendText   = "summed err (+1#sigma)"
+        totalRelDown.legendText = "summed err (+1#sigma)"
 
         totalUp.style        = styles.lineStyle( ROOT.kSpring-1, width=3 )
         totalRelUp.style     = styles.lineStyle( ROOT.kSpring-1, width=3 )
         totalDown.style      = styles.lineStyle( ROOT.kOrange+7, width=3 )
         totalRelDown.style   = styles.lineStyle( ROOT.kOrange+7, width=3 )
 
-        return {"up":totalUp, "down":totalDown, "relUp":totalRelUp, "relDown":totalRelDown, "yield":hists["total"]}
+        return {"up":totalUp, "down":totalDown, "relUp":totalRelUp, "relDown":totalRelDown, "yield":hists["signal" if bkgSubstracted else "total"]}
