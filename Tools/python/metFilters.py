@@ -2,7 +2,7 @@
 # Flag_BadChargedCandidateFilter is not recommended anymore, under review
 # https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFiltersRun2
 
-def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBadChargedCandidate=True, skipBadPFMuon=False, skipVertexFilter=False, skipWeight=False):
+def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBadChargedCandidate=True, skipBadPFMuon=False, skipVertexFilter=False, skipWeight=False, skipECalFilter=False):
 
     if year in [2016, "Run2016"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
@@ -36,7 +36,8 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         if isFastSim:
             filters        += ["Flag_ecalBadCalibFilter"]
         else:
-            filters        += ["Flag_ecalBadCalibFilterV2"]
+            if not skipECalFilter:
+                filters        += ["Flag_ecalBadCalibFilterV2"]
 
     elif year in [2018, "Run2018"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
@@ -56,13 +57,14 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         if isFastSim:
             filters        += ["Flag_ecalBadCalibFilter"]
         else:
-            filters        += ["Flag_ecalBadCalibFilterV2"]
+            if not skipECalFilter:
+                filters        += ["Flag_ecalBadCalibFilterV2"]
 
     elif year=="RunII":
         return "((year==2016&&{filter_2016})||(year==2017&&{filter_2017})||(year==2018&&{filter_2018}))".format( 
-            filter_2016 = getFilterCut( 2016, isData=isData, ignoreJSON=ignoreJSON, isFastSim=isFastSim, skipBadChargedCandidate=skipBadChargedCandidate, skipBadPFMuon=skipBadPFMuon, skipVertexFilter=skipVertexFilter),
-            filter_2017 = getFilterCut( 2017, isData=isData, ignoreJSON=ignoreJSON, isFastSim=isFastSim, skipBadChargedCandidate=skipBadChargedCandidate, skipBadPFMuon=skipBadPFMuon, skipVertexFilter=skipVertexFilter),
-            filter_2018 = getFilterCut( 2018, isData=isData, ignoreJSON=ignoreJSON, isFastSim=isFastSim, skipBadChargedCandidate=skipBadChargedCandidate, skipBadPFMuon=skipBadPFMuon, skipVertexFilter=skipVertexFilter),
+            filter_2016 = getFilterCut( 2016, isData=isData, ignoreJSON=ignoreJSON, isFastSim=isFastSim, skipBadChargedCandidate=skipBadChargedCandidate, skipBadPFMuon=skipBadPFMuon, skipVertexFilter=skipVertexFilter, skipECalFilter=True),
+            filter_2017 = getFilterCut( 2017, isData=isData, ignoreJSON=ignoreJSON, isFastSim=isFastSim, skipBadChargedCandidate=skipBadChargedCandidate, skipBadPFMuon=skipBadPFMuon, skipVertexFilter=skipVertexFilter, skipECalFilter=True),
+            filter_2018 = getFilterCut( 2018, isData=isData, ignoreJSON=ignoreJSON, isFastSim=isFastSim, skipBadChargedCandidate=skipBadChargedCandidate, skipBadPFMuon=skipBadPFMuon, skipVertexFilter=skipVertexFilter, skipECalFilter=True),
           )
     else:
         raise NotImplementedError( "No MET filter found for year %i" %year )
