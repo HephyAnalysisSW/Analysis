@@ -30,6 +30,7 @@ fitDiagnostics (statOnly):  PATH/NAME_shapeCard_staOnly_FD.root (can be created 
 
 # Standard imports
 import os, sys
+user = os.environ['USER']
 import math
 import copy
 import shutil
@@ -619,7 +620,7 @@ class CombineResults:
         """
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
@@ -640,7 +641,7 @@ class CombineResults:
         """
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
@@ -683,7 +684,7 @@ class CombineResults:
             raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
@@ -717,7 +718,7 @@ class CombineResults:
         """
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
@@ -841,7 +842,7 @@ class CombineResults:
         """
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating "+uniqueDirname
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'mlfitNormsToText.py'), os.path.join(uniqueDirname, 'mlfitNormsToText.py'))
@@ -865,7 +866,7 @@ class CombineResults:
             raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating "+uniqueDirname
         os.makedirs(uniqueDirname)
 
@@ -897,7 +898,7 @@ class CombineResults:
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Printing first %i correlations of %s"%(nMax, nuisance)
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'printCorrelations.py'), os.path.join(uniqueDirname, 'printCorrelations.py'))
@@ -1328,7 +1329,7 @@ class CombineResults:
 
         # create environment
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp/", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating "+uniqueDirname
         os.makedirs(uniqueDirname)
 
@@ -1562,7 +1563,7 @@ class CombineResults:
         """
 
         ustr          = str(uuid.uuid4())
-        uniqueDirname = os.path.join("/tmp", ustr)
+        uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
         print "Creating %s"%uniqueDirname
         os.makedirs(uniqueDirname)
 
