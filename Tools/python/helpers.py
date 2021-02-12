@@ -45,6 +45,20 @@ def getCouplingFromName(name, coupling):
     else:
         return 0.
 
+def dRCleaning( col1, col2, dR):
+    'Clean col1 with col2'
+    res = []
+    for o1 in col1:
+        clean = True
+        for o2 in col2:
+            if deltaR2(o1, o2)<dR**2:
+                clean = False
+                break
+        if clean:
+            res.append(o1)
+    return res
+    
+
 def bestDRMatchInCollection(l, coll, deltaR = 0.2, deltaRelPt = 0.5 ):
     lst = []
     for l2 in coll:
