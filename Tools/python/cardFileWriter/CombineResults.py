@@ -160,14 +160,14 @@ class CombineResults:
         self.constrain           = None
         self.nuisances           = None
         self.correlationHisto    = None
-        self.rateParameter       = {"preFit":None, "postFit":None}
-        self.estimates           = {"preFit":None, "postFit":None}
-        self.uncertainties       = {"preFit":None, "postFit":None}
-        self.uncertaintiesShape  = {"preFit":None, "postFit":None}
-        self.pulls               = {"preFit":None, "postFit":None}
-        self.covarianceHistos    = {"preFit":None, "postFit":None}
-        self.regionHistos        = {"preFit":{"all":None}, "postFit":{"all":None}}
-        self.regionFile          = {"preFit":{"all":None}, "postFit":{"all":None}}
+        self.rateParameter       = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.estimates           = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.uncertainties       = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.uncertaintiesShape  = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.pulls               = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.covarianceHistos    = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.regionHistos        = {"preFit":{"all":None}, "preFit_rateParam":{"all":None}, "postFit":{"all":None}}
+        self.regionFile          = {"preFit":{"all":None}, "preFit_rateParam":{"all":None}, "postFit":{"all":None}}
         self.modHistos           = None
 
 #    def __private( self ):
@@ -321,7 +321,7 @@ class CombineResults:
                     print "Missing directory %s/%s in root file %s! Continuing..."%(fit, d, rootFile)
                     continue
                 histList    = [ x.GetName() for x in dir.GetListOfKeys() if x.GetName() != "data" ] + ["data"]
-                n           = nBins if nBins and nBins <= dir.Get(histList[0]).GetNbinsX() else dir.Get(histList[0]).GetNbinsX()
+                n           = nBins if nBins and nBins <= dir.Get(histList[-2]).GetNbinsX() else dir.Get(histList[-2]).GetNbinsX()
                 # histograms have too many bins from the masked fit, remove those
                 for hist in histList:
                     h = dir.Get(hist)
@@ -363,8 +363,9 @@ class CombineResults:
             tRootFile.cd(dir)
             for d in self.channels:
                 if not statOnly and not self.combinedCard:
-                    result[dir][d]["total_covar"].SetName("process_covar")
-                    result[dir][d]["total_covar"].Write()
+                    if "total_covar" in result[dir][d].keys():
+                        result[dir][d]["total_covar"].SetName("process_covar")
+                        result[dir][d]["total_covar"].Write()
                     result[dir][d]["total_signal"].Write()
                     result[dir][d]["total_background"].Write()
                     result[dir][d]["total"].Write()
@@ -450,7 +451,7 @@ class CombineResults:
                     break
         return u_float(float(r_stat), float(err_stat))
 
-    def __getNuisanceBinYield( self, nuisance, bin, directory, postFit=False ):
+    def __getNuisanceBinYield( self, nuisance, bin, directory, postFit=False, bkgSubstracted=False ):
         """ get the bin yield of a +-1 sigma up variation of a certain nuisance
         """
 
@@ -459,6 +460,7 @@ class CombineResults:
 
         uncBin           = bin.replace(directory+"_","")
         yields           = self.getEstimates( postFit=postFit )[directory][uncBin]
+        yields_prefit    = self.getEstimates( postFit=False, postFitRateParams=postFit )[directory][uncBin]
         processes        = self.getProcessesPerBin( bin=bin )[bin]
         unc              = self.getUncertaintiesFromTxtCard(   bin=uncBin, postFit=postFit )[directory][uncBin]
 
@@ -472,19 +474,20 @@ class CombineResults:
             # do not apply rate parameters if the process is not affected
             unc[p].update( { key:0 for key in rateParam.keys() } if not rateParamInfo or (rateParamInfo and p not in rateParamInfo[nuisance]) else rateParam )
             if p.count('signal') and self.isSearch: continue
+            if not p.count('signal') and bkgSubstracted: continue
             yproc  = yields[p].val if p in yields.keys() else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
+            yproc_prefit  = yields_prefit[p].val if p in yields_prefit.keys() else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
             uproc  = unc[p][nuisance]
-            print p, nuisance, unc[p][nuisance]
             y     += yproc
-            sig   += yproc*uproc #(yproc*uproc)**2
-#        sig = math.sqrt(sig)
+            sig   += yproc_prefit*uproc # absolute error, the error band is in fact relative to the prefit yield, interesting to know, has litte effect, except for large pulls
+
         yup   = y + sig
-        ydown = y - sig #math.sqrt(sig)
+        ydown = y - sig
 
         return {"up":yup, "down":ydown, "relUp":yup/y if y else 0, "relDown":ydown/y if y else 0, "yield":y}
 
 
-    def __regionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, statOnly=False ):
+    def __regionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, statOnly=False, postFitRateParams=False ):
         """ get a dictionary of histograms containing all region bins of the fit
             plot only certain bins with e.g. plotBins = [0, 5, 9]
             add additional +-1 sigma variation histograms of certain nuisances with 'nuisances'
@@ -493,9 +496,13 @@ class CombineResults:
             statOnly=True for getting the output of the statonly fit, if this fit was not performed yet, it will be then
         """
 
+        if postFit: postFitRateParams = False
+
         hists    = {}
         key    = "postFit" if postFit else "preFit"
         subkey = "_".join(map(str,plotBins)) if plotBins else "all"
+        if postFitRateParams and not postFit:
+            subkey += "_rateParam"
 
         if not statOnly and subkey in self.regionHistos[key].keys() and self.regionHistos[key][subkey]:
             hists = self.regionHistos[key][subkey]
@@ -508,6 +515,10 @@ class CombineResults:
         if statOnly: fit = self.__getStatOnlyFitObject( key=dirName )
         else:        fit = self.__getFitObject( key=dirName )
 
+        if postFitRateParams:
+            rateParams = self.getRateParameter( postFit=True )
+            rateParamInfo = self.getRateParameterInfo()
+
         for dir in self.channels:
             histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if x.GetName() != "data" ] + [ "data" ]
             histList = filter( lambda hist: "total_covar" not in hist and "process_" not in hist, histList )
@@ -516,6 +527,14 @@ class CombineResults:
             for hist in histList:
 
                 hists[dir][hist] = fit.Get(dir+"/"+hist).Clone()
+
+                if postFitRateParams:
+                    for rateParam, rateDict in rateParamInfo.iteritems():
+                        for rateBin, processList in rateDict.iteritems():
+                            if rateBin.startswith(dir) and hist in processList:
+                                for ibin in range(hists[dir][hist].GetNbinsX()):
+                                    if int(rateBin.split("Bin")[-1]) == ibin:
+                                        hists[dir][hist].SetBinContent( ibin+1, hists[dir][hist].GetBinContent( ibin+1 )*rateParams[rateParam].val )
 
                 # change TGraph type to TH1F type for data
                 if "data" in hist:
@@ -544,7 +563,24 @@ class CombineResults:
 
             if nuisances:
                 if isinstance( nuisances, str ): nuisances = [nuisances]
-                hists[dir].update( self.getNuisanceHistosFromShapeCard( postFit=postFit, plotBins=None, nuisances=nuisances, directory=dir )[dir] )
+
+                if postFit and "r" in nuisances:
+                    rUncHist = hists[dir]["signal"].Clone()
+                    rVal    = self.getPulls( postFit=True )["r"]
+                    rUncHist.Scale( rVal.sigma )
+
+                    rHistUp = hists[dir]["signal" if bkgSubstracted else "total"].Clone()
+                    rHistUp.Add(rUncHist)
+                    rHistDown = hists[dir]["signal" if bkgSubstracted else "total"].Clone()
+                    rUncHist.Scale( -1 )
+                    rHistDown.Add(rUncHist)
+                    hists[dir]["r"] = {"up":rHistUp, "down":rHistDown}
+                    hists[dir]["r"]["up"].style        = styles.lineStyle( ROOT.kSpring-1, width=3 ) #change to dynamic style
+                    hists[dir]["r"]["down"].style      = styles.lineStyle( ROOT.kOrange+7, width=3 )
+                    hists[dir]["r"]["up"].legendText   = "r (+1#sigma)"
+                    hists[dir]["r"]["down"].legendText = "r (-1#sigma)"
+
+                hists[dir].update( self.getNuisanceHistosFromShapeCard( postFit=postFit, plotBins=None, bkgSubstracted=bkgSubstracted, nuisances=[n for n in nuisances if n != "r"], directory=dir )[dir] )
 
             labels = self.getBinLabels( labelFormater=labelFormater )[dir]
             if labels:
@@ -591,23 +627,13 @@ class CombineResults:
                 if nuisances: safe += nuisances
                 for key in hists[dir].keys():
                     if key not in safe: del hists[dir][key]
-                hists[dir]["signal"] = hists[dir][tot].Clone()
 
                 hists[dir]["dataUp"] = hists[dir]["data"].Clone()
                 hists[dir]["dataDown"] = hists[dir]["data"].Clone()
-                hists[dir]["signalUp"] = hists[dir]["signal"].Clone()
-                hists[dir]["signalDown"] = hists[dir]["signal"].Clone()
 
                 hists[dir]["data"].Add( hists[dir]["total_background"], -1 )
                 hists[dir]["dataDown"].Add( hists[dir]["total_backgroundUp"], -1 )
                 hists[dir]["dataUp"].Add( hists[dir]["total_backgroundDown"], -1 )
-                hists[dir]["signal"].Add( hists[dir]["total_background"], -1 )
-                hists[dir]["signalDown"].Add( hists[dir]["total_backgroundUp"], -1 )
-                hists[dir]["signalUp"].Add( hists[dir]["total_backgroundDown"], -1 )
-                if nuisances:
-                    for n in nuisances:
-                        hists[dir][n]["up"].Add( hists[dir]["total_background"], -1 )
-                        hists[dir][n]["down"].Add( hists[dir]["total_background"], -1 )
 
                 hists[dir]["total_background"].Scale(0)
                 del hists[dir]["total_backgroundUp"]
@@ -710,11 +736,10 @@ class CombineResults:
 
         return r_lin
 
-    def plotPOIScan( self, rMin=0, rMax=2, points=200, addLumi=None ):
+    def plotPOIScan( self, rMin=0, rMax=2, points=200 ):
         """ https://indico.cern.ch/event/747340/contributions/3198653/attachments/1744339/2823486/HComb-Tutorial-FitDiagnostics.pdf
             create plot of likelihood with r value + splitted uncertainties (stat, syst, lumi if addLumi)
-            addLumi is the part of the string that identifies all luminosity nuisances (e.g. addLumi='Luminosity')
-            uncertainty is only split in stat+syst if addLumi=None
+            uncertainty is only split in stat+syst
         """
 
         ustr          = str(uuid.uuid4())
@@ -726,23 +751,13 @@ class CombineResults:
             print "Workspace not availabe, creating it!"
             self.createWorkspace() # run the fit from card inputs
 
-        params = [p for p in self.getPulls().keys() if p !="JEC_HF"]
+        params = [p for p in self.getPulls().keys() if p !="EGammaResolution"]
         statParams = ",".join( params )
 
         cmd  = "cd %s;combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n bestfit --saveWorkspace %s "%(uniqueDirname,points,rMin,rMax,self.rootWorkSpace)
-        if addLumi:
-            # some issues here that are not understood
-            lumiParams     = ",".join( [ p for p in params if not addLumi in p ] )
-            cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n stat --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,statParams)
-            cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n lumi --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,lumiParams)
-            cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI_wLumi --others  higgsCombinelumi.MultiDimFit.mH120.root:Lumi+Stat:4 higgsCombinestat.MultiDimFit.mH120.root:Stat:2 --breakdown syst,lumi,stat"
-#            cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI_wLumi --others  higgsCombinelumi.MultiDimFit.mH120.root:Luminosity:4 higgsCombinestat.MultiDimFit.mH120.root:Stat:2 --breakdown syst,lumi,stat"
-#            cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI_wLumi --others higgsCombinestat.MultiDimFit.mH120.root:Stat:2 higgsCombinelumi.MultiDimFit.mH120.root:Lumi:4 --breakdown syst,stat,lumi"
-            cmd += ";mv scanPOI_wLumi.* %s/"%(self.plotDirectory)
-        else:
-            cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n stat --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,statParams)
-            cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI --others higgsCombinestat.MultiDimFit.mH120.root:StatOnly:2 --breakdown syst,stat"
-            cmd += ";mv scanPOI.* %s/"%(self.plotDirectory)
+        cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n stat --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,statParams)
+        cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI --others higgsCombinestat.MultiDimFit.mH120.root:StatOnly:2 --breakdown syst,stat"
+        cmd += ";mv scanPOI.* %s/"%(self.plotDirectory)
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -795,10 +810,10 @@ class CombineResults:
                         rateParams[param] = { bin:proc }
         return rateParams
 
-    def getNuisanceYields( self, nuisance, postFit=False ):
+    def getNuisanceYields( self, nuisance, postFit=False, bkgSubstracted=False ):
         """ return a dictionary with each bin containing the yield with the +-1sigma variation of a certain nuisance
         """
-        return { dir:{ b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b, directory=dir, postFit=postFit ) for b in self.getBinList( unique=True, directory=dir ) } for dir in self.channels }
+        return { dir:{ b:self.__getNuisanceBinYield( nuisance=nuisance, bin=b, directory=dir, postFit=postFit, bkgSubstracted=bkgSubstracted ) for b in self.getBinList( unique=True, directory=dir ) } for dir in self.channels }
 
     def getBinList( self, unique=True, directory=None ):
         """ get either the bin names for each process according to the cardfile ( Bin0 Bin0 Bin0 ... Bin1 Bin1 ...)
@@ -1087,6 +1102,7 @@ class CombineResults:
                 unc = unc[0] if unc else "stat"
                 est = shape.replace("_"+unc+"Up","")
                 shapeH = shapeHisto.Clone()
+
                 if unc == "stat":
                     # stat unc
                     if not "histo" in uncertainties[dir].keys(): uncertainties[dir]["histo"] = {}
@@ -1098,7 +1114,8 @@ class CombineResults:
                         err = shapeH.GetBinError( i_bin+1 ) / shapeH.GetBinContent( i_bin+1 ) if shapeH.GetBinContent( i_bin+1 ) and withMCStat else 0
                         if postFit and withMCStat and "prop_bin%s_bin%i"%(dir,i_bin) in pulls.keys():
                             # log normal calculation
-                            err = ((1+err)**pulls["prop_bin%s_bin%i"%(dir,i_bin)].sigma)-1
+#                            err = ((1+err)**pulls["prop_bin%s_bin%i"%(dir,i_bin)].sigma)-1
+                            err *=pulls["prop_bin%s_bin%i"%(dir,i_bin)].sigma # constraints are not from log normal calculations, interesting to know, has little effect except for large constraints
                         propH = shapeH.Clone()
                         propH.Scale(0)
                         propH.SetBinContent( i_bin+1, err )
@@ -1109,10 +1126,12 @@ class CombineResults:
                 else:
                     shapeH.Add(shapes[dir][est],-1)
                     shapeH.Divide(shapes[dir][est])
+
                     if postFit:
                         # log normal calculation
                         for i_bin in range(shapeH.GetNbinsX()):
-                            shapeH.SetBinContent(i_bin+1, ((1+shapeH.GetBinContent(i_bin+1))**pulls[unc].sigma)-1)
+#                            shapeH.SetBinContent(i_bin+1, ((1+shapeH.GetBinContent(i_bin+1))**pulls[unc].sigma)-1)
+                            shapeH.SetBinContent(i_bin+1, shapeH.GetBinContent(i_bin+1)*pulls[unc].sigma) # constraints are not from log normal calculations, interesting to know, has little effect except for large constraints
 
                     for i_bin in range(shapeH.GetNbinsX()):
                         _bin = "Bin%i"%i_bin
@@ -1170,7 +1189,8 @@ class CombineResults:
                         uncertainties[dir][_bin][est][unc] = 0
                     if postFit and uncertainties[dir][_bin][est][unc]:
                         # log normal calculation
-                        uncertainties[dir][_bin][est][unc] = ((1+uncertainties[dir][_bin][est][unc])**pulls[unc].sigma)-1
+#                        uncertainties[dir][_bin][est][unc] = ((1+uncertainties[dir][_bin][est][unc])**pulls[unc].sigma)-1
+                        uncertainties[dir][_bin][est][unc] *= pulls[unc].sigma # constraints are not from log normal calculations, interesting to know, has little effect except for large constraints
 
         self.uncertainties[key] = uncertainties
 
@@ -1185,17 +1205,22 @@ class CombineResults:
 
         return {dir:{ b:b_dict["data"] for b, b_dict in o.iteritems() } for dir, o in self.getEstimates( postFit=False, bin=bin, estimate="data" ).iteritems()}
 
-    def getEstimates( self, bin=None, estimate=None, postFit=False ):
+    def getEstimates( self, bin=None, estimate=None, postFit=False, postFitRateParams=False ):
         """ return pre/postfit estimates in a dictionary
         """
 
+        if postFit: postFitRateParams = False
+
         key    = "postFit" if postFit else "preFit"
+        if postFitRateParams and not postFit:
+            key += "_rateParam"
+
         if self.estimates[key]:
             ests = self.estimates[key]
             all = { d:self.__filterDict( dic, bin=bin, estimate=estimate ) if bin else dic for d, dic in ests.iteritems() } 
             return all
 
-        regionHistos = self.getRegionHistos( postFit=postFit, plotBins=None )
+        regionHistos = self.getRegionHistos( postFit=postFit, plotBins=None, postFitRateParams=postFitRateParams )
         processes    = self.getProcessesPerBin( bin=None )
         yields       = {}
         tmp          = {}
@@ -1222,7 +1247,7 @@ class CombineResults:
         all = { d:self.__filterDict( dic, bin=bin, estimate=estimate ) if bin else dic for d, dic in yields.iteritems() } 
         return all
 
-    def getNuisanceHistosFromShapeCard( self, postFit=False, plotBins=None, nuisances=None, directory=None ):
+    def getNuisanceHistosFromShapeCard( self, postFit=False, plotBins=None, bkgSubstracted=False, nuisances=None, directory=None ):
         """ return a histogram of the nuisance with +- 1 sigma variation
             be careful: the quadratic sum of each postfit nuisance does not give you the full uncertainty due to (anti-)corrlations, use sumNuisanceHistos
         """
@@ -1240,29 +1265,28 @@ class CombineResults:
         for dir in dirs:
             histDict = self.getUncertaintiesFromShapeCard( postFit=postFit )[dir]["histo"]
             regions = self.getRegionHistos( postFit=postFit, plotBins=plotBins )[dir]
+            regions_preFit = self.getRegionHistos( postFit=False, plotBins=plotBins, postFitRateParams=postFit )[dir]
             nuisanceHistos[dir] = {}
             for i_n, nuisance in enumerate(nuisances):
 
                 if nuisance in rateParams or "Lumi" in nuisance: #quick fix, use getNuisanceHistos for lnN, FIXME
-                    nuisanceHistos[dir][nuisance] = self.getNuisanceHistos( postFit=postFit, plotBins=plotBins, nuisances=[nuisance], directory=dir )[dir][nuisance]
+                    nuisanceHistos[dir][nuisance] = self.getNuisanceHistos( postFit=postFit, plotBins=plotBins, bkgSubstracted=bkgSubstracted, nuisances=[nuisance], directory=dir )[dir][nuisance]
                     continue
 
-                y = regions["total"].Clone("yield")
+                y = regions["signal" if bkgSubstracted else "total"].Clone("yield")
                 y.Scale(0)
-                total_err = regions["total"].Clone(nuisance)
+                total_err = regions["signal" if bkgSubstracted else "total"].Clone(nuisance)
                 total_err.Scale(0)
                 for est in allEst:
+                    if bkgSubstracted and est != "signal": continue
                     # quadratically add error histograms for each process
                     yproc = regions[est].Clone()            # process yield
                     y.Add(yproc)                            # total yield
                     if nuisance not in histDict[est].keys(): continue # nuisance does not apply to process
                     err = histDict[est][nuisance].Clone()   # relative error histogram
-                    err.Multiply(yproc)                     # absolute error histogram
-#                    err.Multiply(err)                       # quadratically added
+#                    err.Multiply(yproc)                     # absolute error histogram
+                    err.Multiply(regions_preFit[est].Clone()) # absolute error histogram, the error band is in fact relative to the prefit yield, interesting to know, has litte effect, except for large pulls. note that rate-parameters need to be applied
                     total_err.Add(err)
-
-#                for i in range(total_err.GetNbinsX()):                    
-#                    total_err.SetBinContent(i+1, math.sqrt(total_err.GetBinContent(i+1)))
 
                 nuisanceHistUp   = y.Clone()
                 nuisanceHistDown = y.Clone()
@@ -1277,7 +1301,7 @@ class CombineResults:
 
         return nuisanceHistos
 
-    def getNuisanceHistos( self, postFit=False, plotBins=None, nuisances=None, directory=None ):
+    def getNuisanceHistos( self, postFit=False, plotBins=None, bkgSubstracted=False, nuisances=None, directory=None ):
         """ return a histogram of the nuisance with +- 1 sigma variation
             be careful: the quadratic sum of each postfit nuisance does not give you the full uncertainty due to (anti-)corrlations, use sumNuisanceHistos
         """
@@ -1294,7 +1318,7 @@ class CombineResults:
             for i_n, nuisance in enumerate(nuisances):
                 nuisanceHistUp      = regions["total_signal"].Clone(dir+nuisance+"up")
                 nuisanceHistDown    = regions["total_signal"].Clone(dir+nuisance+"down")
-                nuisanceYields  = self.getNuisanceYields( nuisance, postFit=postFit )[dir]
+                nuisanceYields  = self.getNuisanceYields( nuisance, postFit=postFit, bkgSubstracted=bkgSubstracted )[dir]
 
                 for i in range(nuisanceHistUp.GetNbinsX()):
                     if self.combinedCard: key = dir+"_Bin"+str(i)
@@ -1312,7 +1336,7 @@ class CombineResults:
 
         return nuisanceHistos
 
-    def createRebinnedResults( self, rebinningCardFile, skipStatOnly=False, setParameters="", options="" ):
+    def createRebinnedResults( self, rebinningCardFile, skipStatOnly=True, setParameters="", options="" ):
         """ apply the fitresults of the current workspace on another data-card (rebinningCardFile)
             be careful: the MC stat uncertainty constraints and pulls are not applied, output is a bit more conservative (no MC stat constraints, no pulls)
             also be carful: if a nuisance of the current card is not available in the rebinningCardfile it will not be applied
@@ -1430,11 +1454,12 @@ class CombineResults:
         shutil.rmtree(uniqueDirname)
         # rewrite content in a similar way to the combine fit results
         self.__rewriteRebinnedFile( copy.deepcopy(resShapeFile.replace(".txt","_FD.root")), postfit=True, nBins=nBins )
-        self.__rewriteRebinnedFile( copy.deepcopy(resShapeFile.replace(".txt","_statOnly_FD.root")), postfit=True, nBins=nBins, statOnly=True )
+        if not skipStatOnly:
+            self.__rewriteRebinnedFile( copy.deepcopy(resShapeFile.replace(".txt","_statOnly_FD.root")), postfit=True, nBins=nBins, statOnly=True )
 
         return resTxtFile
 
-    def getRegionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, addStatOnlyHistos=False ):
+    def getRegionHistos( self, postFit=False, plotBins=None, nuisances=None, bkgSubstracted=False, labelFormater=None, addStatOnlyHistos=False, postFitRateParams=False ):
         """ get a dictionary of histograms containing all region bins of the fit
             plot only certain bins with e.g. plotBins = [0, 5, 9]
             add additional +-1 sigma variation histograms of certain nuisances with 'nuisances'
@@ -1445,15 +1470,15 @@ class CombineResults:
 
         if nuisances:
             if isinstance( nuisances, str ): nuisances = [nuisances]
-            allNuisances = self.getNuisancesList() + ["totalUnc","MCStat","stat"]
+            allNuisances = self.getNuisancesList() + ["totalUnc","MCStat","stat","r"]
             notIncluded = [ n for n in nuisances if n not in allNuisances]
             if notIncluded:
                 raise ValueError( "Provided nuisances %s unknown!"%", ".join(notIncluded) )
 
-        hists = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=nuisances, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=False )
+        hists = self.__regionHistos( postFit=postFit, plotBins=plotBins, nuisances=nuisances, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=False, postFitRateParams=postFitRateParams )
         if addStatOnlyHistos:
             # only makes sense for postFit
-            hists_stat = self.__regionHistos( postFit=True, plotBins=plotBins, nuisances=None, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=True )
+            hists_stat = self.__regionHistos( postFit=True, plotBins=plotBins, nuisances=None, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=True, postFitRateParams=postFitRateParams )
             for dir, dic in hists_stat.iteritems():
                 for h_key, h in dic.iteritems():
                     hists[dir][h_key+"_stat"] = h.Clone()
@@ -1473,8 +1498,9 @@ class CombineResults:
 
         if bkgSubstracted:
             histList =  [ [ [regionHistos["signal"]] ], [(0,0)] ]
-            histList[0] +=  [ [regionHistos["data"]] ]
-            histList[1] +=  [ (len(histList[0])-1,0) ]
+            if not noData:
+                histList[0] +=  [ [regionHistos["data"]] ]
+                histList[1] +=  [ (len(histList[0])-1,0) ]
             for n in nuisances:
                 if n in regionHistos.keys():
                     histList[0] +=  [ [regionHistos[n]["up"]], [regionHistos[n]["down"]] ]
@@ -1498,15 +1524,21 @@ class CombineResults:
 
         binProcesses = self.getProcessesPerBin()
         ratioHistos  = []
-        bins         = regionHistos["signal"].GetNbinsX() #len(self.getBinLabels()[self.channels[0]])
+        bins         = regionHistos["signal"].GetNbinsX() 
         i_n          = 0
 
         if sorted:
+            labels = self.getBinLabels()[self.channels[0]]
             histoList = [[]]
             for i in range( bins ):
                 proc_list = []
+                sig = None
                 if self.combinedCard: key = directory + "_Bin%i"%i
                 else:                 key = "Bin%i"%i
+
+                if labels[i].split(" ")[-1].startswith("SR"): signalregion = True
+                else: signalregion = False
+
                 for p in binProcesses[key]:
 
                     if p in regionHistos.keys():
@@ -1524,10 +1556,14 @@ class CombineResults:
                         try: del tmp.legendText
                         except: pass
 
-                    proc_list.append(tmp)
+                    if signalregion and p == "signal":
+                        sig = tmp
+                    else:
+                        proc_list.append(tmp)
 
                 # sort each bin
                 proc_list.sort( key=lambda h: -h.Integral() )
+                if sig: proc_list = [sig]+proc_list
 
                 # sort each bin
                 histoList[0] += proc_list
@@ -1558,7 +1594,7 @@ class CombineResults:
 
         return histoList, ratioHistos
         
-    def getImpactPlot( self, expected=False, printPNG=False, cores=1 ):
+    def getImpactPlot( self, expected=False, printPNG=False, cores=1, options="" ):
         """ create the impact plot of the current workspace, it no workspace is provided it will be created
         """
 
@@ -1571,8 +1607,8 @@ class CombineResults:
         if self.bkgOnly: plotName += "_bkgOnly"
         if expected:     plotName += "_expected"
 
-        if self.bkgOnly: options = "--freezeParameters r --setParameters r=%i"%(0 if self.isSearch else 1)
-        else:            options = "--rMin 0 --rMax 2"
+        if self.bkgOnly: options += " --freezeParameters r --setParameters r=%i"%(0 if self.isSearch else 1)
+        else:            options += " --rMin 0 --rMax 2"
 
         if not self.rootWorkSpace:
             print "Workspace not availabe, creating it!"
@@ -1657,6 +1693,9 @@ class CombineResults:
 
         return matrix
 
+    def getFitObject( self ):
+        return self.__getFitObject( "fit_s" )
+
     def getCorrelationMatrixEntryByNuisances( self, nuisance_i, nuisance_j ):
         """ returns the entry of the correlationMatrix according to the name of the nuisances
             function will always return 0 for correlations of mc stat with other nuisances
@@ -1670,26 +1709,20 @@ class CombineResults:
 
         if nuisance_i not in all_pars or nuisance_j not in all_pars: return 0
 
-        print nuisance_i, nuisance_j, float(rfr.correlation( nuisance_i, nuisance_j))
         return float(rfr.correlation( nuisance_i, nuisance_j))
 
 
 
-    def sumNuisanceHistos( self, hists, nuisances=[], addStatUnc=False, postFit=False, bkgSubstracted=False ):
+    def sumNuisanceHistos( self, hists, nuisances=[], postFit=False, bkgSubstracted=False ):
         """ sum histograms using correlation matrix if postFit, sum quadratically for preFit
             hists = { "total":TH1F, Nuisance1:{"up":TH1F, "down":TH1F}, Nuisance2:{"up":TH1F, "down":TH1F} } (as in the getRegionsPlot output)
         """
         if not hists: return {}
 
-        if not postFit and addStatUnc:
-            print "Summing over preFit histograms, thus setting addStatUnc to False!"
-            addStatUnc=False
+        hists = copy.deepcopy(hists)
 
         if not "total" in hists.keys():
             raise ValueError( "Total Histogram needs to be provided to sum up nuisance histos!" )
-
-        if not "total_stat" in hists.keys() and addStatUnc:
-            raise ValueError( "Total Stat Histogram not found! Please add it using getRegionHistos() with addStatOnlyHistos=True" )
 
         allNuisances = self.getNuisancesList() if not nuisances else nuisances
 
@@ -1698,15 +1731,6 @@ class CombineResults:
             print "Histograms not known as nuisances will not be summed: %s"%", ".join(unKnown+["total"])
 
         summedNuisances = [ n for n in allNuisances if n in hists.keys() ]
-
-        if addStatUnc:
-#            summedNuisances += ["totalStat"]
-            statUp = hists["total_stat"].Clone()
-            statDown = hists["total_stat"].Clone()
-            for i in range( statUp.GetNbinsX() ):
-                statUp.SetBinContent( i+1, hists["signal" if bkgSubstracted else "total"].GetBinContent( i+1 ) + statUp.GetBinError( i+1 ) )
-                statDown.SetBinContent( i+1, hists["signal" if bkgSubstracted else "total"].GetBinContent( i+1 ) - statUp.GetBinError( i+1 ) )
-            hists["totalStat"] = {"up":statUp, "down":statDown}
 
         for i_n, ni in enumerate(summedNuisances):
             if "up" not in hists[ni].keys():
@@ -1726,26 +1750,10 @@ class CombineResults:
                 tmpHist_i = hists[ni]["up"].Clone()
                 tmpHist_j = hists[nj]["up"].Clone()
                 tmpHist_i.Multiply( tmpHist_j )
+
                 if i_n != j_n:
                     tmpHist_i.Scale( self.getCorrelationMatrixEntryByNuisances( ni, nj ) )
                 totalRelUp.Add( tmpHist_i )
-
-        if addStatUnc:
-
-            tmpHistStat = hists["totalStat"]["up"].Clone()
-            tmpHistStat.Add( hists["signal" if bkgSubstracted else "total"], -1 )
-            tmpHistStat.Multiply( tmpHistStat )
-            totalRelUp.Add( tmpHistStat )
-
-            statUnc = self.getPulls( postFit=True, statOnly=True )["r"]
-            print statUnc
-            statUnc = statUnc.sigma / statUnc.val
-            print statUnc
-#            statUncSq = statUnc*statUnc
-            for i in range( totalRelUp.GetNbinsX() ):
-                print totalRelUp.GetBinContent( i+1 ), (hists["signal" if bkgSubstracted else "total"].GetBinContent(i+1)*statUnc)**2
-                totalRelUp.SetBinContent( i+1, totalRelUp.GetBinContent( i+1 ) - (hists["signal" if bkgSubstracted else "total"].GetBinContent(i+1)*statUnc)**2 )
-
 
         for i in range( totalRelUp.GetNbinsX() ):
             totalRelUp.SetBinContent( i+1, math.sqrt( totalRelUp.GetBinContent( i+1 ) ) )
