@@ -69,16 +69,18 @@ def write_sync_files_txt(output_filename = 'file_sync_storage.txt'):
         for f in phpfiles:
             if f not in file_sync_storage:
                 file_sync_storage.append(f)
-
+    n_files = 0
     if len(file_sync_storage)>0:
         with file( output_filename, 'w' ) as outfile:
             for filename in file_sync_storage:
                 if 'www/' in filename:
                     # for rsync cmd with relative path
                     outfile.write('{filename}\n'.format(filename=os.path.expanduser(os.path.expandvars(filename)).replace('www/','www/./')))
+                    n_files+=1
                 else:
                     print "Will not sync %s" % filename
-        print "Analysis.Tools.syncer: Written %i files to %s for rsync." % (len(file_sync_storage), output_filename)
+        print "Analysis.Tools.syncer: Written %i files to %s for rsync." % (n_files, output_filename)
+    return n_files
 
 def sync():
 
@@ -89,7 +91,9 @@ def sync():
         return
 
     filename = '/tmp/%s.txt'%uuid.uuid4()
-    write_sync_files_txt(filename)    
+
+    if write_sync_files_txt(filename)==0: return 
+
     cmd = "rsync -avR  `cat %s` ${CERN_USER}@lxplus.cern.ch:/eos/user/$(echo ${CERN_USER} | head -c 1)/${CERN_USER}/www/" % filename
     #print cmd
     output,error = subprocess.Popen(cmd, shell=True, executable="/bin/bash", stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
