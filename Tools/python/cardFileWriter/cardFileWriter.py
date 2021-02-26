@@ -91,11 +91,11 @@ class cardFileWriter:
             return
         self.rateParameters.append((p, value, r))
 
-    def addFreeParameter(self, name, p, value, r):
+    def addFreeParameter(self, name, p, value, r, bin=None):
         if [ a[0] for a in self.freeParameters ].count(name):
             logger.info("Free parameter for process %s already added!"%p)
             return
-        self.freeParameters.append((name, p, value, r))
+        self.freeParameters.append((name, p, value, r, bin))
 
     def specifyExpectation(self, b, p, exp):
         self.expectation[(b,p)] = round(exp, self.precision)
@@ -232,11 +232,14 @@ class cardFileWriter:
 
         for p in self.freeParameters:
             outfile.write('\n')
-            for b in self.bins:
-                outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
+            if not p[4]:
+                for b in self.bins:
+                    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
+            else:
+                    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], str(p[4]), p[1], str(p[2]), str(p[3])))
 
         if shapeFile and not noMCStat:
-            outfile.write('* autoMCStats 0 \n')
+            outfile.write('* autoMCStats 20 1 1\n')
 
         outfile.close()
         print "[cardFileWrite] Written card file %s"%fname
@@ -248,7 +251,7 @@ class cardFileWriter:
     def writeToShapeFile(self, fname, noMCStat=False):
         bins        = natural_sort(self.bins)
         processes   = []
-        nuisances   = [ u for u in self.uncertainties if (not 'stat' in u.lower() and self.uncertaintyString[u] == 'shape')  ] # stat uncertainties are treated differently
+        nuisances   = [ u for u in self.uncertainties if (not 'stat' in u.lower() and (self.uncertaintyString[u] == 'shape' or self.uncertaintyString[u] == 'flatParam'))  ] # stat uncertainties are treated differently
         logNormal   = [ u for u in self.uncertainties if (not 'stat' in u.lower() and self.uncertaintyString[u] == 'lnN')  ]
         for b in bins:
             for p in self.processes[b]:
@@ -320,7 +323,6 @@ class cardFileWriter:
         self.niceNames[bins[0]] = 'inclusive bin'
         for process in processes:
             self.specifyExpectation(self.bins[0], process, histos[process].Integral())
-            #print "setting expectation to shape file", self.bins[0], process,  histos[process].Integral()
             # need to set the strength of the shape uncertainties defined by the histograms. If not turned on (meaning a value greater than 0), they have no effect.
             for nuis in nuisForProc[process]:
                 self.specifyUncertainty(nuis, bins[0], process, 1)
@@ -395,11 +397,10 @@ class cardFileWriter:
             from Analysis.Tools.cardFileWriter.getNorms import getNorms
             filename += " > output.txt"
         
-        combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M AsymptoticLimits %s %s"%(options,filename)
-        print combineCommand
+        combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M MultiDimFit %s %s"%(options,filename)
         os.system(combineCommand)
 
-        tempResFile = uniqueDirname+"/higgsCombineTest.AsymptoticLimits.mH120.root"
+        tempResFile = uniqueDirname+"/higgsCombineTest.MultiDimFit.mH120.root"
 
         try:
             res= self.readResFile(tempResFile)
@@ -428,6 +429,7 @@ class cardFileWriter:
         nll["nll"] = t.nll
         # absolute NLL postfit
         nll["nll_abs"] = t.nll0 + t.nll
+
         f.Close()
         return nll
 
@@ -446,10 +448,11 @@ class cardFileWriter:
           filename = fname if fname else os.path.join(uniqueDirname, ustr+".txt")
           self.writeToFile(filename)
 
-        combineCommand  = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine -M MultiDimFit -n Nominal --saveNLL --forceRecreateNLL --freezeParameters r %s %s"%(options,filename)
+        combineCommand  = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine -M MultiDimFit -n Nominal --saveNLL --freezeParameters r --X-rtd REMOVE_CONSTANT_ZERO_POINT=1 --cminDefaultMinimizerStrategy=0 --cminDefaultMinimizerTolerance=0.01 %s %s"%(options,filename)
         os.system(combineCommand)
         nll = self.readNLLFile(uniqueDirname+"/higgsCombineNominal.MultiDimFit.mH120.root")
         nll["bestfit"] = nll["nll"]
+        print "NLL", nll
         shutil.rmtree(uniqueDirname)
 
         return nll
@@ -474,7 +477,7 @@ class cardFileWriter:
 
         assert os.path.exists(filename), "File not found: %s"%filename
 
-        combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s %s"%(options,filename)
+        combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --robustFit 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s %s"%(options,filename)
         combineCommand +=";python diffNuisances.py  fitDiagnostics.root &> nuisances.txt"
         combineCommand +=";python diffNuisances.py -a fitDiagnostics.root &> nuisances_full.txt"
         if bonly:
