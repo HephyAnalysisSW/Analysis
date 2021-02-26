@@ -474,7 +474,6 @@ class CombineResults:
             # do not apply rate parameters if the process is not affected
             unc[p].update( { key:0 for key in rateParam.keys() } if not rateParamInfo or (rateParamInfo and p not in rateParamInfo[nuisance]) else rateParam )
             if p.count('signal') and self.isSearch: continue
-            if not p.count('signal') and bkgSubstracted: continue
             yproc  = yields[p].val if p in yields.keys() else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
             yproc_prefit  = yields_prefit[p].val if p in yields_prefit.keys() else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
             uproc  = unc[p][nuisance]
@@ -518,6 +517,7 @@ class CombineResults:
         if postFitRateParams:
             rateParams = self.getRateParameter( postFit=True )
             rateParamInfo = self.getRateParameterInfo()
+            print rateParams, rateParamInfo
 
         for dir in self.channels:
             histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if x.GetName() != "data" ] + [ "data" ]
@@ -528,8 +528,9 @@ class CombineResults:
 
                 hists[dir][hist] = fit.Get(dir+"/"+hist).Clone()
 
-                if postFitRateParams:
+                if postFitRateParams and rateParams:
                     for rateParam, rateDict in rateParamInfo.iteritems():
+                        if rateParam not in rateParams.keys(): continue # parameter frozen
                         for rateBin, processList in rateDict.iteritems():
                             if rateBin.startswith(dir) and hist in processList:
                                 for ibin in range(hists[dir][hist].GetNbinsX()):
@@ -569,9 +570,9 @@ class CombineResults:
                     rVal    = self.getPulls( postFit=True )["r"]
                     rUncHist.Scale( rVal.sigma )
 
-                    rHistUp = hists[dir]["signal" if bkgSubstracted else "total"].Clone()
+                    rHistUp = hists[dir]["total"].Clone()
                     rHistUp.Add(rUncHist)
-                    rHistDown = hists[dir]["signal" if bkgSubstracted else "total"].Clone()
+                    rHistDown = hists[dir]["total"].Clone()
                     rUncHist.Scale( -1 )
                     rHistDown.Add(rUncHist)
                     hists[dir]["r"] = {"up":rHistUp, "down":rHistDown}
@@ -631,9 +632,16 @@ class CombineResults:
                 hists[dir]["dataUp"] = hists[dir]["data"].Clone()
                 hists[dir]["dataDown"] = hists[dir]["data"].Clone()
 
+                hists[dir][tot].Add( hists[dir]["total_background"], -1 )
+
                 hists[dir]["data"].Add( hists[dir]["total_background"], -1 )
                 hists[dir]["dataDown"].Add( hists[dir]["total_backgroundUp"], -1 )
                 hists[dir]["dataUp"].Add( hists[dir]["total_backgroundDown"], -1 )
+
+                if nuisances:
+                    for n in nuisances:
+                        hists[dir][n]["up"].Add( hists[dir]["total_background"], -1 )
+                        hists[dir][n]["down"].Add( hists[dir]["total_background"], -1 )
 
                 hists[dir]["total_background"].Scale(0)
                 del hists[dir]["total_backgroundUp"]
@@ -1273,12 +1281,14 @@ class CombineResults:
                     nuisanceHistos[dir][nuisance] = self.getNuisanceHistos( postFit=postFit, plotBins=plotBins, bkgSubstracted=bkgSubstracted, nuisances=[nuisance], directory=dir )[dir][nuisance]
                     continue
 
-                y = regions["signal" if bkgSubstracted else "total"].Clone("yield")
+#                y = regions["signal" if bkgSubstracted else "total"].Clone("yield")
+                y = regions["total"].Clone("yield")
                 y.Scale(0)
-                total_err = regions["signal" if bkgSubstracted else "total"].Clone(nuisance)
+#                total_err = regions["signal" if bkgSubstracted else "total"].Clone(nuisance)
+                total_err = regions["total"].Clone(nuisance)
                 total_err.Scale(0)
                 for est in allEst:
-                    if bkgSubstracted and est != "signal": continue
+#                    if bkgSubstracted and est != "signal": continue
                     # quadratically add error histograms for each process
                     yproc = regions[est].Clone()            # process yield
                     y.Add(yproc)                            # total yield
