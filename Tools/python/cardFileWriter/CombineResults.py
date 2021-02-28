@@ -1495,7 +1495,7 @@ class CombineResults:
 
         return hists
 
-    def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, addNuisanceHistos=[], bkgSubstracted=False, directory=None ):
+    def getRegionHistoList( self, regionHistos, processes=None, noData=False, sorted=False, unsortProcesses=False, addNuisanceHistos=[], bkgSubstracted=False, directory=None ):
         """ get the list of histograms and the ratio list for plotting a region plot using RootTools
             e.g.
                 plots, ratioHistos = Results.getRegionHistoList( ... )
@@ -1540,6 +1540,7 @@ class CombineResults:
         if sorted:
             labels = self.getBinLabels()[self.channels[0]]
             histoList = [[]]
+
             for i in range( bins ):
                 proc_list = []
                 sig = None
@@ -1549,7 +1550,19 @@ class CombineResults:
                 if labels[i].split(" ")[-1].startswith("SR"): signalregion = True
                 else: signalregion = False
 
-                for p in binProcesses[key]:
+                if unsortProcesses:
+                    binLabelStarter = labels[i].split(" ")[-1][:2]
+                    if i == 0 or binLabelStarter != labels[i-1].split(" ")[-1][:2]:
+                        yields = []
+                        for p in binProcesses[key]:
+                            yields.append( (p,regionHistos[p].GetBinContent(i+1) if p in regionHistos.keys() else 0) )
+                        yields.sort( key=lambda (p,y): -y )
+                        processList = [p for p,y in yields]
+
+                else:
+                    processList = binProcesses[key]
+
+                for p in processList:
 
                     if p in regionHistos.keys():
                         # set only one bin != 0
@@ -1572,7 +1585,8 @@ class CombineResults:
                         proc_list.append(tmp)
 
                 # sort each bin
-                proc_list.sort( key=lambda h: -h.Integral() )
+                if not unsortProcesses:
+                    proc_list.sort( key=lambda h: -h.Integral() )
                 if sig: proc_list = [sig]+proc_list
 
                 # sort each bin
