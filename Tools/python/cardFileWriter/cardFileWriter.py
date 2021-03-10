@@ -47,8 +47,22 @@ class cardFileWriter:
         self.rateParameters = []
         self.freeParameters = []
         self.precision = 10
+	self.freeParamBins={}
+	self.regionMapping = {}
+	self.CR = []
+	self.SR = []
+    def addFreeParamBin(self,name,binlist):
+	self.freeParamBins= {name:binlist}
 
-    
+    def addMap(self,regionMapping):
+	self.regionMapping=regionMapping
+    def addCR(self,CRbins):
+        self.CR=CRbins
+        self.nCR = len(CRbins)
+
+    def addSR(self,SRbins):
+	self.SR=SRbins
+
     def setPrecision(self, prec):
         self.precision = prec
 
@@ -91,11 +105,11 @@ class cardFileWriter:
             return
         self.rateParameters.append((p, value, r))
 
-    def addFreeParameter(self, name, p, value, r, bin=None):
+    def addFreeParameter(self, name, p, value, r):
         if [ a[0] for a in self.freeParameters ].count(name):
             logger.info("Free parameter for process %s already added!"%p)
             return
-        self.freeParameters.append((name, p, value, r, bin))
+        self.freeParameters.append((name, p, value, r))
 
     def specifyExpectation(self, b, p, exp):
         self.expectation[(b,p)] = round(exp, self.precision)
@@ -171,6 +185,9 @@ class cardFileWriter:
         return str(round(float(f),self.precision))
 
     def writeToFile(self, fname, shapeFile=False, noMCStat=False):
+
+        print "noMCStat: {}".format(noMCStat)
+
         import datetime, os
         if not self.checkCompleteness():
             print "Incomplete specification."
@@ -206,7 +223,7 @@ class cardFileWriter:
         outfile.write( '\n')
 
         if shapeFile:
-            outfile.write( 'shapes * * %s  $PROCESS $PROCESS_$SYSTEMATIC \n'%shapeFile)
+            outfile.write( 'shapes * * %s  $CHANNEL_$PROCESS $CHANNEL_$PROCESS_$SYSTEMATIC \n'%shapeFile)
             outfile.write( '\n')
 
         outfile.write( 'bin'.ljust(lspace)              +(' '.join([b.rjust(self.defWidth) for b in unmutedBins] ) ) +'\n')
@@ -224,22 +241,47 @@ class cardFileWriter:
             outfile.write( u.ljust(self.maxUncNameWidth)+' '+self.uncertaintyString[u].ljust(self.maxUncStrWidth)+' '+
                                           ' '.join( [' '.join([self.getUncertaintyString((u,b,p)).rjust(self.defWidth) for p in self.processes[b]] ) for b in unmutedBins]) +'\n')
 
+	print self.rateParameters
         for p in self.rateParameters:
+            print self.rateParameters
             outfile.write('\n')
-            for b in self.bins:
-                outfile.write('%s_norm_%s rateParam %s %s (@0*1) %s_norm\n'%(p[0], b, b, p[0], p[0]))
-            outfile.write('%s_norm extArg %s %s\n'%(p[0], str(p[1]), str(p[2])))
 
+            nCR= len(self.CR)
+            print "length of CR: ", nCR
+            #print self.regionMapping
+            shift_SR=0
+
+            if shapeFile :
+                for i_cr, cr in enumerate(self.CR):
+                        outfile.write('%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0], str(p[1]), str(p[2]) ))
+                        print '%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0], str(p[1]), str(p[2]) )
+                        
+                        
+            else :
+                for i_cr, cr in enumerate(self.CR):
+                        outfile.write('%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0],"Bin{}".format(i_cr), p[0] ))
+                        print '%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0],"Bin{}".format(i_cr), p[0] )
+                        corr_SR = self.SR[shift_SR:shift_SR+self.regionMapping[i_cr]]
+                        
+                        for i_sr, sr in enumerate(corr_SR):
+                            print '%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(nCR+shift_SR+i_sr), p[0], "Bin{}".format(nCR+shift_SR+i_sr), p[0],"Bin{}".format(i_cr), p[0] )
+                            outfile.write('%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(nCR+shift_SR+i_sr), p[0], "Bin{}".format(nCR+shift_SR+i_sr), p[0],"Bin{}".format(i_cr), p[0] ))
+                        
+                        shift_SR +=len(corr_SR)
+                        # outfile.write('%s_norm_%s extArg %s %s\n'%("Bin{}".format(i_cr), p[0], str(p[1]), str(p[2])))
+		
         for p in self.freeParameters:
             outfile.write('\n')
-            if not p[4]:
-                for b in self.bins:
-                    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
-            else:
-                    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], str(p[4]), p[1], str(p[2]), str(p[3])))
+            #for b in self.freeParamBins[p[0]]:
+	    #bins = [val for keys,val in region.items() if p[0] in names]
+
+            for b in self.bins:
+                outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
+            #for b in self.bins:
+            #    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
 
         if shapeFile and not noMCStat:
-            outfile.write('* autoMCStats 20 1 1\n')
+            outfile.write('* autoMCStats 0 \n')
 
         outfile.close()
         print "[cardFileWrite] Written card file %s"%fname
@@ -248,15 +290,46 @@ class cardFileWriter:
     def makeHist(self, name):
         return ROOT.TH1F(name, name, len(self.bins), 0, len(self.bins))
 
+
+    def getPTgroupedHistos(self, hist_object) :
+        nCR= len(self.CR)
+        h_pT_grouped = []
+        shift_SR=0
+        for i_cr, cr in enumerate(self.CR):
+            nbins = self.regionMapping[i_cr] + 1
+            
+
+            h_pT_grouped.append(ROOT.TH1F("Bin{}_{}".format(i_cr,hist_object.GetName()), "Bin{}_{}".format(i_cr,hist_object.GetName()), nbins, 0, nbins))
+            firstBin = 0
+            h_pT_grouped[i_cr].SetBinContent(firstBin+1,hist_object.GetBinContent(i_cr+1))
+            h_pT_grouped[i_cr].SetBinError(firstBin+1,hist_object.GetBinError(i_cr+1))
+            
+            firstBin = 1
+            
+            corr_SR = self.SR[shift_SR:shift_SR+self.regionMapping[i_cr]]
+           
+            for i_sr, sr in enumerate(corr_SR) :
+                h_pT_grouped[i_cr].SetBinContent(firstBin+1,hist_object.GetBinContent(nCR+shift_SR+i_sr)) 
+                h_pT_grouped[i_cr].SetBinError(firstBin+1,hist_object.GetBinError(nCR+shift_SR+i_sr)) 
+                
+                firstBin += 1
+            shift_SR += len(corr_SR)
+
+        
+        return h_pT_grouped
+
+
     def writeToShapeFile(self, fname, noMCStat=False):
         bins        = natural_sort(self.bins)
         processes   = []
-        nuisances   = [ u for u in self.uncertainties if (not 'stat' in u.lower() and (self.uncertaintyString[u] == 'shape' or self.uncertaintyString[u] == 'flatParam'))  ] # stat uncertainties are treated differently
+        nuisances   = [ u for u in self.uncertainties if (not 'stat' in u.lower() and self.uncertaintyString[u] == 'shape')  ] # stat uncertainties are treated differently
         logNormal   = [ u for u in self.uncertainties if (not 'stat' in u.lower() and self.uncertaintyString[u] == 'lnN')  ]
+        
+        
         for b in bins:
             for p in self.processes[b]:
                 if p not in processes: processes.append(p)
-        
+
         # define a dict that stores which shape nuisances are relevant for each process
         nuisForProc = {proc:[] for proc in processes}
 
@@ -318,23 +391,57 @@ class cardFileWriter:
         rootFileFull = fname
         txtFile  = fname.replace('.root', 'Card.txt')
 
-        # create the one-bin card-file
-        self.bins = [self.bins[0]]
-        self.niceNames[bins[0]] = 'inclusive bin'
-        for process in processes:
-            self.specifyExpectation(self.bins[0], process, histos[process].Integral())
-            # need to set the strength of the shape uncertainties defined by the histograms. If not turned on (meaning a value greater than 0), they have no effect.
-            for nuis in nuisForProc[process]:
-                self.specifyUncertainty(nuis, bins[0], process, 1)
+        # create the card-file with and group all CR and SR bins together
+        self.bins = self.bins[0:self.nCR]
 
-        self.specifyObservation(self.bins[0], int(data_obs.Integral()))
+        # self.niceNames[bins[0]] = 'inclusive bin'
+        shift_SR = 0
+        for i_bin in xrange(self.nCR) :
+            for process in processes:
+                s_start = self.nCR + shift_SR 
+                self.specifyExpectation(self.bins[i_bin], process, histos[process].GetBinContent(i_bin+1) + histos[process].Integral(s_start,s_start+self.regionMapping[i_bin]-1))
+                
+                # if i_bin == 1:
+                #     print process
+                #     print s_start
+                #     print s_start+self.regionMapping[i_bin]-1
+                #     print histos[process].GetBinContent(i_bin+1) + histos[process].Integral(s_start,s_start+self.regionMapping[i_bin]-1)
+
+
+                #     exit(0)
+                #print "setting expectation to shape file", self.bins[0], process,  histos[process].Integral()
+                #need to set the strength of the shape uncertainties defined by the histograms. If not turned on (meaning a value greater than 0), they have no effect.
+                for nuis in nuisForProc[process]:
+                    self.specifyUncertainty(nuis, bins[i_bin], process, 1)
+            
+            shift_SR += self.regionMapping[i_bin]
+                
+            self.specifyObservation(self.bins[i_bin], int(data_obs.GetBinContent(i_bin+1) + data_obs.Integral(s_start,s_start+self.regionMapping[i_bin]-1)))
+
         self.uncertainties = logNormal + nuisances # need to fix things if up/down are already provided
         self.writeToFile(txtFile, shapeFile=rootFile, noMCStat=noMCStat)
         
+
+
+
+
+
+
+
         # write all the histograms to a root file
-        writeObjToFile(rootFileFull, data_obs)
+        h_pT_grouped = self.getPTgroupedHistos(data_obs)
+        for ihh, hhhisto in enumerate(h_pT_grouped) :
+            if ihh == 0 :
+                writeObjToFile(rootFileFull, hhhisto)
+            else :
+                writeObjToFile(rootFileFull, hhhisto, update=True)
+
         for h in sorted(histos.keys()):
-            writeObjToFile(rootFileFull, histos[h], update=True)
+            h_pT_grouped = self.getPTgroupedHistos(histos[h])
+            for ihh, hhhisto in enumerate(h_pT_grouped) :
+                writeObjToFile(rootFileFull, hhhisto, update=True)
+        
+        
         return txtFile
 
     def combineCards(self, cards):
@@ -397,10 +504,11 @@ class cardFileWriter:
             from Analysis.Tools.cardFileWriter.getNorms import getNorms
             filename += " > output.txt"
         
-        combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M MultiDimFit %s %s"%(options,filename)
+        combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M AsymptoticLimits %s %s"%(options,filename)
+        print combineCommand
         os.system(combineCommand)
 
-        tempResFile = uniqueDirname+"/higgsCombineTest.MultiDimFit.mH120.root"
+        tempResFile = uniqueDirname+"/higgsCombineTest.AsymptoticLimits.mH120.root"
 
         try:
             res= self.readResFile(tempResFile)
@@ -429,7 +537,6 @@ class cardFileWriter:
         nll["nll"] = t.nll
         # absolute NLL postfit
         nll["nll_abs"] = t.nll0 + t.nll
-
         f.Close()
         return nll
 
@@ -448,11 +555,10 @@ class cardFileWriter:
           filename = fname if fname else os.path.join(uniqueDirname, ustr+".txt")
           self.writeToFile(filename)
 
-        combineCommand  = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine -M MultiDimFit -n Nominal --saveNLL --freezeParameters r --X-rtd REMOVE_CONSTANT_ZERO_POINT=1 --cminDefaultMinimizerStrategy=0 --cminDefaultMinimizerTolerance=0.01 %s %s"%(options,filename)
+        combineCommand  = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine -M MultiDimFit -n Nominal --saveNLL --forceRecreateNLL --freezeParameters r %s %s"%(options,filename)
         os.system(combineCommand)
         nll = self.readNLLFile(uniqueDirname+"/higgsCombineNominal.MultiDimFit.mH120.root")
         nll["bestfit"] = nll["nll"]
-        print "NLL", nll
         shutil.rmtree(uniqueDirname)
 
         return nll
@@ -477,7 +583,7 @@ class cardFileWriter:
 
         assert os.path.exists(filename), "File not found: %s"%filename
 
-        combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --robustFit 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s %s"%(options,filename)
+        combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s %s"%(options,filename)
         combineCommand +=";python diffNuisances.py  fitDiagnostics.root &> nuisances.txt"
         combineCommand +=";python diffNuisances.py -a fitDiagnostics.root &> nuisances_full.txt"
         if bonly:
