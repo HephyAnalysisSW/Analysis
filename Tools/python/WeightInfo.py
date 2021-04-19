@@ -197,7 +197,7 @@ class WeightInfo:
 
         sample.setSelectionString( selectionString ) 
 
-        variables = map( TreeVariable.fromString, [ "np/I", "ref_lumiweight1fb/F", "lumiweight1fb/F" ] )
+        variables = map( TreeVariable.fromString, [ "np/I" ] )
         variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=1000) )
 
         reader = sample.treeReader( variables = variables )
