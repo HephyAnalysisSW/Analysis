@@ -271,38 +271,38 @@ class WeightInfo:
                 prefac1, comb_diff2 = WeightInfo.differentiate( comb_diff, var[1:] ) 
             return prefac0*prefac1, comb_diff2
             
-    # String methods
-    def diff_weight_string_allWC(self, var):
-        ''' return string of the full weight string, differentiated wrt to var as a function of all WC
-        '''
+#    # String methods
+#    def diff_weight_string_allWC(self, var):
+#        ''' return string of the full weight string, differentiated wrt to var as a function of all WC
+#        '''
+#
+#        if var not in self.variables:
+#            raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
+#
+#        substrings = []
+#        for i_comb, comb in enumerate( self.combinations ):
+#            prefac, diff_comb = WeightInfo.differentiate( comb, var )
+#            if prefac != 0:
+#                subsubstrings = [ "%i*p_C[%i]" %(prefac, i_comb) if prefac != 1 else "p_C[%i]" %i_comb ]
+#                for v in diff_comb:
+#                    if self.ref_point_coordinates[v] == 0:
+#                        subsubstrings.append( 'rw_%s'%v )
+#                    else:
+#                        subsubstrings.append(  "(rw_%s-%s)"%(v, str(float(self.ref_point[v])).rstrip('0')) )
+#                substrings.append( "*".join( subsubstrings ) ) 
+#        
+#        return "+".join( substrings )
+#
+#    def fisher_parametrization_string_allWC( self, var1, var2 ):
+#        ''' return a string for the fisher information vor variables var1, vars as a function of the weight coefficients and all WC 
+#        '''
+#
+#        if var1 == var2:
+#            return "(%s)**2/(%s)"%( self.diff_weight_string_WC( var1 ), self.weight_string_WC() )
+#        else:
+#            return "(%s)*(%s)/(%s)"%( self.diff_weight_string_WC( var1 ), self.diff_weight_string_WC( var2 ), self.weight_string_WC() )
 
-        if var not in self.variables:
-            raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
-
-        substrings = []
-        for i_comb, comb in enumerate( self.combinations ):
-            prefac, diff_comb = WeightInfo.differentiate( comb, var )
-            if prefac != 0:
-                subsubstrings = [ "%i*p_C[%i]" %(prefac, i_comb) if prefac != 1 else "p_C[%i]" %i_comb ]
-                for v in diff_comb:
-                    if self.ref_point_coordinates[v] == 0:
-                        subsubstrings.append( 'rw_%s'%v )
-                    else:
-                        subsubstrings.append(  "(rw_%s-%s)"%(v, str(float(self.ref_point[v])).rstrip('0')) )
-                substrings.append( "*".join( subsubstrings ) ) 
-        
-        return "+".join( substrings )
-
-    def fisher_parametrization_string_allWC( self, var1, var2 ):
-        ''' return a string for the fisher information vor variables var1, vars as a function of the weight coefficients and all WC 
-        '''
-
-        if var1 == var2:
-            return "(%s)**2/(%s)"%( self.diff_weight_string_WC( var1 ), self.weight_string_WC() )
-        else:
-            return "(%s)*(%s)/(%s)"%( self.diff_weight_string_WC( var1 ), self.diff_weight_string_WC( var2 ), self.weight_string_WC() )
-
-    def diff_weight_string( self, var, **kwargs ):
+    def get_diff_weight_string( self, var, **kwargs ):
         '''make a root draw string that evaluates the diff weight 
            in terms of the p_C coefficient vector using the kwargs as WC
         '''
@@ -329,6 +329,15 @@ class WeightInfo:
                 substrings.append( ("%+f"%fac).rstrip('0')+"*p_C[%i]"%i_comb  )
 
         return "".join( substrings ).lstrip('+')
+
+    def get_fisher_weight_string( self, var1, var2, **kwargs):
+        ''' return a string for the fisher information vor variables var1, var2 as a function of the weight coefficients and all WC 
+        '''
+
+        if var1 == var2:
+            return "(%s)**2/(%s)"%( self.get_diff_weight_string( var1, **kwargs), self.get_weight_string(**kwargs) )
+        else:
+            return "(%s)*(%s)/(%s)"%( self.get_diff_weight_string( var1, **kwargs), self.get_diff_weight_string( var2, **kwargs), self.get_weight_string(**kwargs) )
 
     def get_weight_func(self, **kwargs):
         '''construct a lambda function that evaluates the weight in terms of the event.p_C coefficient vector using the kwargs as WC
