@@ -238,7 +238,7 @@ class LeptonSF:
 
 if __name__ == "__main__":
 
-    sigma = 1
+    sigma = 0
     print "2016, medium"
     LSF = LeptonSF(year=2016, ID="medium")
     print LSF.getSF(11, 10, 1, sigma=sigma)
