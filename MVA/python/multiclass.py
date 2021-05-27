@@ -22,7 +22,7 @@ args = argParser.parse_args()
 
 if args.add_LSTM:   args.name+="_LSTM"
 input_postfix = ''
-if args.small:      
+if args.small:
     args.name    +="_small"
     input_postfix = '_small'
 
@@ -44,11 +44,11 @@ import pandas as pd
 #########################################################################################
 # variable definitions
 
-import Analysis.Tools.user as user 
+import Analysis.Tools.user as user
 
 # directories
 plot_directory   = os.path.join( user. plot_directory, 'MVA', args.name, args.config )
-output_directory = os.path.join( args.output_directory, 'models', args.name, args.config) 
+output_directory = os.path.join( args.output_directory, 'models', args.name, args.config)
 
 # fix random seed for reproducibility
 np.random.seed(1)
@@ -84,7 +84,7 @@ if args.small:
 X  = dataset[:,0:n_var_flat]
 
 # regress FI
-Y = dataset[:, n_var_flat] 
+Y = dataset[:, n_var_flat]
 
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
@@ -166,10 +166,10 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3) # patien
 
 # train the model
 batch_size = 1024*6
-history = model.fit(training_data, 
-                    Y_train, 
+history = model.fit(training_data,
+                    Y_train,
                     sample_weight = None,
-                    epochs=500, 
+                    epochs=500,
                     batch_size=batch_size,
                     #verbose=0, # switch to 1 for more verbosity, 'silences' the output
                     #validation_split=0.1
@@ -177,6 +177,10 @@ history = model.fit(training_data,
                     callbacks=[callback],
                    )
 print('training finished')
+
+# plot the metrics
+from plot_metrics import plot_metrics
+plot_metrics(history, plot_directory)
 
 # saving
 if not os.path.exists(output_directory):
