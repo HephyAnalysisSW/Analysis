@@ -73,7 +73,6 @@ reader = sample.treeReader( \
     variables =  config.read_variables,
     sequence  = config.sequence,
     )
-reader.start()
 
 def fill_vector_collection( event, collection_name, collection_varnames, objects, maxN = 100):
     setattr( event, "n"+collection_name, len(objects) )
@@ -93,19 +92,19 @@ def filler( event ):
 
     # copy scalar variables
     for name, func in config.all_mva_variables.iteritems():
-        setattr( event, name, func(r, sample=None) )
+        setattr( event, name, func(r, sample) )
 
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
-        objs = vector_var["func"]( r, sample=None ) 
+        objs = vector_var["func"]( r, sample) 
 
         fill_vector_collection( event, name, vector_var['varnames'], objs )
 
-    # fill FIs
-    if hasattr(config, "FIs"):
-        for FI_name, FI in config.FIs.iteritems():
-            #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
-            setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
+    ## fill FIs
+    #if hasattr(config, "FIs"):
+    #    for FI_name, FI in config.FIs.iteritems():
+    #        #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
+    #        setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
 
 # Create a maker. Maker class will be compiled. 
 
@@ -116,11 +115,11 @@ mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
 for name, vector_var in config.mva_vector_variables.iteritems():
     #mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
     mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
-# FIs
-if hasattr( config, "FIs"):
-    FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
-else:
-    FI_variables = [] 
+## FIs
+#if hasattr( config, "FIs"):
+#    FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
+#else:
+#    FI_variables = [] 
 
 tmp_dir     = ROOT.gDirectory
 
@@ -130,17 +129,27 @@ if not os.path.exists(dirname):
 
 outputfile = ROOT.TFile.Open(output_file, 'recreate')
 
+# keep branches
+if hasattr( config, "keep_branches" ):
+    clonedTree = reader.cloneTree( config.keep_branches, newTreename = "Events", rootfile = outputfile )
+else:
+    clonedTree = None
+
 outputfile.cd()
 maker = TreeMaker(
     sequence  = [ filler ],
     variables = map(TreeVariable.fromString, 
-          mva_variables+FI_variables,  
+          mva_variables#+FI_variables,  
         ),
     treeName = "Events"
     )
 
+if clonedTree is not None:
+    maker = maker.cloneWithoutCompile( externalTree = clonedTree )
+
 tmp_dir.cd()
 
+reader.start()
 maker.start()
 
 logger.info( "Starting event loop" )

@@ -18,7 +18,7 @@ def chunk( tot, n_split, index):
         Return tuple (start, stop)
     '''
         
-    d = tot / n_split
+    d = int( tot / n_split )
     r = tot % n_split
 
     #return [d+1]*r + [d]*(n_split-r)
@@ -143,7 +143,6 @@ class DataGenerator(Sequence):
         n_var_flat     = len(self.mva_variables)
         X  = dataset[:,0:n_var_flat]
 
-        # regress FI
         Y = dataset[:, n_var_flat] 
 
         from sklearn.preprocessing import label_binarize
@@ -212,4 +211,3 @@ if __name__=='__main__':
         jet_LSTM = True,
         input_directory = os.path.expandvars("/scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/"),
         ) 
-
