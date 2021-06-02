@@ -15,10 +15,37 @@ logger = logging.getLogger(__name__)
 ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/Analysis/Tools/scripts/tdrstyle.C")
 ROOT.setTDRStyle()
 
-def add_histos( l ):
-    res = l[0].Clone()
-    for h in l[1:]: res.Add(h)
-    return res
+def chunk( tot, n_split, index):
+    ''' Implements split of number into n_split chunks
+        https://math.stackexchange.com/questions/2975936/split-a-number-into-n-numbers
+        Return tuple (start, stop)
+    '''
+        
+    d = int( tot / n_split )
+    r = tot % n_split
+
+    #return [d+1]*r + [d]*(n_split-r)
+    if index<r:
+        return ( (d+1)*index, (d+1)*(index+1) )
+    else:
+        return ( (d+1)*r + d*(index-r), (d+1)*r + d*(index-r+1) )
+
+# FIXME ... if you were looking for add_histos, please use sum_histos 
+#def add_histos( l ):
+#    res = l[0].Clone()
+#    for h in l[1:]: res.Add(h)
+#    return res
+
+def sum_histos( histos ):
+
+    res = histos[0].Clone()
+
+    for histo in histos[1:]:
+        if not histo.GetNbinsX() == res.GetNbinsX():
+            raise ValueError("Inconsistent binning!")
+        res.Add( histo )
+
+    return res 
 
 def natural_sort(list, key=lambda s:s):
     """
@@ -38,12 +65,12 @@ def natural_sort(list, key=lambda s:s):
 
     return lc
 
-def getCouplingFromName(name, coupling):
-    if "%s_"%coupling in name:
-        l = name.split('_')
-        return float(l[l.index(coupling)+1].replace('p','.').replace('m','-'))
-    else:
-        return 0.
+#def getCouplingFromName(name, coupling):
+#    if "%s_"%coupling in name:
+#        l = name.split('_')
+#        return float(l[l.index(coupling)+1].replace('p','.').replace('m','-'))
+#    else:
+#        return 0.
 
 def dRCleaning( col1, col2, dR):
     'Clean col1 with col2'
@@ -58,7 +85,6 @@ def dRCleaning( col1, col2, dR):
             res.append(o1)
     return res
     
-
 def bestDRMatchInCollection(l, coll, deltaR = 0.2, deltaRelPt = 0.5 ):
     lst = []
     for l2 in coll:
@@ -78,17 +104,6 @@ def getFileList(dir, histname='histo', maxN=-1):
     if maxN>=0:
         filelist = filelist[:maxN]
     return filelist
-
-def sum_histos( histos ):
-
-    res = histos[0].Clone()
-
-    for histo in histos[1:]:
-        if not histo.GetNbinsX() == res.GetNbinsX():
-            raise ValueError("Inconsistent binning!")
-        res.Add( histo )
-
-    return res 
 
 def getSortedZCandidates(leptons):
     inds = range(len(leptons))
@@ -159,39 +174,39 @@ def checkRootFile(f, checkForObjects=[]):
     rf.Close()
     return good
 
-def getChunks(sample,  maxN=-1):
-    import os, subprocess
-    chunks = [{'name':x} for x in os.listdir(sample.path) if x.startswith(sample.chunkString+'_Chunk') or x==sample.chunkString]
-    chunks=chunks[:maxN] if maxN>0 else chunks
-    sumWeights=0
-    failedChunks=[]
-    goodChunks  =[]
-    const = 'All Events' if sample.isData else 'Sum Weights'
-    for i, s in enumerate(chunks):
-            logfile = "/".join([sample.path, s['name'], sample.skimAnalyzerDir,'SkimReport.txt'])
-#      print logfile
-            if os.path.isfile(logfile):
-                line = [x for x in subprocess.check_output(["cat", logfile]).split('\n') if x.count(const)]
-                assert len(line)==1,"Didn't find normalization constant '%s' in  number in file %s"%(const, logfile)
-                n = int(float(line[0].split()[2]))
-                sumW = float(line[0].split()[2])
-                inputFilename = '/'.join([sample.path, s['name'], sample.rootFileLocation])
-#        print sumW, inputFilename
-                if os.path.isfile(inputFilename) and checkRootFile(inputFilename):
-                    sumWeights+=sumW
-                    s['file']=inputFilename
-                    goodChunks.append(s)
-                else:
-                    failedChunks.append(chunks[i])
-            else:
-                print "log file not found:  ", logfile
-                failedChunks.append(chunks[i])
-#    except: print "Chunk",s,"could not be added"
-    eff = round(100*len(failedChunks)/float(len(chunks)),3)
-    print "Chunks: %i total, %i good (normalization constant %f), %i bad. Inefficiency: %f"%(len(chunks),len(goodChunks),sumWeights,len(failedChunks), eff)
-    for s in failedChunks:
-        print "Failed:",s
-    return goodChunks, sumWeights
+#def getChunks(sample,  maxN=-1):
+#    import os, subprocess
+#    chunks = [{'name':x} for x in os.listdir(sample.path) if x.startswith(sample.chunkString+'_Chunk') or x==sample.chunkString]
+#    chunks=chunks[:maxN] if maxN>0 else chunks
+#    sumWeights=0
+#    failedChunks=[]
+#    goodChunks  =[]
+#    const = 'All Events' if sample.isData else 'Sum Weights'
+#    for i, s in enumerate(chunks):
+#            logfile = "/".join([sample.path, s['name'], sample.skimAnalyzerDir,'SkimReport.txt'])
+##      print logfile
+#            if os.path.isfile(logfile):
+#                line = [x for x in subprocess.check_output(["cat", logfile]).split('\n') if x.count(const)]
+#                assert len(line)==1,"Didn't find normalization constant '%s' in  number in file %s"%(const, logfile)
+#                n = int(float(line[0].split()[2]))
+#                sumW = float(line[0].split()[2])
+#                inputFilename = '/'.join([sample.path, s['name'], sample.rootFileLocation])
+##        print sumW, inputFilename
+#                if os.path.isfile(inputFilename) and checkRootFile(inputFilename):
+#                    sumWeights+=sumW
+#                    s['file']=inputFilename
+#                    goodChunks.append(s)
+#                else:
+#                    failedChunks.append(chunks[i])
+#            else:
+#                print "log file not found:  ", logfile
+#                failedChunks.append(chunks[i])
+##    except: print "Chunk",s,"could not be added"
+#    eff = round(100*len(failedChunks)/float(len(chunks)),3)
+#    print "Chunks: %i total, %i good (normalization constant %f), %i bad. Inefficiency: %f"%(len(chunks),len(goodChunks),sumWeights,len(failedChunks), eff)
+#    for s in failedChunks:
+#        print "Failed:",s
+#    return goodChunks, sumWeights
 
 def getObjFromFile(fname, hname):
     gDir = ROOT.gDirectory.GetName()
@@ -444,6 +459,14 @@ def mapRootFile( rootFile ):
     rf.Map()
     rf.Close()
 
+def nonEmptyFile( f, treeName='Events' ):
+    rf = ROOT.TFile.Open(f)
+    if not rf: return False
+    tree = getattr( rf, treeName )
+    nonEmpty = bool( tree.GetEntries() )
+    rf.Close()
+    return nonEmpty
+
 #def scanRootFile( rootFile, var="nJet", thresh=200 ):
 #    """ uses TChain.Scan() function to check entries for corrupt root files
 #    """
@@ -511,14 +534,6 @@ def mT( p1, p2 ):
 def mTg( l, g, met ):
     mT2 = mTsq( l, g ) + mTsq( l, met ) + mTsq( g, met )
     return sqrt( mT2 )
-
-def nonEmptyFile( f, treeName='Events' ):
-    rf = ROOT.TFile.Open(f)
-    if not rf: return False
-    tree = getattr( rf, treeName )
-    nonEmpty = bool( tree.GetEntries() )
-    rf.Close()
-    return nonEmpty
 
 
 

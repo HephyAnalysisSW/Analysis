@@ -12,21 +12,7 @@ import awkward
 import numpy as np
 import pandas as pd
 
-def chunk( tot, n_split, index):
-    ''' Implements split of number into n_split chunks
-        https://math.stackexchange.com/questions/2975936/split-a-number-into-n-numbers
-        Return tuple (start, stop)
-    '''
-        
-    d = int( tot / n_split )
-    r = tot % n_split
-
-    #return [d+1]*r + [d]*(n_split-r)
-    if index<r:
-        return ( (d+1)*index, (d+1)*(index+1) )
-    else:
-        return ( (d+1)*r + d*(index-r), (d+1)*r + d*(index-r+1) )
-
+from Analysis.Tools.helpers import chunk
 
 from keras.utils import Sequence
 class DataGenerator(Sequence):
