@@ -1,5 +1,7 @@
 import ROOT
 
+from array import *
+
 import shutil
 import os
 
@@ -281,7 +283,7 @@ class cardFileWriter:
             #    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
 
         if shapeFile and not noMCStat:
-            outfile.write('* autoMCStats 0 \n')
+            outfile.write('* autoMCStats 10 \n')
 
         outfile.close()
         print "[cardFileWrite] Written card file %s"%fname
@@ -298,24 +300,24 @@ class cardFileWriter:
         for i_cr, cr in enumerate(self.CR):
             nbins = self.regionMapping[i_cr] + 1
             
-
+            firstBin = 0 
             h_pT_grouped.append(ROOT.TH1F("Bin{}_{}".format(i_cr,hist_object.GetName()), "Bin{}_{}".format(i_cr,hist_object.GetName()), nbins, 0, nbins))
-            firstBin = 0
-            h_pT_grouped[i_cr].SetBinContent(firstBin+1,hist_object.GetBinContent(i_cr+1))
-            h_pT_grouped[i_cr].SetBinError(firstBin+1,hist_object.GetBinError(i_cr+1))
+            # h_pT_grouped.append(ROOT.TH1F("Bin{}_{}".format(i_cr,hist_object.GetName()), "Bin{}_{}".format(i_cr,hist_object.GetName()), binning[nbins]))
             
-            firstBin = 1
-            
+
             corr_SR = self.SR[shift_SR:shift_SR+self.regionMapping[i_cr]]
            
             for i_sr, sr in enumerate(corr_SR) :
-                h_pT_grouped[i_cr].SetBinContent(firstBin+1,hist_object.GetBinContent(nCR+shift_SR+i_sr)) 
-                h_pT_grouped[i_cr].SetBinError(firstBin+1,hist_object.GetBinError(nCR+shift_SR+i_sr)) 
+                h_pT_grouped[i_cr].SetBinContent(firstBin+1,hist_object.GetBinContent(nCR+shift_SR+i_sr+1)) #12+0+{0,1,2,3}
+                h_pT_grouped[i_cr].SetBinError(firstBin+1,hist_object.GetBinError(nCR+shift_SR+i_sr+1)) 
                 
                 firstBin += 1
             shift_SR += len(corr_SR)
 
-        
+
+            h_pT_grouped[i_cr].SetBinContent(firstBin+1,hist_object.GetBinContent(i_cr+1))
+            h_pT_grouped[i_cr].SetBinError(firstBin+1,hist_object.GetBinError(i_cr+1))
+            
         return h_pT_grouped
 
 
@@ -383,7 +385,8 @@ class cardFileWriter:
                         if unc in nuisForProc[process]:
                             if not (unc.lower().count('up') or unc.lower().count('down')):
                                 histos['%s_%sUp'%(process, unc)].SetBinContent(i+1, relUnc*expect)
-                                histos['%s_%sDown'%(process, unc)].SetBinContent(i+1, (2-relUnc)*expect)
+                                # histos['%s_%sDown'%(process, unc)].SetBinContent(i+1, (2-relUnc)*expect)
+                                histos['%s_%sDown'%(process, unc)].SetBinContent(i+1, expect/relUnc)
                             else:
                                 histos['%s_%s'%(process, unc)].SetBinContent(i+1, relUnc*expect)
         # define the file names
@@ -397,16 +400,13 @@ class cardFileWriter:
         # self.niceNames[bins[0]] = 'inclusive bin'
         shift_SR = 0
         for i_bin in xrange(self.nCR) :
-            for process in processes:
-                s_start = self.nCR + shift_SR 
-                self.specifyExpectation(self.bins[i_bin], process, histos[process].GetBinContent(i_bin+1) + histos[process].Integral(s_start,s_start+self.regionMapping[i_bin]-1))
+            s_start = self.nCR + shift_SR 
                 
-                # if i_bin == 1:
-                #     print process
-                #     print s_start
-                #     print s_start+self.regionMapping[i_bin]-1
-                #     print histos[process].GetBinContent(i_bin+1) + histos[process].Integral(s_start,s_start+self.regionMapping[i_bin]-1)
-
+            for process in processes:
+                # s_start = self.nCR + shift_SR 
+                self.specifyExpectation(self.bins[i_bin], process, histos[process].GetBinContent(i_bin+1) + histos[process].Integral(s_start+1,s_start+self.regionMapping[i_bin]))
+                
+                
 
                 #     exit(0)
                 #print "setting expectation to shape file", self.bins[0], process,  histos[process].Integral()
@@ -416,7 +416,7 @@ class cardFileWriter:
             
             shift_SR += self.regionMapping[i_bin]
                 
-            self.specifyObservation(self.bins[i_bin], int(data_obs.GetBinContent(i_bin+1) + data_obs.Integral(s_start,s_start+self.regionMapping[i_bin]-1)))
+            self.specifyObservation(self.bins[i_bin], int(round(data_obs.GetBinContent(i_bin+1) + data_obs.Integral(s_start+1,s_start+self.regionMapping[i_bin]),0) )  )
 
         self.uncertainties = logNormal + nuisances # need to fix things if up/down are already provided
         self.writeToFile(txtFile, shapeFile=rootFile, noMCStat=noMCStat)
