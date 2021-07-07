@@ -80,8 +80,38 @@ class CombineResults:
         self.channels     = self.__getChannelsFromCard( self.txtCardShape )
         
 
+        logger.debug("channels are: {}".format(self.channels))
 
 
+        # set some defaults. If a method gets some of these variables, they will be filled
+        # this safes some time if they are used multiple times
+        self.tRootFile           = None # needed otherwise python looses the pointer to the root file
+        self.tStatOnlyRootFile   = None # needed otherwise python looses the pointer to the root file
+        self.tShapeFile          = None # needed otherwise python looses the pointer to the root file
+        self.binList             = None
+        self.binLabels           = None
+        self.processes           = None
+        self.processList         = None
+        self.fitResults          = None
+        self.statOnlyFitResults  = None
+        self.shapeInputs         = None
+        self.fittedUncertainties = None
+        self.constrain           = None
+        self.nuisances           = None
+        self.correlationHisto    = None
+        self.rateParameter       = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.estimates           = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.uncertainties       = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.uncertaintiesShape  = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.pulls               = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.covarianceHistos    = {"preFit":None, "postFit":None, "preFit_rateParam":None}
+        self.regionHistos        = {"preFit":{"all":None}, "preFit_rateParam":{"all":None}, "postFit":{"all":None}}
+        self.regionFile          = {"preFit":{"all":None}, "preFit_rateParam":{"all":None}, "postFit":{"all":None}}
+        self.modHistos           = None
+
+
+
+        
 
         #this had a different meaning in  ttgamma - try to avoid for SLS - set combinedCard as False
         logger.warning("combinedCard set to False (different to ttgamma)")
@@ -103,15 +133,17 @@ class CombineResults:
             logger.warning( "Continuing with limited options!" )
             self.shapeRootFile = { dir:None for dir in self.channels }
 
+        logger.debug("shapeRootFile are: {}".format(self.shapeRootFile))
+        
 
         # workspace from shape file
         self.rootWorkSpace = cardFile.replace(".txt","_shapeCard.root" )
         if not os.path.exists( self.rootWorkSpace ):
             if createMissingInputs:
-                self.createWorkspace() # run the fit from card inputs
+                self.createWorkspace() # run the fit from card inputs -> result in shapeCard.root
             else:
                 logger.warning( "Root card file of fit result not found: %s"%self.rootWorkSpace )
-                logger.warning( "Creating workspace!" )
+                logger.warning( "Run with create missing input to get it!" )
                 self.rootWorkSpace = None
 
 
@@ -119,6 +151,7 @@ class CombineResults:
         self.fitResult      = cardFile.replace(".txt","_shapeCard_FD.root" )
         if not os.path.exists( self.fitResult ):
             if createMissingInputs:
+                logger.debug("creating fit diagnostics file now") 
                 self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
             else:
                 logger.warning( "Root file of fit result not found: %s"%self.fitResult )
@@ -133,7 +166,6 @@ class CombineResults:
                 logger.warning( "Root file w/ stat-only fit of fit result not found: %s"%self.fitResultStatOnly )
                 logger.warning( "Continuing with limited options!" )
                 self.fitResultStatOnly = None
-
 
         self.txtCardComb         = None
         self.txtCardRebinnedComb = None
@@ -156,31 +188,7 @@ class CombineResults:
         if not os.path.isdir( self.plotDirectory ):
             os.makedirs( self.plotDirectory )
 
-        # set some defaults. If a method gets some of these variables, they will be filled
-        # this safes some time if they are used multiple times
-        self.tRootFile           = None # needed otherwise python looses the pointer to the root file
-        self.tStatOnlyRootFile   = None # needed otherwise python looses the pointer to the root file
-        self.tShapeFile          = None # needed otherwise python looses the pointer to the root file
-        self.binList             = None
-        self.binLabels           = None
-        self.processes           = None
-        self.processList         = None
-        self.fitResults          = None
-        self.statOnlyFitResults  = None
-        self.shapeInputs         = None
-        self.fittedUncertainties = None
-        self.constrain           = None
-        self.nuisances           = None
-        self.correlationHisto    = None
-        self.rateParameter       = {"preFit":None, "postFit":None}
-        self.estimates           = {"preFit":None, "postFit":None}
-        self.uncertainties       = {"preFit":None, "postFit":None}
-        self.uncertaintiesShape  = {"preFit":None, "postFit":None}
-        self.pulls               = {"preFit":None, "postFit":None}
-        self.covarianceHistos    = {"preFit":None, "postFit":None}
-        self.regionHistos        = {"preFit":{"all":None}, "postFit":{"all":None}}
-        self.regionFile          = {"preFit":{"all":None}, "postFit":{"all":None}}
-        self.modHistos           = None
+        
 
 #    def __private( self ):
 #    def public( self ):
@@ -249,6 +257,9 @@ class CombineResults:
 
         print "key: {}".format(key)
 
+        print "="*90
+        print self.tRootFile
+        print "="*90
         # return safed fitResult if available
         if self.fitResults:
             if key and key in self.fitResults.keys(): return self.fitResults[key]
@@ -259,18 +270,12 @@ class CombineResults:
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         if not self.tRootFile:
-            print "do this"
             self.tRootFile = ROOT.TFile( self.fitResult, "READ")
-
+            
         fits   = ["fit_b", "fit_s", "norm_prefit", "norm_fit_s", "norm_fit_b", "nuisances_prefit", "nuisances_prefit_res", "shapes_prefit", "shapes_fit_b", "shapes_fit_s"] # this is not part of our FD - yet , "overall_total_covar", "process_covar", "process_corr"]
         result = {}
-        print fits
-        print "good"
-        print self.fitResult
         for fit in fits:
-            print fit
             result[fit] = copy.deepcopy( self.tRootFile.Get(fit) )
-        print "problem here"
         self.fitResults = result
 
         if key: return self.fitResults[key]
@@ -512,6 +517,8 @@ class CombineResults:
         hists_tmp = {}
         key    = "postFit" if postFit else "preFit"
         subkey = "_".join(map(str,plotBins)) if plotBins else "all"
+        print subkey
+        # exit(0)
 
         if not statOnly and subkey in self.regionHistos[key].keys() and self.regionHistos[key][subkey]:
             hists = self.regionHistos[key][subkey]
@@ -558,8 +565,9 @@ class CombineResults:
 
                     if type( hists[dir][hist] ) == ROOT.TGraphAsymmErrors:
                         for i in range(dataHist.GetNbinsX()):
+                            print "data value: {} +/- {}".format(hists[dir][hist].Eval(i+0.5),math.sqrt(hists[dir][hist].Eval(i+0.5)))
                             dataHist.SetBinContent(i+1, hists[dir][hist].Eval(i+0.5))
-                            # dataHist.SetBinError(i+1, math.sqrt(hists[dir][hist].Eval(i+0.5)))
+                            dataHist.SetBinError(i+1, math.sqrt(hists[dir][hist].Eval(i+0.5)))
                         hists[dir]["data"] = dataHist
                     else:
                         hists[dir]["data"] = hists[dir][hist]
@@ -591,7 +599,7 @@ class CombineResults:
             
             
             labels = [
-                str(k) for k in range(0,56)
+                str(k) for k in range(0,88)
 		      ]
             # print len(labels)
 	    #labels = ['allCR1aX', 'eCR1aX','muCR1aX','allCR1aY', 'eCR1aY', 'muCR1aY','allCR1bX','eCR1bX','muCR1bX','allCR1bY','eCR1bY','muCR1bY','allCR1cX','eCR1cX','muCR1cX','allCR1cY','eCR1cY','muCR1cY','allCR2aX', 'eCR2aX','muCR2aX','allCR2aY', 'eCR2aY', 'muCR2aY','allCR2bX','eCR2bX','muCR2bX','allCR2bY','eCR2bY','muCR2bY','allCR2cX','eCR2cX','muCR2cX','allCR2cY','eCR2cY','muCR2cY']
@@ -649,47 +657,7 @@ class CombineResults:
 
                 hists[dir]["total_background"].Scale(0)
 
-        # print "nuisances: {}".format(nuisances)
-        # print "bkgSubstracted: {}".format(bkgSubstracted)
-        # print "Bin11" 
-        # print hists["Bin11"]["ZInv"].GetNbinsX() 
-        # print "8"*90
 
-
-
-
-
-
-
-
-
-
-
-        # for hist in histList:
-        #update plot
-        # temp = ROOT.TH1F(hist,"",56,0,55)
-        # for c in range(temp.GetNbinsX()) :
-        #     temp.SetBinContent(c+1,0.0)
-
-        # # for b in range(1,temp.GetNbinsX()) :
-        # temp.SetBinContent(10,hists[dir][hist].GetBinContent(1))
-        # temp.SetBinContent(12,hists[dir][hist].GetBinContent(2))
-        # temp.SetBinContent(20,hists[dir][hist].GetBinContent(3))
-
-        # hists[dir][hist] = temp.Clone()
-                
-
-        # print hists.keys()
-        # returnHists = {}
-        # for comb_regions in hists.keys() :
-        #     for process in  hists[comb_regions].keys() :
-        #         returnHists[process] = temp.Clone()
-        #         returnHists[process].SetBinContent(10,hists[comb_regions][process].GetBinContent(1))
-        #         returnHists[process].SetBinContent(12,hists[comb_regions][process].GetBinContent(2))
-        #         returnHists[process].SetBinContent(20,hists[comb_regions][process].GetBinContent(3))
-
-
-        # exit(0)
         return hists
 
     def createWorkspace( self, options="" ):
@@ -708,7 +676,7 @@ class CombineResults:
         print "Executing command: %s"%cmd
         os.system(cmd)
 
-        self.rootWorkSpace = cardFile.replace(".txt","_shapeCard.root" )
+        self.rootWorkSpace = self.txtCard.replace(".txt","_shapeCard.root")
         shutil.copyfile(uniqueDirname+"/higgsCombineTest.MultiDimFit.mH120.root", self.rootWorkSpace)
 
         shutil.rmtree(uniqueDirname)
@@ -726,7 +694,7 @@ class CombineResults:
             print "Workspace not availabe, creating it!"
             self.createWorkspace() # run the fit from card inputs
 
-        cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, "--profilingMode none" if statOnly else "")
+        cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics -t -1 --expectSignal 1 --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, "--profilingMode none" if statOnly else "")
         print "Executing command: %s"%cmd
         os.system(cmd)
 
@@ -1010,8 +978,8 @@ class CombineResults:
             binLabels[dir] = binLabel
 
         self.binLabels = copy.copy(binLabels)
-# labelFormater   = lambda x:x.split(" ")[1].split(":")[0]
-# Bin0 all CT1>=300&&CT1<400&&HT>=400&&ISRJets_pt>=100&&l1_charge==-1&&l1_eta>=-1.5&&l1_eta<1.5&&l1_pt>=30&&mt>=0&&mt<60&&nHardBJets==0&&nSoftBJets==0
+        # labelFormater   = lambda x:x.split(" ")[1].split(":")[0]
+        # Bin0 all CT1>=300&&CT1<400&&HT>=400&&ISRJets_pt>=100&&l1_charge==-1&&l1_eta>=-1.5&&l1_eta<1.5&&l1_pt>=30&&mt>=0&&mt<60&&nHardBJets==0&&nSoftBJets==0
 
         if labelFormater:
             for dir in [self.channels[0]]:
@@ -1119,9 +1087,9 @@ class CombineResults:
 
         # return safed pulls if available
         key = "postFit" if postFit else "preFit"
-        if self.pulls[key] and not statOnly:
-            if nuisance: return self.pulls[key][nuisance]
-            else:        return self.pulls[key]
+        # if self.pulls[key] and not statOnly:
+        #     if nuisance: return self.pulls[key][nuisance]
+        #     else:        return self.pulls[key]
 
         dirName = "fit_b" if self.bkgOnly else "fit_s"
         if statOnly: fit = self.__getStatOnlyFitObject( key=dirName )
@@ -1633,9 +1601,9 @@ class CombineResults:
             histoList   += [ [regionHistos["data"]] ]
             ratioHistos += [ (1,0) ]
             i_n         += 1
-	# for searches,plot signal Histo on top, for search regions, may be not plot them
+	    # for searches,plot signal Histo on top, for search regions, may be not plot them
         histoList   += [ [regionHistos["signal"]] ]
-	#i_n         += 1
+	    #i_n         += 1
         # add nuisance histos at last
         for n in nuisances:
             if n in regionHistos.keys() and isinstance( regionHistos[n], dict ):
@@ -1675,9 +1643,9 @@ class CombineResults:
             self.createWorkspace() # run the fit from card inputs
 
         cd             = "cd %s"%uniqueDirname
-        robustFit      = "combineTool.py -M Impacts -m 125 -d %s --doInitialFit --robustFit 1 %s"%(self.rootWorkSpace, options)
-        impactFits     = "combineTool.py -M Impacts -m 125 -d %s --robustFit 1 --doFits --parallel %i %s"%( self.rootWorkSpace, cores, options )
-        extractImpact  = "combineTool.py -M Impacts -m 125 -d %s -o impacts.json"%self.rootWorkSpace
+        robustFit      = "combineTool.py -M Impacts -t -1 --expectSignal 1 -m 125 -d %s --doInitialFit --robustFit 1 %s"%(self.rootWorkSpace, options)
+        impactFits     = "combineTool.py -M Impacts -t -1 --expectSignal 1 -m 125 -d %s --robustFit 1 --doFits --parallel %i %s"%( self.rootWorkSpace, cores, options )
+        extractImpact  = "combineTool.py -M Impacts -t -1 --expectSignal 1 -m 125 -d %s -o impacts.json"%self.rootWorkSpace
         plotImpacts    = "plotImpacts.py -i impacts.json -o %s"%plotName
         cmd            = ";".join( [ cd, robustFit, impactFits, extractImpact, plotImpacts ] )
 
