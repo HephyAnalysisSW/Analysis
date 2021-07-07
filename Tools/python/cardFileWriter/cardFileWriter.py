@@ -283,7 +283,7 @@ class cardFileWriter:
             #    outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
 
         if shapeFile and not noMCStat:
-            outfile.write('* autoMCStats 0 \n')
+            outfile.write('* autoMCStats 10 \n')
 
         outfile.close()
         print "[cardFileWrite] Written card file %s"%fname
