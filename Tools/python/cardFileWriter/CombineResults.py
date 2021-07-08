@@ -511,6 +511,7 @@ class CombineResults:
         if   postFit and not self.bkgOnly: dirName = "shapes_fit_s"
         elif postFit and     self.bkgOnly: dirName = "shapes_fit_b"
         else:                              dirName = "shapes_prefit"
+	print "dir name:", dirName
 
         if statOnly: fit = self.__getStatOnlyFitObject( key=dirName )
         else:        fit = self.__getFitObject( key=dirName )
@@ -521,12 +522,12 @@ class CombineResults:
             print rateParams, rateParamInfo
 
         for dir in self.channels:
-            histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if x.GetName() != "data" ] + [ "data" ]
+            #histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if (x.GetName() != "data" and x.GetName() != "signal")] + [ "data" ] 
+            histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if x.GetName() != "data" ] + [ "data" ] 
             histList = filter( lambda hist: "total_covar" not in hist and "process_" not in hist, histList )
             histList.sort()
             hists[dir]    = {}
             for hist in histList:
-
                 hists[dir][hist] = fit.Get(dir+"/"+hist).Clone()
 
                 if postFitRateParams and rateParams:
@@ -584,7 +585,46 @@ class CombineResults:
 
                 hists[dir].update( self.getNuisanceHistosFromShapeCard( postFit=postFit, plotBins=None, bkgSubstracted=bkgSubstracted, nuisances=[n for n in nuisances if n != "r"], directory=dir )[dir] )
 
-            labels = self.getBinLabels( labelFormater=labelFormater )[dir]
+            #labels = self.getBinLabels( labelFormater=labelFormater )[dir]
+	    labels = ['allSR1vlaX',  'allSR1laX', 'allSR1maX',  'allSR1haX',
+		      'allSR1vlaY',  'allSR1laY', 'allSR1maY',  'allSR1haY',
+		      'allSR1vlbX',  'allSR1lbX', 'allSR1mbX',  'allSR1hbX',
+		      'allSR1vlbY',  'allSR1lbY', 'allSR1mbY',  'allSR1hbY',
+		      'allSR1lcX', 'allSR1mcX',  'allSR1hcX',
+		      'allSR1lcY', 'allSR1mcY',  'allSR1hcY',
+		      'allSR2vlaX',  'allSR2laX', 'allSR2maX',  'allSR2haX',
+		      'allSR2vlaY',  'allSR2laY', 'allSR2maY',  'allSR2haY',
+		      'allSR2vlbX',  'allSR2lbX', 'allSR2mbX',  'allSR2hbX',
+		      'allSR2vlbY',  'allSR2lbY', 'allSR2mbY',  'allSR2hbY',
+		      'allSR2lcX', 'allSR2mcX',  'allSR2hcX',
+		      'allSR2lcY', 'allSR2mcY',  'allSR2hcY'
+		      ]
+	#    labels = ['allCR1maX',  'allCR1haX', 
+	#	      'allCR1maY',  'allCR1haY', 
+	#	      'allCR1mbX',  'allCR1hbX', 
+	#	      'allCR1mbY',  'allCR1hbY', 
+	#	      'allCR1mcX',  'allCR1hcX', 
+	#	      'allCR1mcY',  'allCR1hcY', 
+	#	      'allCR2maX',  'allCR2haX', 
+	#	      'allCR2maY',  'allCR2haY', 
+	#	      'allCR2mbX',  'allCR2hbX', 
+	#	      'allCR2mbY',  'allCR2hbY', 
+	#	      'allCR2mcX',  'allCR2hcX', 
+	#	      'allCR2mcY',  'allCR2hcY']
+	#    labels = ['allCR1maX', 'eCR1maX','muCR1maX', 'allCR1haX', 'eCR1haX', 'muCR1haX',
+	#	      'allCR1maY', 'eCR1maY','muCR1maY', 'allCR1haY', 'eCR1haY', 'muCR1haY',
+	#	      'allCR1mbX', 'eCR1mbX','muCR1mbX', 'allCR1hbX', 'eCR1hbX', 'muCR1hbX',
+	#	      'allCR1mbY', 'eCR1mbY','muCR1mbY', 'allCR1hbY', 'eCR1hbY', 'muCR1hbY',
+	#	      'allCR1mcX', 'eCR1mcX','muCR1mcX', 'allCR1hcX', 'eCR1hcX', 'muCR1hcX',
+	#	      'allCR1mcY', 'eCR1mcY','muCR1mcY', 'allCR1hcY', 'eCR1hcY', 'muCR1hcY',
+	#	      'allCR2maX', 'eCR2maX','muCR2maX', 'allCR2haX', 'eCR2haX', 'muCR2haX',
+	#	      'allCR2maY', 'eCR2maY','muCR2maY', 'allCR2haY', 'eCR2haY', 'muCR2haY',
+	#	      'allCR2mbX', 'eCR2mbX','muCR2mbX', 'allCR2hbX', 'eCR2hbX', 'muCR2hbX',
+	#	      'allCR2mbY', 'eCR2mbY','muCR2mbY', 'allCR2hbY', 'eCR2hbY', 'muCR2hbY',
+	#	      'allCR2mcX', 'eCR2mcX','muCR2mcX', 'allCR2hcX', 'eCR2hcX', 'muCR2hcX',
+	#	      'allCR2mcY', 'eCR2mcY','muCR2mcY', 'allCR2hcY', 'eCR2hcY', 'muCR2hcY']
+	#    labels = ['allCR1aX', 'allCR1aY', 'allCR1bX','allCR1bY','allCR1cX','allCR1cY','allCR2aX', 'allCR2aY', 'allCR2bX','allCR2bY','allCR2cX','allCR2cY']
+	    #labels = ['allCR1aX', 'eCR1aX','muCR1aX','allCR1aY', 'eCR1aY', 'muCR1aY','allCR1bX','eCR1bX','muCR1bX','allCR1bY','eCR1bY','muCR1bY','allCR1cX','eCR1cX','muCR1cX','allCR1cY','eCR1cY','muCR1cY','allCR2aX', 'eCR2aX','muCR2aX','allCR2aY', 'eCR2aY', 'muCR2aY','allCR2bX','eCR2bX','muCR2bX','allCR2bY','eCR2bY','muCR2bY','allCR2cX','eCR2cX','muCR2cX','allCR2cY','eCR2cY','muCR2cY']
             if labels:
                 for h_key, h in hists[dir].iteritems():
                     if isinstance( h, dict ):
@@ -1572,7 +1612,8 @@ class CombineResults:
                         tmp.SetBinContent( i+1, regionHistos[p].GetBinContent(i+1) )
                         self.__copyHistoSettings( fromHist=regionHistos[p], toHist=tmp, plotBins=None )
                     else:
-                        tmp = regionHistos["signal"].Clone()
+                        tmp = regionHistos["WJets"].Clone()
+                        #tmp = regionHistos["signal"].Clone()
                         tmp.Scale(0.)
                         logger.info( "Adding default histogram for process %s in bin %i"%(p, i) )
                     if i != 0:
@@ -1602,7 +1643,9 @@ class CombineResults:
             histoList   += [ [regionHistos["data"]] ]
             ratioHistos += [ (1,0) ]
             i_n         += 1
-
+	# for searches,plot signal Histo on top, for search regions, may be not plot them
+        histoList   += [ [regionHistos["signal"]] ]
+	#i_n         += 1
         # add nuisance histos at last
         for n in nuisances:
             if n in regionHistos.keys() and isinstance( regionHistos[n], dict ):
@@ -1610,11 +1653,13 @@ class CombineResults:
                 ratioHistos += [ ((i_n)*2,0),((i_n)*2+1,0) ]
                 i_n         += 1
 
-        for i in range( regionHistos["signal"].GetNbinsX() ):
+        for i in range( regionHistos["WJets"].GetNbinsX() ):
+        #for i in range( regionHistos["signal"].GetNbinsX() ):
             for h_list in histoList:
                 for h in h_list:
                     # make that more dynamic FIXME
-                    h.GetXaxis().SetBinLabel( i+1, regionHistos["signal"].GetXaxis().GetBinLabel( i+1 ) )
+                    h.GetXaxis().SetBinLabel( i+1, regionHistos["WJets"].GetXaxis().GetBinLabel( i+1 ) )
+                    #h.GetXaxis().SetBinLabel( i+1, regionHistos["signal"].GetXaxis().GetBinLabel( i+1 ) )
                     h.LabelsOption("v","X") #"vu" for 45 degree labels
 
         return histoList, ratioHistos
