@@ -255,8 +255,11 @@ class cardFileWriter:
 
             if shapeFile :
                 for i_cr, cr in enumerate(self.CR):
-                        outfile.write('%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0], str(p[1]), str(p[2]) ))
-                        print '%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0], str(p[1]), str(p[2]) )
+                        if "And" in p[0] :
+                            outfile.write('%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0].split("And")[0], str(p[1]), str(p[2]) ))
+                            outfile.write('%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0].split("And")[1], str(p[1]), str(p[2]) ))
+                        else :
+                            outfile.write('%s_norm_%s rateParam %s %s %s %s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0], str(p[1]), str(p[2]) ))
                         
                         
             else :
