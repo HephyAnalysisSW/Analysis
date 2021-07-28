@@ -50,6 +50,10 @@ elif os.environ['USER'] in ['ttschida']:
     cache_directory        = "/afs/hephy.at/data/cms04/ttschida/cache/"
     cern_proxy_certificate = "/afs/cern.ch/user/t/ttschida/private/.proxy"
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/ttschida/'
+elif os.environ['USER'] in ['dennis.schwarz']:
+    plot_directory         = "/mnt/hephy/cms/dennis.schwarz/www/tWZ/"
+    cache_directory        = "/users/dennis.schwarz/public/cache/"
+    cern_proxy_certificate = "/users/dennis.schwarz/private/.proxy"
 else:
     plot_directory         = "/afs/hephy.at/user/%s/%s/www/Analysis/"%(os.environ['USER'][0],os.environ['USER'])
     cache_directory        = "/afs/hephy.at/data/%s01/Analysis/"%os.environ['USER']
