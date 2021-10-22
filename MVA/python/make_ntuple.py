@@ -54,7 +54,7 @@ count  = int(sample.getYieldFromDraw( weightString="(1)" )["val"])
 logger.info( "Found %i events for sample %s", count, sample.name )
 
 if args.small:
-    sample.reduceFiles(to=1)
+    sample.reduceFiles(to=5)
     subDir += '_small'
 
 # selection
@@ -74,9 +74,9 @@ reader = sample.treeReader( \
     sequence  = config.sequence,
     )
 
-def fill_vector_collection( event, collection_name, collection_varnames, objects, maxN = 100):
+def fill_vector_collection( event, collection_name, collection_varnames, objects, nMax = 100):
     setattr( event, "n"+collection_name, len(objects) )
-    for i_obj, obj in enumerate(objects[:maxN]):
+    for i_obj, obj in enumerate(objects[:nMax]):
         for var in collection_varnames:
             if var in obj.keys():
                 if type(obj[var]) == type("string"):
@@ -97,14 +97,8 @@ def filler( event ):
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
         objs = vector_var["func"]( r, sample) 
-
-        fill_vector_collection( event, name, vector_var['varnames'], objs )
-
-    ## fill FIs
-    #if hasattr(config, "FIs"):
-    #    for FI_name, FI in config.FIs.iteritems():
-    #        #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
-    #        setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
+        #print name, objs, vector_var['varnames']
+        fill_vector_collection( event, name, vector_var['varnames'], objs, nMax = vector_var['nMax'] if vector_var.has_key('nMax') else None )
 
 # Create a maker. Maker class will be compiled. 
 
@@ -114,7 +108,7 @@ mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
 # vector variables, if any
 for name, vector_var in config.mva_vector_variables.iteritems():
     #mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
-    mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
+    mva_variables.append ( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var['nMax'] if vector_var.has_key('nMax') else None ) )
 ## FIs
 #if hasattr( config, "FIs"):
 #    FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
@@ -138,10 +132,8 @@ else:
 outputfile.cd()
 maker = TreeMaker(
     sequence  = [ filler ],
-    variables = map(TreeVariable.fromString, 
-          mva_variables#+FI_variables,  
-        ),
-    treeName = "Events"
+    variables = [ TreeVariable.fromString(var) if type(var)==type("") else var for var in  mva_variables], 
+    treeName = "Events",
     )
 
 if clonedTree is not None:

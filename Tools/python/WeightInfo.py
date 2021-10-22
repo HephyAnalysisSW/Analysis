@@ -58,15 +58,21 @@ class WeightInfo:
     def get_ndof( nvar, order ):
         return sum( [ int(scipy.special.binom(nvar + o - 1, o)) for o in xrange(order+1) ] )
 
+    # static method to make combinations 
+    @staticmethod
+    def make_combinations( variables, order ):
+        combinations = []
+        for o in xrange(order+1):
+            combinations.extend( list(itertools.combinations_with_replacement( variables, o )) )
+        return combinations
+
     # compute combinations on demand
     @property
     def combinations( self ):
         if hasattr( self, "_combinations"):
             return self._combinations
         else:
-            self._combinations = []
-            for o in xrange(self.order+1):
-                self._combinations.extend( list(itertools.combinations_with_replacement( self.variables, o )) )
+            self._combinations = self.make_combinations( self.variables, self.order )
             return self._combinations
 
     def weight_string_WC( self ):
@@ -307,8 +313,10 @@ class WeightInfo:
            in terms of the p_C coefficient vector using the kwargs as WC
         '''
 
-        if var not in self.variables:
+        if type(var)==type("") and var not in self.variables:
             raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
+        if type(var)==tuple and not all( v in self.variables for v in var ):
+            raise ValueError( "One variable of %r not in list of variables %r" % (var, self.variables) )
 
         # add the arguments from the ref-point 
         self.set_default_args( kwargs )
@@ -361,8 +369,10 @@ class WeightInfo:
         '''construct a lambda function that evaluates the diff weight in terms of the event.p_C coefficient vector using the kwargs as WC
         '''
 
-        if var not in self.variables:
-            raise ValueError( "Variable %s not in gridpack: %r" % ( var, self.variables ) ) 
+        if type(var)==type("") and var not in self.variables:
+            raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
+        if type(var) == tuple and not all( v in self.variables for v in var ):
+            raise ValueError( "One variable of %r not in list of variables %r" % (var, self.variables) )
         
         # add the arguments from the ref-point 
         self.set_default_args( kwargs )
