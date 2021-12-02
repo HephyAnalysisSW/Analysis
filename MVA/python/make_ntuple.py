@@ -64,13 +64,16 @@ if hasattr( config, "selectionString"):
 else:
     logger.info( "Do not use selectionstring" )
 
+if hasattr(sample, "selectionString"):
+    logger.info( "Sample has %s", sample.selectionString) 
+
 # where the output goes
 output_file  = os.path.join( args.output_directory, "MVA-training", subDir, sample.name, sample.name + ".root" )
 
 # reader
 reader = sample.treeReader( \
     #variables = map( TreeVariable.fromString, config.read_variables),
-    variables =  config.read_variables,
+    variables = config.read_variables + ( sample.read_variables if hasattr( sample, "read_variables") else []),
     sequence  = config.sequence,
     )
 
@@ -133,7 +136,7 @@ outputfile.cd()
 maker = TreeMaker(
     sequence  = [ filler ],
     variables = [ TreeVariable.fromString(var) if type(var)==type("") else var for var in  mva_variables], 
-    treeName = "Events",
+    treeName  = "Events",
     )
 
 if clonedTree is not None:
