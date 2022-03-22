@@ -380,17 +380,17 @@ if __name__ == "__main__":
     #print BTagEff.getSF(5, 400, -2)[0]
     #del BTagEff
 
-    print "2017"
-    BTagEff = BTagEfficiency( year='UL2017',tagger="DeepCSV" )
-    print BTagEff.getSF(5, 100., 1.5)[0]
-    print BTagEff.getSF(5, 100., -1.5)[0]
-    print BTagEff.getSF(5, 100., 2.0)[0]
-    print BTagEff.getSF(5, 100., -2.0)[0]
-    print BTagEff.getSF(5, 400., 1.5)[0]
-    print BTagEff.getSF(5, 400., -1.5)[0]
-    print BTagEff.getSF(5, 400., 2.0)[0]
-    print BTagEff.getSF(5, 400., -2.0)[0]
-    del BTagEff
+    #print "2017"
+    #BTagEff = BTagEfficiency( year=2017,tagger="DeepCSV" )
+    #print BTagEff.getSF(5, 100., 1.5)[0]
+    #print BTagEff.getSF(5, 100., -1.5)[0]
+    #print BTagEff.getSF(5, 100., 2.0)[0]
+    #print BTagEff.getSF(5, 100., -2.0)[0]
+    #print BTagEff.getSF(5, 400., 1.5)[0]
+    #print BTagEff.getSF(5, 400., -1.5)[0]
+    #print BTagEff.getSF(5, 400., 2.0)[0]
+    #print BTagEff.getSF(5, 400., -2.0)[0]
+    #del BTagEff
 
     #print "2018"
     #BTagEff = BTagEfficiency( year=2018,tagger="DeepCSV" )
