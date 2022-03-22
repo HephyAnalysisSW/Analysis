@@ -368,6 +368,7 @@ class btagEfficiency_1d:
 
 
 if __name__ == "__main__":
+	pass
     #print "2016"
     #BTagEff = BTagEfficiency( year=2016,tagger="DeepCSV" )
     #print BTagEff.getSF(5, 100, 1.5)[0]
