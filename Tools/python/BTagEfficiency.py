@@ -207,7 +207,7 @@ class BTagEfficiency:
 
         logger.info ( "Loading scale factors from %s", self.scaleFactorFile )
 	self.correction = _core.CorrectionSet.from_file(self.scaleFactorFile)
-	print "WP: ", self.WP
+	#print "WP: ", self.WP
 	#self.evaltr = correction[self.WP]
 		
         #ROOT.gSystem.Load( 'libCondFormatsBTauObjects' ) 
@@ -282,10 +282,10 @@ class BTagEfficiency:
 
         if abs(pdgId)==5 or abs(pdgId)==4: #SF for b/c
 	    WP = self.WP + '_comb'
-	    print WP, " is the selected WP"
-	    print "self.WP: ", self.WP, "WP", WP
+	    #print WP, " is the selected WP"
+	    #print "self.WP: ", self.WP, "WP", WP
 	    self.evaltr = self.correction[WP]
-	    print "bla bla: ", self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
+	    #print "bla bla: ", self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
             sf      	= sf_fs*self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
             sf_b_d      = sf_fs*self.evaltr.evaluate('down',    'M', abs(pdgId) , abs(eta), pt)
             sf_b_u      = sf_fs*self.evaltr.evaluate('up',      'M', abs(pdgId) , abs(eta), pt)
@@ -294,8 +294,8 @@ class BTagEfficiency:
         else: #SF for light flavours
 	    WP = self.WP + '_incl'
 	    self.evaltr = self.correction[WP]
-	    print "self.WP: ", self.WP, "WP", WP
-	    print "incl: ",  self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
+	    #print "self.WP: ", self.WP, "WP", WP
+	    #print "incl: ",  self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
             sf      	= sf_fs*self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
             sf_b_d  = 1.
             sf_b_u  = 1.
@@ -331,7 +331,7 @@ class BTagEfficiency:
         if self.fastSim:
             return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u, sf*sf_fs_u/sf_fs, sf*sf_fs_d/sf_fs)
         else:
-	    print 'SFs extracted from POG BTag file: ', sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u
+	    #print 'SFs extracted from POG BTag file: ', sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u
             return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u)
 
     def addBTagEffToJet(self, j):

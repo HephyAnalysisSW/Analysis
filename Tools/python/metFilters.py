@@ -1,22 +1,24 @@
 # MetFilter Analysis Recommendations according to https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2
 # Flag_BadChargedCandidateFilter is not recommended anymore, under review
 # https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFiltersRun2
+# adding Flag_BadPFMuonDzFilter for UL2016 and Flag_eeBadScFilter applies to data & MC both
+def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBadChargedCandidate=True, skipBadPFMuon=False, skipVertexFilter=False, skipWeight=False, skipECalFilter=False, skipULFilter = False):
 
-def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBadChargedCandidate=True, skipBadPFMuon=False, skipVertexFilter=False, skipWeight=False, skipECalFilter=False):
-
-    if year in [2016, "Run2016"]:
+    if year in [2016, "Run2016", "2016preVFP", "2016postVFP"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
+	print "better be here %s", year
         if not isFastSim:
             filters        += [ "Flag_globalSuperTightHalo2016Filter" ]       # beam halo filter
         filters            += [ "Flag_HBHENoiseFilter" ]                      # HBHE noise filter
         filters            += [ "Flag_HBHENoiseIsoFilter" ]                   # HBHEiso noise filter
         filters            += [ "Flag_EcalDeadCellTriggerPrimitiveFilter" ]   # ECAL TP filter
+	if not skipULFilter:
+		filters            += [ "Flag_BadPFMuonDzFilter" ]	      # new UL Filter
+        filters        	   += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
         if not skipBadChargedCandidate: #recommended to skip for now!!
             filters        += [ "Flag_BadChargedCandidateFilter" ]            # Bad Charged Hadron Filter
-        if isData:
-            filters        += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
 
     elif year in [2017, "Run2017"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
@@ -27,17 +29,18 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         filters            += [ "Flag_EcalDeadCellTriggerPrimitiveFilter" ]   # ECAL TP filter
 #        filters            += [ "Flag_ecalBadCalibReducedMINIAODFilter" ]     # ECAL bad calibration filter update (needs to be re-run on miniAOD)
         filters            += [ "Flag_ecalBadCalibFilter" ]                   # current replacement for Flag_ecalBadCalibReducedMINIAODFilter -> change to Flag_ecalBadCalibFilterv2
+    	filters        	   += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
+	if not skipULFilter:
+        	filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
         if not skipBadChargedCandidate: #recommended to skip for now!!
             filters        += [ "Flag_BadChargedCandidateFilter" ]            # Bad Charged Hadron Filter
-        if isData:
-            filters        += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
         if isFastSim:
             filters        += ["Flag_ecalBadCalibFilter"]
-        else:
-            if not skipECalFilter:
-                filters        += ["Flag_ecalBadCalibFilterV2"]
+        #else:
+        #    if not skipECalFilter:
+        #        filters        += ["Flag_ecalBadCalibFilter"]
 
     elif year in [2018, "Run2018"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
