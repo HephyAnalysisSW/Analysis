@@ -30,9 +30,10 @@ def toFlavourKey(pdgId):
 ##All efficiencies are now with medium WP
 effFile2016postVFPULDeepCSV = 'TTGJets_2016_2j_1l_DeepB_eta_v3.pkl'
 effFile2016preVFPULDeepCSV = 'TTGJets_2016APV_2j_1l_DeepB_eta_v2.pkl'
+effFile2017ULDeepCSV = 'TTLep_pow_CP5_2017_2j_1l_DeepB_eta_v2.pkl'
+effFile2018ULDeepCSV = 'TTGJets_2018_2j_1l_DeepB_eta_v2.pkl'
 #sfFileULDeepCSV  = 'bjets.json'
 sfFileULDeepCSV  = 'btagging.json'
-effFile2017ULDeepCSV = 'TTLep_pow_CP5_2017_2j_1l_DeepB_eta_v2.pkl'
 
 effFile2016DeepCSV = 'TTLep_pow_2016_CP5_2j_1l_DeepB_eta.pkl'
 effFile2017DeepCSV = 'TTLep_pow_2017_CP5_2j_1l_DeepB_eta.pkl'
