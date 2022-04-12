@@ -6,7 +6,6 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
 
     if year in [2016, "Run2016", "2016preVFP", "2016postVFP"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
-	print "better be here %s", year
         if not isFastSim:
             filters        += [ "Flag_globalSuperTightHalo2016Filter" ]       # beam halo filter
         filters            += [ "Flag_HBHENoiseFilter" ]                      # HBHE noise filter
@@ -30,14 +29,13 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
 #        filters            += [ "Flag_ecalBadCalibReducedMINIAODFilter" ]     # ECAL bad calibration filter update (needs to be re-run on miniAOD)
         filters            += [ "Flag_ecalBadCalibFilter" ]                   # current replacement for Flag_ecalBadCalibReducedMINIAODFilter -> change to Flag_ecalBadCalibFilterv2
     	filters        	   += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
+        filters            += ["Flag_ecalBadCalibFilter"]
 	if not skipULFilter:
         	filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
         if not skipBadChargedCandidate: #recommended to skip for now!!
             filters        += [ "Flag_BadChargedCandidateFilter" ]            # Bad Charged Hadron Filter
-        if isFastSim:
-            filters        += ["Flag_ecalBadCalibFilter"]
         #else:
         #    if not skipECalFilter:
         #        filters        += ["Flag_ecalBadCalibFilter"]
@@ -51,17 +49,17 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         filters            += [ "Flag_EcalDeadCellTriggerPrimitiveFilter" ]   # ECAL TP filter
 #        filters            += [ "Flag_ecalBadCalibReducedMINIAODFilter" ]     # ECAL bad calibration filter update (needs to be re-run on miniAOD)
         filters            += [ "Flag_ecalBadCalibFilter" ]                   # current replacement for Flag_ecalBadCalibReducedMINIAODFilter -> change to Flag_ecalBadCalibFilterv2
+        filters            += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
+        filters            += ["Flag_ecalBadCalibFilter"]
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
+	if not skipULFilter:
+        	filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
         if not skipBadChargedCandidate: #recommended to skip for now!!
             filters        += [ "Flag_BadChargedCandidateFilter" ]            # Bad Charged Hadron Filter
-        if isData:
-            filters        += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
-        if isFastSim:
-            filters        += ["Flag_ecalBadCalibFilter"]
-        else:
-            if not skipECalFilter:
-                filters        += ["Flag_ecalBadCalibFilterV2"]
+        #else:
+        #    if not skipECalFilter:
+        #        filters        += ["Flag_ecalBadCalibFilterV2"]
 
     elif year=="RunII":
         return "((year==2016&&{filter_2016})||(year==2017&&{filter_2017})||(year==2018&&{filter_2018}))".format( 
