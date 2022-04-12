@@ -33,6 +33,9 @@ elif os.environ['USER'] in ['phussain']:
 elif os.environ['USER'] in ['priya.hussain']:
     cache_directory        = "/mnt/hephy/cms/priya.hussain/StopsCompressed/cache/"
     plot_directory         = "/mnt/hephy/cms/priya.hussain/www/StopsCompressed/"
+elif os.environ['USER'] in ['dietrich.liko']:
+    cache_directory        = "/groups/hephy/cms/dietrich.liko/StopsCompressed/cache/"
+    plot_directory         = "/groups/hephy/cms/dietrich.liko/www/StopsCompressed/"
 elif os.environ['USER'] in ['rschoefbeck']:
     plot_directory         = "/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/"
     cache_directory        = "/afs/hephy.at/data/rschoefbeck01/cache/"
