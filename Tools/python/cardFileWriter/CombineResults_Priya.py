@@ -23,8 +23,8 @@ txt card file:              PATH/NAME.txt (required)
 shape card file:            PATH/NAME_shapeCard.txt (not required, but should be provided)
 input shapes:               PATH/NAME_shape.root (not required, but should be provided)
 workspace:                  PATH/NAME_shapeCard.root (can be created with this class)
-fitDiagnostics:             PATH/NAME_shapeCard_FD.root (can be created with this class)
-fitDiagnostics (statOnly):  PATH/NAME_shapeCard_staOnly_FD.root (can be created with this class)
+fitDiagnosticsTest:             PATH/NAME_shapeCard_FD.root (can be created with this class)
+fitDiagnosticsTest (statOnly):  PATH/NAME_shapeCard_staOnly_FD.root (can be created with this class)
 
 """
 
@@ -598,9 +598,10 @@ class CombineResults:
 
             
             
-            labels = [
-                str(k) for k in range(0,88)
-		      ]
+        #    labels = [
+        #        str(k) for k in range(0,88)
+	#	      ]
+	    labels = 2*(["VL","L","M","H","VH","CR"]*4+["L","M","H","VH","CR"]*4)
             # print len(labels)
 	    #labels = ['allCR1aX', 'eCR1aX','muCR1aX','allCR1aY', 'eCR1aY', 'muCR1aY','allCR1bX','eCR1bX','muCR1bX','allCR1bY','eCR1bY','muCR1bY','allCR1cX','eCR1cX','muCR1cX','allCR1cY','eCR1cY','muCR1cY','allCR2aX', 'eCR2aX','muCR2aX','allCR2aY', 'eCR2aY', 'muCR2aY','allCR2bX','eCR2bX','muCR2bX','allCR2bY','eCR2bY','muCR2bY','allCR2cX','eCR2cX','muCR2cX','allCR2cY','eCR2cY','muCR2cY']
             
@@ -700,10 +701,10 @@ class CombineResults:
 
         if statOnly:
             self.fitResultStatOnly = self.shapeCard.replace(".txt","_statOnly_FD.root" )
-            shutil.copyfile(uniqueDirname+'/fitDiagnostics.root', self.fitResultStatOnly)
+            shutil.copyfile(uniqueDirname+'/fitDiagnosticsTest.root', self.fitResultStatOnly)
         else:
             self.fitResult         = self.shapeCard.replace(".txt","_FD.root" )
-            shutil.copyfile(uniqueDirname+'/fitDiagnostics.root', self.fitResult)
+            shutil.copyfile(uniqueDirname+'/fitDiagnosticsTest.root', self.fitResult)
 
         print "Created Result%s: %s"%(" (stat-only)" if statOnly else "", self.fitResultStatOnly if statOnly else self.fitResult)
         print "Result%s: r=%s"%(" (stat-only)" if statOnly else "", self.getPulls( postFit=True, statOnly=statOnly )["r"])
@@ -1461,9 +1462,9 @@ class CombineResults:
         shutil.copyfile(uniqueDirname+"/txtCard.txt",         resTxtFile.replace(  ".txt","_fit.txt"))
         shutil.copyfile(uniqueDirname+"/combinedCard.txt",    resShapeFile.replace(".txt","_fit.txt"))
         shutil.copyfile(uniqueDirname+"/combinedCard.root",   resShapeFile.replace(".txt",".root"))
-        shutil.copyfile(uniqueDirname+"/fitDiagnostics.root", resShapeFile.replace(".txt","_FD.root"))
+        shutil.copyfile(uniqueDirname+"/fitDiagnosticsTest.root", resShapeFile.replace(".txt","_FD.root"))
 
-        os.remove(uniqueDirname+"/fitDiagnostics.root")
+        os.remove(uniqueDirname+"/fitDiagnosticsTest.root")
 
         # get number of bins of the rebinning card
         rbResults = CombineResults( cardFile=rebinningCardFile, plotDirectory=self.plotDirectory, year=self.year, bkgOnly=self.bkgOnly, isSearch=self.isSearch )
@@ -1477,7 +1478,7 @@ class CombineResults:
         print "Executing command: %s"%cmd
         os.system(cmd)
 
-        shutil.copyfile(uniqueDirname+"/fitDiagnostics.root", resShapeFile.replace(".txt","_statOnly_FD.root"))
+        shutil.copyfile(uniqueDirname+"/fitDiagnosticsTest.root", resShapeFile.replace(".txt","_statOnly_FD.root"))
 
         shutil.rmtree(uniqueDirname)
 

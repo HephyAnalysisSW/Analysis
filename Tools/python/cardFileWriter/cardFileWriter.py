@@ -587,19 +587,19 @@ class cardFileWriter:
         assert os.path.exists(filename), "File not found: %s"%filename
 
         combineCommand  = "cd "+uniqueDirname+";combine --robustHesse 1 --forceRecreateNLL -M FitDiagnostics --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s %s"%(options,filename)
-        combineCommand +=";python diffNuisances.py  fitDiagnostics.root &> nuisances.txt"
-        combineCommand +=";python diffNuisances.py -a fitDiagnostics.root &> nuisances_full.txt"
+        combineCommand +=";python diffNuisances.py  fitDiagnosticsTest.root &> nuisances.txt"
+        combineCommand +=";python diffNuisances.py -a fitDiagnosticsTest.root &> nuisances_full.txt"
         if bonly:
-          combineCommand +=";python diffNuisances.py -bf latex fitDiagnostics.root &> nuisances.tex"
-          combineCommand +=";python diffNuisances.py -baf latex fitDiagnostics.root &> nuisances_full.tex"
+          combineCommand +=";python diffNuisances.py -bf latex fitDiagnosticsTest.root &> nuisances.tex"
+          combineCommand +=";python diffNuisances.py -baf latex fitDiagnosticsTest.root &> nuisances_full.tex"
         else:
-          combineCommand +=";python diffNuisances.py -f latex fitDiagnostics.root &> nuisances.tex"
-          combineCommand +=";python diffNuisances.py -af latex fitDiagnostics.root &> nuisances_full.tex"
+          combineCommand +=";python diffNuisances.py -f latex fitDiagnosticsTest.root &> nuisances.tex"
+          combineCommand +=";python diffNuisances.py -af latex fitDiagnosticsTest.root &> nuisances_full.tex"
         print combineCommand
         os.system(combineCommand)
 
         if outputFileAddon: outputFileAddon = "_"+outputFileAddon
-        shutil.copyfile(uniqueDirname+'/fitDiagnostics.root', fname.replace('.txt','%s_FD.root'%(outputFileAddon)))
+        shutil.copyfile(uniqueDirname+'/fitDiagnosticsTest.root', fname.replace('.txt','%s_FD.root'%(outputFileAddon)))
 
         tempResFile      = uniqueDirname+"/nuisances%s.txt"%(outputFileAddon)
         tempResFileFull  = uniqueDirname+"/nuisances%s_full.txt"%(outputFileAddon)
