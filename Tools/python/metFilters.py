@@ -3,8 +3,8 @@
 # https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFiltersRun2
 # adding Flag_BadPFMuonDzFilter for UL2016 and Flag_eeBadScFilter applies to data & MC both
 def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBadChargedCandidate=True, skipBadPFMuon=False, skipVertexFilter=False, skipWeight=False, skipECalFilter=False, skipULFilter = False):
-
-    if year in [2016, "Run2016", "2016preVFP", "2016postVFP"]:
+    year = str(year)
+    if year in ["2016", "Run2016", "2016preVFP", "2016postVFP"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
         if not isFastSim:
             filters        += [ "Flag_globalSuperTightHalo2016Filter" ]       # beam halo filter
@@ -19,7 +19,7 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         if not skipBadChargedCandidate: #recommended to skip for now!!
             filters        += [ "Flag_BadChargedCandidateFilter" ]            # Bad Charged Hadron Filter
 
-    elif year in [2017, "Run2017"]:
+    elif year in ["2017", "Run2017"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
         if not isFastSim:
             filters        += [ "Flag_globalSuperTightHalo2016Filter" ]       # beam halo filter
@@ -40,7 +40,7 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         #    if not skipECalFilter:
         #        filters        += ["Flag_ecalBadCalibFilter"]
 
-    elif year in [2018, "Run2018"]:
+    elif year in ["2018", "Run2018"]:
         filters             = [ "Flag_goodVertices" ]                         # primary vertex filter
         if not isFastSim:
             filters        += [ "Flag_globalSuperTightHalo2016Filter" ]       # beam halo filter
