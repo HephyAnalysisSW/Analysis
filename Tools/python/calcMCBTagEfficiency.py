@@ -201,16 +201,16 @@ if __name__ == "__main__":
 
     elif options.year == 2017:
     # 2017
-        #from Samples.nanoAOD.UL17v9_private   import TTGJets as tt17
-        from Samples.nanoAOD.UL17v9_private   import TTLep_pow_CP5 as sample
+        from Samples.nanoAOD.UL17v9_private   import TTGJets as sample
+        #from Samples.nanoAOD.UL17v9_private   import TTLep_pow_CP5 as sample
         #from Samples.nanoAOD.UL17v9_private   import TTSingleLep_pow_CP5 as ttsemil17
         #from Samples.nanoAOD.UL17v9_private   import TTGJets as sample
 	print "sample as a chain, not list: ", sample.name
 	res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.4506', etaBins=etaBins2017 )
-	print "Efficiencies %s 2016:"%sample.name
+	print "Efficiencies %s 2017:"%sample.name
 	print res
 	print
-	writeToFile ( res, "%s_2017_2j_1l_DeepB_eta_v2"%sample.name)
+	writeToFile ( res, "%s_2017_2j_1l_DeepB_eta_v3"%sample.name)
 
         #res = getBTagMCTruthEfficiencies2D( ttsemil17.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.4506', etaBins=etaBins2017 )
         #print "Efficiencies 2017:"

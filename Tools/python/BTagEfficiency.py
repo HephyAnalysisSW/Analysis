@@ -30,7 +30,8 @@ def toFlavourKey(pdgId):
 ##All efficiencies are now with medium WP
 effFile2016postVFPULDeepCSV = 'TTGJets_2016_2j_1l_DeepB_eta_v3.pkl'
 effFile2016preVFPULDeepCSV = 'TTGJets_2016APV_2j_1l_DeepB_eta_v2.pkl'
-effFile2017ULDeepCSV = 'TTLep_pow_CP5_2017_2j_1l_DeepB_eta_v2.pkl'
+#effFile2017ULDeepCSV = 'TTLep_pow_CP5_2017_2j_1l_DeepB_eta_v2.pkl'
+effFile2017ULDeepCSV = 'TTGJets_2017_2j_1l_DeepB_eta_v2.pkl'
 effFile2018ULDeepCSV = 'TTGJets_2018_2j_1l_DeepB_eta_v2.pkl'
 #sfFileULDeepCSV  = 'bjets.json'
 sfFileULDeepCSV  = 'btagging.json'
@@ -121,7 +122,6 @@ class BTagEfficiency:
             ref = reduce(mul, [j['beff']['MC'] for j in bJets] + [1-j['beff']['MC'] for j in nonBJets], 1 )
             if ref>0:
 		result = reduce(mul, [j['beff'][var] for j in bJets] + [1-j['beff'][var] for j in nonBJets], 1 )/ref
-		#print "btag SF: ", result
                 return result 
                 #return reduce(mul, [j['beff'][var] for j in bJets] + [1-j['beff'][var] for j in nonBJets], 1 )/ref
             else:
@@ -184,7 +184,6 @@ class BTagEfficiency:
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2017DeepCSV_FastSim ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2017ULDeepCSV ) )
 	    	self.WP = 'deepCSV'
-		#print "file for sf: ", self.scaleFactorFile
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, sfFile2017DeepJet ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2017DeepJet_FastSim ) )
