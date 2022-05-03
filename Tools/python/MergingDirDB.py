@@ -49,7 +49,13 @@ class MergingDirDB:
 
         # create directory
         if not os.path.isdir( self.directory ):
-            os.makedirs( self.directory ) 
+            # there can be a race condition, if many jobs starts at the same time and also create this 
+            # directory
+            try:
+                os.makedirs( self.directory ) 
+            except OSError as e:
+                if not os.path.isdir( self.directory):
+                    raise e
 
         # new data
         self.data_dict = {}
