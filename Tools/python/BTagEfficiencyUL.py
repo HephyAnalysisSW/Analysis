@@ -243,6 +243,7 @@ class BTagEfficiency:
             sf_b_u  = 1.
             sf_l_d      = sf_fs*self.evaltr.evaluate('down',    working_point, abs(pdgId) , abs(eta), pt)
             sf_l_u      = sf_fs*self.evaltr.evaluate('up',      working_point, abs(pdgId) , abs(eta), pt)
+        # print pdgId, sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u
         if self.fastSim:
             return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u, sf*sf_fs_u/sf_fs, sf*sf_fs_d/sf_fs)
         else:
