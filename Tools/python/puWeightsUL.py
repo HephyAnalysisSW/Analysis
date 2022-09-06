@@ -8,9 +8,7 @@ from correctionlib import _core
 import logging
 logger = logging.getLogger(__name__)
     
-#puJson = "/users/priya.hussain/private/CMSSW_10_6_25/src/Analysis/Tools/data/puReweightingData/LUM/2016preVFP_UL/puWeights.json"
 puJson = os.path.join(os.environ["CMSSW_BASE"], "src/Analysis/Tools/data/puReweightingData/LUM/")
-
 
 def getPUReweight (nTrueInt, year ="UL2016",  weight="nominal" ):
 	if "2016_preVFP" in year:
@@ -38,4 +36,3 @@ def getPUReweight (nTrueInt, year ="UL2016",  weight="nominal" ):
 	PU = correction.evaluate(nTrueInt, weight) 
 
 	return PU
-

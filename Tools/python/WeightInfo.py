@@ -58,15 +58,21 @@ class WeightInfo:
     def get_ndof( nvar, order ):
         return sum( [ int(scipy.special.binom(nvar + o - 1, o)) for o in xrange(order+1) ] )
 
+    # static method to make combinations 
+    @staticmethod
+    def make_combinations( variables, order ):
+        combinations = []
+        for o in xrange(order+1):
+            combinations.extend( list(itertools.combinations_with_replacement( variables, o )) )
+        return combinations
+
     # compute combinations on demand
     @property
     def combinations( self ):
         if hasattr( self, "_combinations"):
             return self._combinations
         else:
-            self._combinations = []
-            for o in xrange(self.order+1):
-                self._combinations.extend( list(itertools.combinations_with_replacement( self.variables, o )) )
+            self._combinations = self.make_combinations( self.variables, self.order )
             return self._combinations
 
     def weight_string_WC( self ):
@@ -197,7 +203,7 @@ class WeightInfo:
 
         sample.setSelectionString( selectionString ) 
 
-        variables = map( TreeVariable.fromString, [ "np/I", "ref_lumiweight1fb/F", "lumiweight1fb/F" ] )
+        variables = map( TreeVariable.fromString, [ "np/I" ] )
         variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=1000) )
 
         reader = sample.treeReader( variables = variables )
@@ -271,44 +277,46 @@ class WeightInfo:
                 prefac1, comb_diff2 = WeightInfo.differentiate( comb_diff, var[1:] ) 
             return prefac0*prefac1, comb_diff2
             
-    # String methods
-    def diff_weight_string_allWC(self, var):
-        ''' return string of the full weight string, differentiated wrt to var as a function of all WC
-        '''
+#    # String methods
+#    def diff_weight_string_allWC(self, var):
+#        ''' return string of the full weight string, differentiated wrt to var as a function of all WC
+#        '''
+#
+#        if var not in self.variables:
+#            raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
+#
+#        substrings = []
+#        for i_comb, comb in enumerate( self.combinations ):
+#            prefac, diff_comb = WeightInfo.differentiate( comb, var )
+#            if prefac != 0:
+#                subsubstrings = [ "%i*p_C[%i]" %(prefac, i_comb) if prefac != 1 else "p_C[%i]" %i_comb ]
+#                for v in diff_comb:
+#                    if self.ref_point_coordinates[v] == 0:
+#                        subsubstrings.append( 'rw_%s'%v )
+#                    else:
+#                        subsubstrings.append(  "(rw_%s-%s)"%(v, str(float(self.ref_point[v])).rstrip('0')) )
+#                substrings.append( "*".join( subsubstrings ) ) 
+#        
+#        return "+".join( substrings )
+#
+#    def fisher_parametrization_string_allWC( self, var1, var2 ):
+#        ''' return a string for the fisher information vor variables var1, vars as a function of the weight coefficients and all WC 
+#        '''
+#
+#        if var1 == var2:
+#            return "(%s)**2/(%s)"%( self.diff_weight_string_WC( var1 ), self.weight_string_WC() )
+#        else:
+#            return "(%s)*(%s)/(%s)"%( self.diff_weight_string_WC( var1 ), self.diff_weight_string_WC( var2 ), self.weight_string_WC() )
 
-        if var not in self.variables:
-            raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
-
-        substrings = []
-        for i_comb, comb in enumerate( self.combinations ):
-            prefac, diff_comb = WeightInfo.differentiate( comb, var )
-            if prefac != 0:
-                subsubstrings = [ "%i*p_C[%i]" %(prefac, i_comb) if prefac != 1 else "p_C[%i]" %i_comb ]
-                for v in diff_comb:
-                    if self.ref_point_coordinates[v] == 0:
-                        subsubstrings.append( 'rw_%s'%v )
-                    else:
-                        subsubstrings.append(  "(rw_%s-%s)"%(v, str(float(self.ref_point[v])).rstrip('0')) )
-                substrings.append( "*".join( subsubstrings ) ) 
-        
-        return "+".join( substrings )
-
-    def fisher_parametrization_string_allWC( self, var1, var2 ):
-        ''' return a string for the fisher information vor variables var1, vars as a function of the weight coefficients and all WC 
-        '''
-
-        if var1 == var2:
-            return "(%s)**2/(%s)"%( self.diff_weight_string_WC( var1 ), self.weight_string_WC() )
-        else:
-            return "(%s)*(%s)/(%s)"%( self.diff_weight_string_WC( var1 ), self.diff_weight_string_WC( var2 ), self.weight_string_WC() )
-
-    def diff_weight_string( self, var, **kwargs ):
+    def get_diff_weight_string( self, var, **kwargs ):
         '''make a root draw string that evaluates the diff weight 
            in terms of the p_C coefficient vector using the kwargs as WC
         '''
 
-        if var not in self.variables:
+        if type(var)==type("") and var not in self.variables:
             raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
+        if type(var)==tuple and not all( v in self.variables for v in var ):
+            raise ValueError( "One variable of %r not in list of variables %r" % (var, self.variables) )
 
         # add the arguments from the ref-point 
         self.set_default_args( kwargs )
@@ -329,6 +337,15 @@ class WeightInfo:
                 substrings.append( ("%+f"%fac).rstrip('0')+"*p_C[%i]"%i_comb  )
 
         return "".join( substrings ).lstrip('+')
+
+    def get_fisher_weight_string( self, var1, var2, **kwargs):
+        ''' return a string for the fisher information vor variables var1, var2 as a function of the weight coefficients and all WC 
+        '''
+
+        if var1 == var2:
+            return "(%s)**2/(%s)"%( self.get_diff_weight_string( var1, **kwargs), self.get_weight_string(**kwargs) )
+        else:
+            return "(%s)*(%s)/(%s)"%( self.get_diff_weight_string( var1, **kwargs), self.get_diff_weight_string( var2, **kwargs), self.get_weight_string(**kwargs) )
 
     def get_weight_func(self, **kwargs):
         '''construct a lambda function that evaluates the weight in terms of the event.p_C coefficient vector using the kwargs as WC
@@ -352,8 +369,10 @@ class WeightInfo:
         '''construct a lambda function that evaluates the diff weight in terms of the event.p_C coefficient vector using the kwargs as WC
         '''
 
-        if var not in self.variables:
-            raise ValueError( "Variable %s not in gridpack: %r" % ( var, self.variables ) ) 
+        if type(var)==type("") and var not in self.variables:
+            raise ValueError( "Variable %s not in list of variables %r" % (var, self.variables) )
+        if type(var) == tuple and not all( v in self.variables for v in var ):
+            raise ValueError( "One variable of %r not in list of variables %r" % (var, self.variables) )
         
         # add the arguments from the ref-point 
         self.set_default_args( kwargs )
@@ -372,6 +391,28 @@ class WeightInfo:
             terms.append( [ i_comb, fac ] )
 
         return lambda event, sample: sum( event.p_C[term[0]]*term[1] for term in terms )
+
+    def get_double_diff_weight_func(self, var, **kwargs):
+        '''construct a lambda function that evaluates the diff weight in terms of the event.p_C coefficient vector using the kwargs as WC
+	'''
+
+	if var not in self.variables:
+	    raise ValueError( "Variable %s not in gridpack: %r" % ( var, self.variables ) )
+     
+    	self.set_default_args( kwargs )
+
+	terms = []
+	for i_comb, comb in enumerate(self.combinations):
+	    if False in [v in kwargs for v in comb]: continue
+	    prefac, diff_comb = WeightInfo.differentiate( comb, var )
+	    if prefac < 2 : continue
+	    fac = float(prefac)
+	    for v in diff_comb:
+		if fac == 0.: break
+	    if fac == 0.: continue
+	    terms.append( [ i_comb, fac ] )
+
+	return lambda event, sample: sum( event.p_C[term[0]]*term[1] for term in terms )
 
     def get_total_weight_yield( self, coeffLists, **kwargs ):
         '''compute yield from a list of coefficients (in the usual order of p_C) using the kwargs as WC

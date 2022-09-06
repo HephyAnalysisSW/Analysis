@@ -1,0 +1,2 @@
+#python ../multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/$USER/example-ntuples-ttZ_dy/MVA-training  --config_module Analysis.MVA.cfg_examples --config ttZ_dy_example --output_directory /scratch-cbe/users/$USER/example-ntuples-ttZ_dy/ --small 
+python ../multiclass_generator.py --name ttZ_dy --input_directory /scratch-cbe/users/$USER/example-ntuples-ttZ_dy/MVA-training  --config_module Analysis.MVA.cfg_examples --config ttZ_dy_example --output_directory /scratch-cbe/users/$USER/example-ntuples-ttZ_dy/ --small 
