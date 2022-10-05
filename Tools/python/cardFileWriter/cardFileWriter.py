@@ -4,6 +4,7 @@ from array import *
 
 import shutil
 import os
+from math import log
 
 from Analysis.Tools.helpers import writeObjToFile
 
@@ -565,6 +566,14 @@ class cardFileWriter:
         shutil.rmtree(uniqueDirname)
 
         return nll
+
+    def poissonPrefitNLL( self ):
+        '''
+        Compute the prefit NLL from expectation and observation without using combine
+        '''
+        obs_sorted = [self.observation[b] for b in self.bins]
+        exp_sorted = map( lambda l: sum([self.expectation[k] for k in l]), [filter( lambda k:k[0]==bin, self.expectation.keys() ) for bin in self.bins ])
+        return -sum([ -lam + obs*log(lam) - sum( [log(n_) for n_ in range(1, obs+1 )] ) for obs, lam in zip(obs_sorted, exp_sorted)])
 
     def calcNuisances(self, fname=None, options="", outputFileAddon = "", bonly=False):
         import uuid, os
