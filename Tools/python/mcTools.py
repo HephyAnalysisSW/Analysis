@@ -24,8 +24,8 @@ class GenSearch:
         return res
 
     def descend(self, p):
-        cands = filter(lambda q:abs(q['pdgId'])==abs(p['pdgId']), self.daughters(p) )
-        if len(cands)>1: print "Warning: Found more than one particle with same pdgId %i in decay chain %r -> %r."%(p['pdgId'], p, cands)
+        cands = [q for q in self.daughters(p) if abs(q['pdgId'])==abs(p['pdgId'])]
+        if len(cands)>1: print("Warning: Found more than one particle with same pdgId %i in decay chain %r -> %r."%(p['pdgId'], p, cands))
         if len(cands)>0:
             if cands[0]==p:return p
             return self.descend(cands[0])
