@@ -17,7 +17,7 @@ import time
 import sqlite3
 import pickle
 
-from u_float import u_float
+from .u_float import u_float
 
 # Logger
 import logging
