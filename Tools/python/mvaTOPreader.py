@@ -18,7 +18,7 @@ class mvaTOPreader:
             yearstring = 'UL18'
             
         cmsswbase=os.environ["CMSSW_BASE"]
-        directory = cmsswbase+"/src/tWZ/Tools/data/mvaWeights/"
+        directory = cmsswbase+"/src/Analysis/Tools/data/mvaWeights/"
         
         # Load Electron weights
         # v1
