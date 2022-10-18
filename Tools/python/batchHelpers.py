@@ -37,25 +37,25 @@ def get_batchInfo( jobID=None, partition=None, title=None, user=None, status=Non
     jobs = format_batchInfo( read_from_subprocess( ["squeue", "-u", os.getenv("USER")] )[1:] )
 
     if jobID and isinstance( jobID, str ):
-        jobs = filter( lambda job: filter_with_wildcards(job["jobID"], jobID), jobs )
+        jobs = [job for job in jobs if filter_with_wildcards(job["jobID"], jobID)]
     if jobID and isinstance( jobID, list ):
-        jobs = filter( lambda job: any( [filter_with_wildcards(job["jobID"], j) for j in jobID] ), jobs )
+        jobs = [job for job in jobs if any( [filter_with_wildcards(job["jobID"], j) for j in jobID] )]
     if partition and isinstance( partition, str ) and partition in ["c","m","g"]:
-        jobs = filter( lambda job: job["partition"] == partition, jobs )
+        jobs = [job for job in jobs if job["partition"] == partition]
     if partition and isinstance( partition, list ) and all( [p in ["c","m","g"] for p in partition] ):
-        jobs = filter( lambda job: job["partition"] in partition, jobs )
+        jobs = [job for job in jobs if job["partition"] in partition]
     if user and isinstance( user, str ):
-        jobs = filter( lambda job: user.startswith(job["user"]), jobs )
+        jobs = [job for job in jobs if user.startswith(job["user"])]
     if status and isinstance( status, str ) and status in ["R","PD","CG"]:
-        jobs = filter( lambda job: job["status"] == status, jobs )
+        jobs = [job for job in jobs if job["status"] == status]
     if status and isinstance( status, list ) and all( [s in ["R","PD","CG"] for s in status] ):
-        jobs = filter( lambda job: job["status"] in status, jobs )
+        jobs = [job for job in jobs if job["status"] in status]
     if title and isinstance( title, str ):
-        jobs = filter( lambda job: filter_with_wildcards(job["title"], title), jobs )
+        jobs = [job for job in jobs if filter_with_wildcards(job["title"], title)]
     if title and isinstance( title, list ):
-        jobs = filter( lambda job: any( [filter_with_wildcards(job["title"], j) for j in title] ), jobs )
+        jobs = [job for job in jobs if any( [filter_with_wildcards(job["title"], j) for j in title] )]
     if title and isinstance( title, list ):
-        jobs = filter( lambda job: any( [filter_with_wildcards(job["title"], j) for j in title] ), jobs )
+        jobs = [job for job in jobs if any( [filter_with_wildcards(job["title"], j) for j in title] )]
 
     return jobs
 

@@ -64,7 +64,7 @@ class PhotonSF:
 if __name__ == "__main__":
 
     sigma = 0
-    print "2016"
+    print("2016")
     LSF = PhotonSF(year=2016)
     LSF.getSF(25, 1.4442, sigma=sigma)
     LSF.getSF(25, -1.4442, sigma=sigma)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     LSF.getSF(220, 0.3, sigma=sigma)
     LSF.getSF(220, -0.3, sigma=sigma)
 
-    print "2017"
+    print("2017")
     LSF = PhotonSF(year=2017)
     LSF.getSF(25, 1.4442, sigma=sigma)
     LSF.getSF(25, -1.4442, sigma=sigma)
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     LSF.getSF(220, 0.3, sigma=sigma)
     LSF.getSF(220, -0.3, sigma=sigma)
 
-    print "2018"
+    print("2018")
     LSF = PhotonSF(year=2018)
     LSF.getSF(25, 1.4442, sigma=sigma)
     LSF.getSF(25, -1.4442, sigma=sigma)

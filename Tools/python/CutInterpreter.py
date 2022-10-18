@@ -16,7 +16,7 @@ class CutInterpreter:
     def translate_cut_to_string( self, string ):
 
         # special cuts
-        if string in self.special_cuts.keys(): return self.special_cuts[string]
+        if string in list(self.special_cuts.keys()): return self.special_cuts[string]
 
         # continous Variables
         for var, tree_var in self.continous_variables:
@@ -58,7 +58,7 @@ class CutInterpreter:
                     else:
                       # logger.debug("Using cut string %s"%'('+'||'.join(vls)+')')
                       return '('+'||'.join(vls)+')'
-        raise ValueError( "Can't interpret string %s. All cuts %s" % (string,  ", ".join( [ c[0] for c in self.continous_variables + self.discrete_variables] +  self.special_cuts.keys() ) ) )
+        raise ValueError( "Can't interpret string %s. All cuts %s" % (string,  ", ".join( [ c[0] for c in self.continous_variables + self.discrete_variables] +  list(self.special_cuts.keys()) ) ) )
 
     def cutString( self, cut, select = [""], ignore = [], photonEstimated=False):
         ''' Cutstring syntax: cut1-cut2-cut3
@@ -67,9 +67,9 @@ class CutInterpreter:
 
         cuts = cut.split('-')
         # require selected
-        cuts = filter( lambda c: any( sel in c for sel in select ), cuts )
+        cuts = [c for c in cuts if any( sel in c for sel in select )]
         # ignore
-        cuts = filter( lambda c: not any( ign in c for ign in ignore ), cuts )
+        cuts = [c for c in cuts if not any( ign in c for ign in ignore )]
 
         cutString = "&&".join( map( self.translate_cut_to_string, cuts ) )
 
@@ -86,9 +86,9 @@ class CutInterpreter:
 
         cuts = cut.split('-')
         # require selected
-        cuts = filter( lambda c: any( sel in c for sel in select ), cuts )
+        cuts = [c for c in cuts if any( sel in c for sel in select )]
         # ignore
-        cuts = filter( lambda c: not any( ign in c for ign in ignore ), cuts )
+        cuts = [c for c in cuts if not any( ign in c for ign in ignore )]
         return [ self.translate_cut_to_string(cut) for cut in cuts ] 
         #return  "&&".join( map( CutInterpreter.translate_cut_to_string, cuts ) )
 

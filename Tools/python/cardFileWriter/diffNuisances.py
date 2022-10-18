@@ -34,13 +34,13 @@ if len(args) == 0:
     exit(1)
 
 file = ROOT.TFile(args[0])
-if file == None: raise RuntimeError, "Cannot open file %s" % args[0]
+if file == None: raise RuntimeError("Cannot open file %s" % args[0])
 fit_s  = file.Get("fit_s")
 fit_b  = file.Get("fit_b")
 prefit = file.Get("nuisances_prefit")
-if fit_s == None or fit_s.ClassName()   != "RooFitResult": raise RuntimeError, "File %s does not contain the output of the signal fit 'fit_s'"     % args[0]
-if fit_b == None or fit_b.ClassName()   != "RooFitResult": raise RuntimeError, "File %s does not contain the output of the background fit 'fit_b'" % args[0]
-if prefit == None or prefit.ClassName() != "RooArgSet":    raise RuntimeError, "File %s does not contain the prefit nuisances 'nuisances_prefit'"  % args[0]
+if fit_s == None or fit_s.ClassName()   != "RooFitResult": raise RuntimeError("File %s does not contain the output of the signal fit 'fit_s'"     % args[0])
+if fit_b == None or fit_b.ClassName()   != "RooFitResult": raise RuntimeError("File %s does not contain the output of the background fit 'fit_b'" % args[0])
+if prefit == None or prefit.ClassName() != "RooArgSet":    raise RuntimeError("File %s does not contain the prefit nuisances 'nuisances_prefit'"  % args[0])
 
 isFlagged = {}
 table = {}
@@ -93,9 +93,9 @@ pmsub, sigsub = None, None
 if options.format == 'text':
     if options.abs:
         fmtstring = "%-40s     %15s    %30s    %30s  %10s"
-        print fmtstring % ('name', 'pre fit', 'b-only fit', 's+b fit', 'rho')
+        print(fmtstring % ('name', 'pre fit', 'b-only fit', 's+b fit', 'rho'))
     else:
-        print fmtstring % ('name', 'b-only fit', 's+b fit', 'rho')
+        print(fmtstring % ('name', 'b-only fit', 's+b fit', 'rho'))
 elif options.format == 'latex':
     pmsub  = (r"(\S+) \+/- (\S+)", r"$\1 \\pm \2$")
     sigsub = ("sig", r"$\\sigma$")
@@ -103,21 +103,21 @@ elif options.format == 'latex':
     morelight = "{{\\color{red}\\textbf{%s}}}"
     if options.abs:
         fmtstring = "%-40s &  %15s & %30s & %30s & %6s \\\\"
-        print "\\begin{tabular}{|l|r|r|r|r|} \\hline ";
-        print (fmtstring % ('name', 'pre fit', '$b$-only fit', '$s+b$ fit', r'$\rho(\theta, \mu)$')), " \\hline"
+        print("\\begin{tabular}{|l|r|r|r|r|} \\hline ");
+        print((fmtstring % ('name', 'pre fit', '$b$-only fit', '$s+b$ fit', r'$\rho(\theta, \mu)$')), " \\hline")
     else:
         if options.bonly:
           fmtstring = "%-40s &  %15s \\\\"
-          print "\\begin{tabular}{|l|r|} \\hline ";
+          print("\\begin{tabular}{|l|r|} \\hline ");
           what = r"$\Delta x/\sigma_{\text{in}}$, $\sigma_{\text{out}}/\sigma_{\text{in}}$"
-          print fmtstring % ('',     '$b$-only fit')
-          print fmtstring % ('name', what), " \\hline"
+          print(fmtstring % ('',     '$b$-only fit'))
+          print(fmtstring % ('name', what), " \\hline")
         else:
           fmtstring = "%-40s &  %15s & %15s & %6s \\\\"
-          print "\\begin{tabular}{|l|r|r|r|} \\hline ";
+          print("\\begin{tabular}{|l|r|r|r|} \\hline ");
           what = r"$\Delta x/\sigma_{\text{in}}$, $\sigma_{\text{out}}/\sigma_{\text{in}}$"
-          print  fmtstring % ('',     '$b$-only fit', '$s+b$ fit', '')
-          print (fmtstring % ('name', what, what, r'$\rho(\theta, \mu)$')), " \\hline"
+          print(fmtstring % ('',     '$b$-only fit', '$s+b$ fit', ''))
+          print((fmtstring % ('name', what, what, r'$\rho(\theta, \mu)$')), " \\hline")
 elif options.format == 'twiki':
     pmsub  = (r"(\S+) \+/- (\S+)", r"\1 &plusmn; \2")
     sigsub = ("sig", r"&sigma;")
@@ -125,16 +125,16 @@ elif options.format == 'twiki':
     morelight = "<b style='color:red;'>%s</b>"
     if options.abs:
         fmtstring = "| <verbatim>%-40s</verbatim>  | %-15s  | %-30s  | %-30s   | %-15s  |"
-        print "| *name* | *pre fit* | *b-only fit* | *s+b fit* | "
+        print("| *name* | *pre fit* | *b-only fit* | *s+b fit* | ")
     else:
         fmtstring = "| <verbatim>%-40s</verbatim>  | %-15s  | %-15s | %-15s  |"
-        print "| *name* | *b-only fit* | *s+b fit* | *corr.* |"
+        print("| *name* | *b-only fit* | *s+b fit* | *corr.* |")
 elif options.format == 'html':
     pmsub  = (r"(\S+) \+/- (\S+)", r"\1 &plusmn; \2")
     sigsub = ("sig", r"&sigma;")
     highlight = "<b>%s</b>"
     morelight = "<strong>%s</strong>"
-    print """
+    print("""
 <html><head><title>Comparison of nuisances</title>
 <style type="text/css">
     td, th { border-bottom: 1px solid black; padding: 1px 1em; }
@@ -143,16 +143,16 @@ elif options.format == 'html':
 </style>
 </head><body style="font-family: 'Verdana', sans-serif; font-size: 10pt;"><h1>Comparison of nuisances</h1>
 <table>
-"""
+""")
     if options.abs:
-        print "<tr><th>nuisance</th><th>pre fit</th><th>background fit </th><th>signal fit</th><th>correlation</th></tr>"
+        print("<tr><th>nuisance</th><th>pre fit</th><th>background fit </th><th>signal fit</th><th>correlation</th></tr>")
         fmtstring = "<tr><td><tt>%-40s</tt> </td><td> %-15s </td><td> %-30s </td><td> %-30s </td><td> %-15s </td></tr>"
     else:
         what = "&Delta;x/&sigma;<sub>in</sub>, &sigma;<sub>out</sub>/&sigma;<sub>in</sub>";
-        print "<tr><th>nuisance</th><th>background fit<br/>%s </th><th>signal fit<br/>%s</th><th>&rho;(&mu;, &theta;)</tr>" % (what,what)
+        print("<tr><th>nuisance</th><th>background fit<br/>%s </th><th>signal fit<br/>%s</th><th>&rho;(&mu;, &theta;)</tr>" % (what,what))
         fmtstring = "<tr><td><tt>%-40s</tt> </td><td> %-15s </td><td> %-15s </td><td> %-15s </td></tr>"
 
-names = table.keys()
+names = list(table.keys())
 names.sort()
 highlighters = { 1:highlight, 2:morelight };
 for n in names:
@@ -163,15 +163,15 @@ for n in names:
     if (n,'b') in isFlagged: v[-3] = highlighters[isFlagged[(n,'b')]] % v[-3]
     if (n,'s') in isFlagged: v[-2] = highlighters[isFlagged[(n,'s')]] % v[-2]
     if options.abs:
-       print fmtstring % (n, v[0], v[1], v[2], v[3])
+       print(fmtstring % (n, v[0], v[1], v[2], v[3]))
     else:
-       if options.bonly and options.format == 'latex': print fmtstring % (v, v[0])
-       else:                                           print fmtstring % (n, v[0], v[1], v[2])
+       if options.bonly and options.format == 'latex': print(fmtstring % (v, v[0]))
+       else:                                           print(fmtstring % (n, v[0], v[1], v[2]))
 
 if options.format == "latex":
-    print " \\hline\n\end{tabular}"
+    print(" \\hline\n\end{tabular}")
 elif options.format == "html":
-    print "</table></body></html>"
+    print("</table></body></html>")
 
 if options.plotfile:
     import ROOT

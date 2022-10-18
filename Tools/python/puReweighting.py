@@ -34,7 +34,7 @@ def getReweightingFunction( data="PU_2100_XSecCentral", mc="Spring15" ):
     histoData.Scale( 1./histoData.Integral() )
     logger.info( "Loaded 'pileup' from data file %s", fileNameData )
 
-    if isinstance( mc, basestring ):
+    if isinstance( mc, str ):
         if mc=='Summer16':
             mcProfile = extendHistoTo( getObjFromFile( os.path.expandvars( puDataPath + "MCProfile_Summer16.root" ), 'pileup' ), histoData )
         elif mc=='Autumn18':

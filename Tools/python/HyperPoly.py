@@ -54,7 +54,7 @@ class HyperPoly:
     @staticmethod
     def get_ndof( nvar, order ):
         ''' Compute the number of d.o.f. of the polynomial by summing up o in the formula for combinations with repetitions of order o in nvar variables'''
-        return sum( [ int(scipy.special.binom(nvar + o - 1, o)) for o in xrange(order+1) ] )
+        return sum( [ int(scipy.special.binom(nvar + o - 1, o)) for o in range(order+1) ] )
 
     def __init__( self, order ):
         self.order       = order
@@ -78,7 +78,7 @@ class HyperPoly:
         # Number of variables
         self.nvar = len( param_points[0] ) 
         # Reference point
-        self.ref_point = ref_point if ref_point is not None else tuple([0 for var in xrange(self.nvar)])
+        self.ref_point = ref_point if ref_point is not None else tuple([0 for var in range(self.nvar)])
         # Check reference point
         if len(self.ref_point)!=self.nvar:
             logger.error('Reference point has length %i but should have length %i', len(self.ref_point), self.nvar )
@@ -93,8 +93,8 @@ class HyperPoly:
         # Order of combinations (with replacements) and ascending in 'order'
         self.combination  = {}
         counter = 0
-        for o in xrange(self.order+1):
-            for comb in itertools.combinations_with_replacement( xrange(self.nvar), o ):
+        for o in range(self.order+1):
+            for comb in itertools.combinations_with_replacement( range(self.nvar), o ):
                 self.combination[counter] = comb
                 counter += 1
 
@@ -124,7 +124,7 @@ class HyperPoly:
     def wEXT_expectation(self, weights, combination ):
         ''' Compute <wEXT ijk...> = 1/Nmeas Sum_meas( wEXT_meas*i_meas*j_meas*k_meas... )
         '''
-        return sum( [ weights[n]*np.prod( [ (self.param_points[n][elem]-self.ref_point[elem]) for elem in combination ] ) for n in xrange(self.N) ] ) / float(self.N)
+        return sum( [ weights[n]*np.prod( [ (self.param_points[n][elem]-self.ref_point[elem]) for elem in combination ] ) for n in range(self.N) ] ) / float(self.N)
 
     def expectation(self, combination ):
         ''' Compute <wEXT ijk...> = 1/Nmeas Sum_meas( i_meas*j_meas*k_meas... )
@@ -162,7 +162,7 @@ class HyperPoly:
                         else:
                             sub_substring.append( "x%i" % (var) if power==1 else "x%i**%i" % (var, power)  )
                 substrings.append( "*".join(sub_substring) ) 
-        return  ( "+".join( filter( lambda s: len(s)>0, substrings) ) ).replace("+-","-")
+        return  ( "+".join( [s for s in substrings if len(s)>0] ) ).replace("+-","-")
 
 if __name__ == "__main__":
 
@@ -179,11 +179,11 @@ if __name__ == "__main__":
     weights     = [ f1(*point) for point in param_points]
     coeff = p.get_parametrization( weights )
 
-    print "len param_points", len(param_points)
-    print "coeff", coeff
-    print "chi2/ndof", p.chi2_ndof( coeff, weights)
-    print "ndof", p.ndof
-    print "String:", p.root_func_string(coeff)
+    print("len param_points", len(param_points))
+    print("coeff", coeff)
+    print("chi2/ndof", p.chi2_ndof( coeff, weights))
+    print("ndof", p.ndof)
+    print("String:", p.root_func_string(coeff))
 
     #def f2(x,y,z):
     #    return (x-z)**3 + y

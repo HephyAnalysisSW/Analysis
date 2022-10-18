@@ -69,7 +69,7 @@ def isBJet( j, tagger='DeepCSV', year=2016 ):
             # UPDATE WHEN AVAILABLE
             return j['btagCSVV2'] > 0.8838 
         else:
-            raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+            raise NotImplementedError
     elif tagger == 'DeepCSV':
         if year == 2016:
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
@@ -81,11 +81,11 @@ def isBJet( j, tagger='DeepCSV', year=2016 ):
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
             return j['btagDeepB'] > 0.4184
         else:
-            raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+            raise NotImplementedError
 
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
-    event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    event.bJets    = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
 sequence.append( make_jets )
 
 def get_mll(event, sample):
@@ -157,9 +157,9 @@ mva_vector_variables    =   {
 }
 
 ## Using all variables
-mva_variables_ = all_mva_variables.keys()
+mva_variables_ = list(all_mva_variables.keys())
 mva_variables_.sort()
-mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
+mva_variables  = [ (key, value) for key, value in all_mva_variables.items() if key in mva_variables_ ]
 
 # keep these branches in ntuple making
 keep_branches = ["GenMET_pt", "GenMET_phi"]

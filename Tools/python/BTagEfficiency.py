@@ -8,6 +8,7 @@ from correctionlib import _core
 
 # Logging
 import logging
+from functools import reduce
 logger = logging.getLogger(__name__)
 
 #binning in pt and eta
@@ -110,7 +111,7 @@ class BTagEfficiency:
             tagWeight[i]*=twfSum
 
         for i in range(maxMultBTagWeight+1):
-            if not tagWeight.has_key(i):
+            if i not in tagWeight:
                 tagWeight[i] = 0.
 
         return tagWeight
@@ -121,7 +122,7 @@ class BTagEfficiency:
         if var != 'MC':
             ref = reduce(mul, [j['beff']['MC'] for j in bJets] + [1-j['beff']['MC'] for j in nonBJets], 1 )
             if ref>0:
-		result = reduce(mul, [j['beff'][var] for j in bJets] + [1-j['beff'][var] for j in nonBJets], 1 )/ref
+                result = reduce(mul, [j['beff'][var] for j in bJets] + [1-j['beff'][var] for j in nonBJets], 1 )/ref
                 return result 
                 #return reduce(mul, [j['beff'][var] for j in bJets] + [1-j['beff'][var] for j in nonBJets], 1 )/ref
             else:
@@ -148,68 +149,70 @@ class BTagEfficiency:
 
         # Input files
         
-	if year == 'UL2016_preVFP':
+        if year == 'UL2016_preVFP':
             self.etaBins = etaBins2016
-	    tag = '2016preVFP_UL'
+            tag = '2016preVFP_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2016DeepCSV_FastSim ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2016preVFPULDeepCSV ) )
-	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, sfFile2016DeepJet ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2016DeepJet_FastSim ) )
                 #self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, effFile2016DeepJet ) )
-	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
-	if year == 'UL2016':
+        if year == 'UL2016':
             self.etaBins = etaBins2016
-	    tag = '2016postVFP_UL'
+            tag = '2016postVFP_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2016DeepCSV_FastSim ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2016postVFPULDeepCSV ) )
-	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, sfFile2016DeepJet ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2016DeepJet_FastSim ) )
                 #self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, effFile2016DeepJet ) )
-	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
         if year == 'UL2017':
             self.etaBins = etaBins2017
-	    tag = '2017_UL'
+            tag = '2017_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2017DeepCSV_FastSim ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2017ULDeepCSV ) )
-	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, sfFile2017DeepJet ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2017DeepJet_FastSim ) )
                 #self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, effFile2017DeepJet ) )
-	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
         if year == 'UL2018':
             self.etaBins = etaBins2018
-	    tag = '2018_UL'
+            tag = '2018_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, tag, sfFile2018DeepCSV_FastSim ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2018ULDeepCSV ) )
-	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, sfFile2018DeepJet ) )
                 #self.scaleFactorFileFS = os.path.expandvars( os.path.join( self.dataDir, sfFile2018DeepJet_FastSim ) )
                 #self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, effFile2018DeepJet ) )
-	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
 
         logger.info ( "Loading scale factors from %s", self.scaleFactorFile )
-	self.correction = _core.CorrectionSet.from_file(self.scaleFactorFile)
-	#print "WP: ", self.WP
-	#self.evaltr = correction[self.WP]
-		
+
+        self.correction = _core.CorrectionSet.from_file(self.scaleFactorFile)
+
+#print "WP: ", self.WP
+#self.evaltr = correction[self.WP]
+
         #ROOT.gSystem.Load( 'libCondFormatsBTauObjects' ) 
         #ROOT.gSystem.Load( 'libCondToolsBTau' )
         #self.calib = ROOT.BTagCalibration( "csvv2", self.scaleFactorFile )
@@ -278,31 +281,31 @@ class BTagEfficiency:
             sf_fs_d = 1
         
         #FullSim SFs (times FSSF)
-    	# UPDATE: evaluate('systematic', 'working_point', 'flavor', 'abseta', 'pt')
+            # UPDATE: evaluate('systematic', 'working_point', 'flavor', 'abseta', 'pt')
 
         if abs(pdgId)==5 or abs(pdgId)==4: #SF for b/c
-	    WP = self.WP + '_comb'
-	    #print WP, " is the selected WP"
-	    #print "self.WP: ", self.WP, "WP", WP
-	    self.evaltr = self.correction[WP]
-	    #print "bla bla: ", self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
-            sf      	= sf_fs*self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
+            WP = self.WP + '_comb'
+            #print WP, " is the selected WP"
+            #print "self.WP: ", self.WP, "WP", WP
+            self.evaltr = self.correction[WP]
+            #print "bla bla: ", self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
+            sf          = sf_fs*self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
             sf_b_d      = sf_fs*self.evaltr.evaluate('down',    'M', abs(pdgId) , abs(eta), pt)
             sf_b_u      = sf_fs*self.evaltr.evaluate('up',      'M', abs(pdgId) , abs(eta), pt)
             sf_l_d  = 1.
             sf_l_u  = 1.
         else: #SF for light flavours
-	    WP = self.WP + '_incl'
-	    self.evaltr = self.correction[WP]
-	    #print "self.WP: ", self.WP, "WP", WP
-	    #print "incl: ",  self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
-            sf      	= sf_fs*self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
+            WP = self.WP + '_incl'
+            self.evaltr = self.correction[WP]
+            #print "self.WP: ", self.WP, "WP", WP
+            #print "incl: ",  self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
+            sf      = sf_fs*self.evaltr.evaluate('central', 'M', abs(pdgId) , abs(eta), pt)
             sf_b_d  = 1.
             sf_b_u  = 1.
-	    sf_l_d      = sf_fs*self.evaltr.evaluate('down',    'M', abs(pdgId) , abs(eta), pt)
-	    sf_l_u      = sf_fs*self.evaltr.evaluate('up',      'M', abs(pdgId) , abs(eta), pt)
+            sf_l_d      = sf_fs*self.evaltr.evaluate('down',    'M', abs(pdgId) , abs(eta), pt)
+            sf_l_u      = sf_fs*self.evaltr.evaluate('up',      'M', abs(pdgId) , abs(eta), pt)
 
-	    #legacy
+            #legacy
             #sf      = sf_fs*self.reader.eval_auto_bounds('central', flavKey, eta, pt)
             #sf_b_d  = sf_fs*self.reader.eval_auto_bounds('down',    flavKey, eta, pt)
             #sf_b_u  = sf_fs*self.reader.eval_auto_bounds('up',      flavKey, eta, pt)
@@ -315,23 +318,23 @@ class BTagEfficiency:
             #sf_l_d  = sf_fs*self.reader.eval_auto_bounds('down',    flavKey, eta, pt)
             #sf_l_u  = sf_fs*self.reader.eval_auto_bounds('up',      flavKey, eta, pt)
 
-	    #UL: # Working point: evaluate('systematic', 'method', 'working_point', 'flavor', 'abseta', 'pt') --> valsf_deepCSV_wp = evaluator["deepCSV_106XUL17SF_wp"].evaluate("central", "comb", 0, 0, 0., 30.)
-            #sf      	= sf_fs*self.evaltr.evaluate('central', 'comb', 1 , flavKey , abs(eta), pt)
+            #UL: # Working point: evaluate('systematic', 'method', 'working_point', 'flavor', 'abseta', 'pt') --> valsf_deepCSV_wp = evaluator["deepCSV_106XUL17SF_wp"].evaluate("central", "comb", 0, 0, 0., 30.)
+            #sf              = sf_fs*self.evaltr.evaluate('central', 'comb', 1 , flavKey , abs(eta), pt)
             #sf_b_d      = sf_fs*self.evaltr.evaluate('down',    'comb', 1 , flavKey , abs(eta), pt)
-            #sf_b_u      = sf_fs*self.evaltr.evaluate('up',	'comb', 1 , flavKey , abs(eta), pt)
+            #sf_b_u      = sf_fs*self.evaltr.evaluate('up',        'comb', 1 , flavKey , abs(eta), pt)
             #sf_l_d  = 1.
             #sf_l_u  = 1.
         #else: #SF for light flavours
-            #sf      	= sf_fs*self.evaltr.evaluate('central', 'incl', 1 , flavKey , abs(eta), pt)
+            #sf              = sf_fs*self.evaltr.evaluate('central', 'incl', 1 , flavKey , abs(eta), pt)
             #sf_b_d  = 1.
             #sf_b_u  = 1.
-	    #sf_l_d      = sf_fs*self.evaltr.evaluate('down', 	'incl', 1 , flavKey , abs(eta), pt)
-	    #sf_l_u      = sf_fs*self.evaltr.evaluate('up', 	'incl', 1 , flavKey , abs(eta), pt)
+            #sf_l_d      = sf_fs*self.evaltr.evaluate('down',         'incl', 1 , flavKey , abs(eta), pt)
+            #sf_l_u      = sf_fs*self.evaltr.evaluate('up',         'incl', 1 , flavKey , abs(eta), pt)
 
         if self.fastSim:
             return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u, sf*sf_fs_u/sf_fs, sf*sf_fs_d/sf_fs)
         else:
-	    #print 'SFs extracted from POG BTag file: ', sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u
+            #print 'SFs extracted from POG BTag file: ', sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u
             return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u)
 
     def addBTagEffToJet(self, j):
@@ -359,7 +362,7 @@ class btagEfficiency_1d:
         j['beff'] = {sys: 1. if sys not in flavourSys_1d[abs(j['hadronFlavour'])] else self.readers[sys].eval(toFlavourKey(j['hadronFlavour']), j['eta'], j['pt'], j['btagCSV']) for sys in self.btagWeightNames}
 
     def __init__(self,  WP = ROOT.BTagEntry.OP_MEDIUM):
-        self.btagWeightNames = reduce(or_, flavourSys_1d.values())
+        self.btagWeightNames = reduce(or_, list(flavourSys_1d.values()))
 
         self.scaleFactorFile = sfFile_1d
         logger.info( "Loading scale factors from %s", self.scaleFactorFile )
@@ -368,7 +371,7 @@ class btagEfficiency_1d:
 
 
 if __name__ == "__main__":
-	pass
+        pass
     #print "2016"
     #BTagEff = BTagEfficiency( year=2016,tagger="DeepCSV" )
     #print BTagEff.getSF(5, 100, 1.5)[0]

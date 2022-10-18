@@ -32,15 +32,15 @@ def prepareTokens():
         if not os.path.exists(tokenPath):
             os.mkdir(tokenPath)
         if not os.path.exists(tokenPath+"/krb5_token_"+on_system):
-	    shutil.copyfile(token, tokenPath+"/krb5_token_"+on_system )
+            shutil.copyfile(token, tokenPath+"/krb5_token_"+on_system )
 
         if on_system == "cern.ch":
             if os.path.exists(tokenPath+"/username"):
                 with open(tokenPath+"/username","r") as FSO:
                     user = FSO.read()
             else:
-                user = raw_input("Give username for cell hephy.at: ")
-                save = raw_input("You want to save '{0}' as your username for later? (Y/n)".format(user))
+                user = input("Give username for cell hephy.at: ")
+                save = input("You want to save '{0}' as your username for later? (Y/n)".format(user))
                 if save != "n":
                     with open(tokenPath+"/username","w") as FSO:
                         FSO.write(user)
@@ -67,7 +67,7 @@ def checkProxy():
         (out,err) =  p.communicate()
 
         if err:
-            print err
+            print(err)
             return False
 
         info = {"time":-1,"path":""}
@@ -81,7 +81,7 @@ def checkProxy():
             shutil.copyfile(info["path"], "proxy/x509_proxy")
             return True
         else:
-            print "Proxy expired! Get a new one with 'voms-proxy-init --voms cms'"
+            print("Proxy expired! Get a new one with 'voms-proxy-init --voms cms'")
             return False
 
 def getHeplxPublicFolder():

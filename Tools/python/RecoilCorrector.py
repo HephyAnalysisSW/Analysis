@@ -17,17 +17,18 @@ class RecoilCorrector:
 
     def __init__(self, filename ):
         self.filename    = filename
-        self.correction_data = pickle.load(file(self.filename))
+        with open( self.filename, 'rb') as file_:
+            self.correction_data = pickle.load(file_)
 
-        self.var_bins = self.correction_data.keys()
+        self.var_bins = list(self.correction_data.keys())
         self.var_bins.sort()
-        self.max_var  = max( map( max, self.var_bins )) 
-        self.min_var  = min( map( min, self.var_bins )) 
+        self.max_var  = max( list(map( max, self.var_bins ))) 
+        self.min_var  = min( list(map( min, self.var_bins ))) 
 
-        self.qt_bins = self.correction_data[self.var_bins[0]].keys()
+        self.qt_bins = list(self.correction_data[self.var_bins[0]].keys())
         self.qt_bins.sort()
-        self.max_qt  = max( map( max, self.qt_bins )) 
-        self.min_qt  = min( map( min, self.qt_bins )) 
+        self.max_qt  = max( list(map( max, self.qt_bins ))) 
+        self.min_qt  = min( list(map( min, self.qt_bins ))) 
 
         if self.min_qt!=0:
             logger.error( "Minimum qt at %3.2f! Should be 0", self.min_qt )
@@ -82,7 +83,6 @@ if __name__=="__main__":
     import Analysis.Tools.logger as logger
     logger    = logger.get_logger( "DEBUG", logFile = None)
 
-    filename = '/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/recoil_v2/2018/lepSel-btag0-relIso0.12-looseLeptonVeto-mll20-onZ/recoil_fitResults_SF.pkl'
-
-    recoilCorrector = RecoilCorrector( filename )
+    #filename = '/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/recoil_v2/2018/lepSel-btag0-relIso0.12-looseLeptonVeto-mll20-onZ/recoil_fitResults_SF.pkl'
+    #recoilCorrector = RecoilCorrector( filename )
 

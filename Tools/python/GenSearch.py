@@ -15,14 +15,14 @@ class GenSearch:
         if hasattr( self, "final_state_particles_no_neutrinos_" ):
             return self.final_state_particles_no_neutrinos_
         else:
-            self.final_state_particles_no_neutrinos_ = filter( lambda p: p.status()==1 and abs(p.pdgId()) not in [12,14,16], self.genParticles ) 
+            self.final_state_particles_no_neutrinos_ = [p for p in self.genParticles if p.status()==1 and abs(p.pdgId()) not in [12,14,16]] 
             return self.final_state_particles_no_neutrinos_
 
     def daughters(self, p):
-        return [p.daughter(i) for i in xrange( p.numberOfDaughters()) ]
+        return [p.daughter(i) for i in range( p.numberOfDaughters()) ]
 
     def mothers(self, p):
-        return [p.mother(i) for i in xrange( p.numberOfMothers()) ]
+        return [p.mother(i) for i in range( p.numberOfMothers()) ]
 
     def isLast(self, p ):
         ''' Returns true if the decay products of p do not contain a particle with p.pdgId() '''
@@ -35,7 +35,7 @@ class GenSearch:
     def descend(self, p):
         ''' Returns the last particle of the same pdgId in the decay chain started by p
         '''
-        cands = filter(lambda q:abs(q.pdgId())==abs(p.pdgId()), self.daughters(p) )
+        cands = [q for q in self.daughters(p) if abs(q.pdgId())==abs(p.pdgId())]
         #if len(cands)>1: print "Warning: Found more than one particle with same pdgId %i in decay chain %r -> %r."%(p.pdgId(), p, cands)
         if len(cands)>0:
             if cands[0]==p:return p
@@ -45,7 +45,7 @@ class GenSearch:
     def ascend(self, p):
         ''' Returns the first particle of the same pdgId in the decay chain started by p
         '''
-        cands = filter(lambda q:abs(q.pdgId())==abs(p.pdgId()), self.mothers(p) )
+        cands = [q for q in self.mothers(p) if abs(q.pdgId())==abs(p.pdgId())]
         #if len(cands)>1: print "Warning: Found more than one particle with same pdgId %i in decay chain %r -> %r."%(p['pdgId'], p, cands)
         if len(cands)>0:
             if cands[0]==p:return p
@@ -53,7 +53,7 @@ class GenSearch:
         return p
 
     def print_decay( self, p, prefix = ""):
-        print prefix+" %s(pt %3.2f, eta %3.2f, phi %3.2f)" % ( pdgToName(p.pdgId()), p.pt(), p.eta(), p.phi())
+        print(prefix+" %s(pt %3.2f, eta %3.2f, phi %3.2f)" % ( pdgToName(p.pdgId()), p.pt(), p.eta(), p.phi()))
         for d in self.daughters( self.descend( p ) ):
             self.print_decay( d, prefix = prefix+'--')
 

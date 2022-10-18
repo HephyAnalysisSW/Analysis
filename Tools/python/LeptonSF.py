@@ -95,13 +95,13 @@ class LeptonSF:
 
         if year == 2016:
 
-            if not ID in keys_mu2016_BCDEF.keys():
+            if not ID in list(keys_mu2016_BCDEF.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
-            if not ID in keys_mu2016_GH.keys():
+            if not ID in list(keys_mu2016_GH.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
-            if not ID in keys_ele2016.keys():
+            if not ID in list(keys_ele2016.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
             self.mu_BCDEF = [ getObjFromFile(os.path.expandvars(os.path.join(self.dataDir, file)), key) for (file, key) in keys_mu2016_BCDEF[ID]              ]
@@ -116,10 +116,10 @@ class LeptonSF:
 
         elif year == 2017:
 
-            if not ID in keys_mu2017.keys():
+            if not ID in list(keys_mu2017.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
-            if not ID in keys_ele2017.keys():
+            if not ID in list(keys_ele2017.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
             self.mu       = [ getObjFromFile(os.path.expandvars(os.path.join(self.dataDir, file)), key) for (file, key) in keys_mu2017[ID]         ]
@@ -131,10 +131,10 @@ class LeptonSF:
 
         elif year == 2018:
 
-            if not ID in keys_mu2018.keys():
+            if not ID in list(keys_mu2018.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
-            if not ID in keys_ele2018.keys():
+            if not ID in list(keys_ele2018.keys()):
                 raise Exception("Don't know ID %s"%ID)
 
             self.mu       = [ getObjFromFile(os.path.expandvars(os.path.join(self.dataDir, file)), key) for (file, key) in keys_mu2018[ID]         ]
@@ -239,116 +239,116 @@ class LeptonSF:
 if __name__ == "__main__":
 
     sigma = 0
-    print "2016, medium"
+    print("2016, medium")
     LSF = LeptonSF(year=2016, ID="medium")
-    print LSF.getSF(11, 10, 1, sigma=sigma)
-    print LSF.getSF(11, 10, -1, sigma=sigma)
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 10, 1, sigma=sigma))
+    print(LSF.getSF(11, 10, -1, sigma=sigma))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 200, 1, sigma=sigma)
-    print LSF.getSF(11, 200, -1, sigma=sigma)
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 200, 1, sigma=sigma))
+    print(LSF.getSF(11, 200, -1, sigma=sigma))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 10, 2.5, sigma=sigma)
-    print LSF.getSF(11, 10, -2.5, sigma=sigma)
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 10, 2.5, sigma=sigma))
+    print(LSF.getSF(11, 10, -2.5, sigma=sigma))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 200, 2.5, sigma=sigma)
-    print LSF.getSF(11, 200, -2.5, sigma=sigma)
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 200, 2.5, sigma=sigma))
+    print(LSF.getSF(11, 200, -2.5, sigma=sigma))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="stat"))
 
-    print "2017, medium"
+    print("2017, medium")
     LSF = LeptonSF(year=2017, ID="medium")
-    print LSF.getSF(11, 10, 1, sigma=sigma)
-    print LSF.getSF(11, 10, -1, sigma=sigma)
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 10, 1, sigma=sigma))
+    print(LSF.getSF(11, 10, -1, sigma=sigma))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 200, 1, sigma=sigma)
-    print LSF.getSF(11, 200, -1, sigma=sigma)
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 200, 1, sigma=sigma))
+    print(LSF.getSF(11, 200, -1, sigma=sigma))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 10, 2.5, sigma=sigma)
-    print LSF.getSF(11, 10, -2.5, sigma=sigma)
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 10, 2.5, sigma=sigma))
+    print(LSF.getSF(11, 10, -2.5, sigma=sigma))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 200, 2.5, sigma=sigma)
-    print LSF.getSF(11, 200, -2.5, sigma=sigma)
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 200, 2.5, sigma=sigma))
+    print(LSF.getSF(11, 200, -2.5, sigma=sigma))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="stat"))
 
-    print "2018, medium"
+    print("2018, medium")
     LSF = LeptonSF(year=2018, ID="medium")
-    print LSF.getSF(11, 10, 1, sigma=sigma)
-    print LSF.getSF(11, 10, -1, sigma=sigma)
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, 1, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 10, -1, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 10, 1, sigma=sigma))
+    print(LSF.getSF(11, 10, -1, sigma=sigma))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, 1, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 10, -1, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 200, 1, sigma=sigma)
-    print LSF.getSF(11, 200, -1, sigma=sigma)
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, 1, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 200, -1, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 200, 1, sigma=sigma))
+    print(LSF.getSF(11, 200, -1, sigma=sigma))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, 1, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 200, -1, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 10, 2.5, sigma=sigma)
-    print LSF.getSF(11, 10, -2.5, sigma=sigma)
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 10, 2.5, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 10, -2.5, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 10, 2.5, sigma=sigma))
+    print(LSF.getSF(11, 10, -2.5, sigma=sigma))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 10, 2.5, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 10, -2.5, sigma=sigma, unc="stat"))
 
-    print LSF.getSF(11, 200, 2.5, sigma=sigma)
-    print LSF.getSF(11, 200, -2.5, sigma=sigma)
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="nominal")
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="syst")
-    print LSF.getSF(13, 200, 2.5, sigma=sigma, unc="stat")
-    print LSF.getSF(13, 200, -2.5, sigma=sigma, unc="stat")
+    print(LSF.getSF(11, 200, 2.5, sigma=sigma))
+    print(LSF.getSF(11, 200, -2.5, sigma=sigma))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="nominal"))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="syst"))
+    print(LSF.getSF(13, 200, 2.5, sigma=sigma, unc="stat"))
+    print(LSF.getSF(13, 200, -2.5, sigma=sigma, unc="stat"))

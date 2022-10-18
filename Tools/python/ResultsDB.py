@@ -15,7 +15,7 @@ self.conn.execute('BEGIN EXCLUSIVE')
 import os
 import time
 import sqlite3
-import cPickle
+import pickle
 
 from u_float import u_float
 
@@ -99,8 +99,8 @@ class ResultsDB:
     def getObjects(self, key):
         ''' Get all entries in the database matching the provided key.
         '''
-        columns = self.clean(key.keys()+["value", "time_stamp"])
-        selection = " AND ".join([ "%s = '%s'"%(k, key[k]) for k in key.keys() ])
+        columns = self.clean(list(key.keys())+["value", "time_stamp"])
+        selection = " AND ".join([ "%s = '%s'"%(k, key[k]) for k in list(key.keys()) ])
 
         selectionString = "SELECT * FROM {} ".format(self.tableName) + " WHERE {} ".format(selection) + " ORDER BY time_stamp"
 
@@ -141,19 +141,19 @@ class ResultsDB:
         d = self.getDicts(key)
         tableColumns = ["Row#"] + self.columns
         header = "{:6}" + "| {:7} "*(len(self.columns)-1) + "| {:15} "
-        print "="*(6+18+10*(len(self.columns)-1))
-        print header.format(*tableColumns)
-        print "="*(6+18+10*(len(self.columns)-1))
+        print("="*(6+18+10*(len(self.columns)-1)))
+        print(header.format(*tableColumns))
+        print("="*(6+18+10*(len(self.columns)-1)))
         row = "{:6}" + "  {:7} "*(len(self.columns)-1) + "| {:15} "
         lineCount = 0
         for entry in d:
             r = [lineCount]
             for col in self.columns:
                 r.append(entry[col])
-            print row.format(*r)
+            print(row.format(*r))
             lineCount += 1
             if lineCount%50==0 and lineCount>0:
-                a = raw_input("continue scanning? 'q' to quit: ")
+                a = input("continue scanning? 'q' to quit: ")
                 if a == 'q': break
             
 
@@ -177,7 +177,7 @@ class ResultsDB:
             if objs:
                 if len(objs[-1]["value"]) > 50:
                     try:
-                        return cPickle.loads(objs[-1]["value"])
+                        return pickle.loads(objs[-1]["value"])
                     except:
                         return False
                 else:
@@ -199,17 +199,17 @@ class ResultsDB:
         if overwrite and self.contains(key):
             self.removeObjects(key)
 
-        columns = self.clean(key.keys()+["value"])
+        columns = self.clean(list(key.keys())+["value"])
         if not sorted(columns) == sorted(self.columns):
-            raise(ValueError("The columns don't match the table. Use the following: %s"%", ".join(self.columns)))
+            raise ValueError
         
         columns += ["time_stamp"]
-        pdata = cPickle.dumps(data, cPickle.HIGHEST_PROTOCOL)
-        values  = key.values()
+        pdata = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
+        values  = list(key.values())
         
         # check if number of columns matches. By default, there is no error if not, but better be save than sorry.
-        if len(key.keys())+1 < len(self.columns):
-            raise(ValueError("The length of the given key doesn't match the number of columns in the table. The following columns (excluding value and time_stamp) are part of the table: %s"%", ".join(self.columns)))
+        if len(list(key.keys()))+1 < len(self.columns):
+            raise ValueError
         
         selectionString = "INSERT INTO {} ".format(self.tableName) + " ({}) ".format(", ".join( columns )) + " VALUES ({}".format(", ".join([ "'%s'"%i for i in values ])) + ", :data, '%s')"%time.time()
         
@@ -239,16 +239,16 @@ class ResultsDB:
             self.removeObjects(key)
 
         logger.debug("Trying to write")
-        columns = self.clean(key.keys()+["value"])
+        columns = self.clean(list(key.keys())+["value"])
         if not sorted(columns) == sorted(self.columns):
-            raise(ValueError("The columns don't match the table. Use the following: %s"%", ".join(self.columns)))
+            raise ValueError
         
         columns += ["time_stamp"]
-        values  = key.values()+[str(value), time.time()]
+        values  = list(key.values())+[str(value), time.time()]
         
         # check if number of columns matches. By default, there is no error if not, but better be save than sorry.
-        if len(key.keys())+1 < len(self.columns):
-            raise(ValueError("The length of the given key doesn't match the number of columns in the table. The following columns (excluding value and time_stamp) are part of the table: %s"%", ".join(self.columns)))
+        if len(list(key.keys()))+1 < len(self.columns):
+            raise ValueError
 
         selectionString = "INSERT INTO {} ".format(self.tableName) + " ({}) ".format(", ".join( columns )) + " VALUES ({})".format(", ".join([ "'%s'"%i for i in values ]))
 
@@ -274,7 +274,7 @@ class ResultsDB:
     def removeObjects(self, key):
         ''' Remove entries matching the key. Careful when not all columns are specified!
         '''
-        selection = " AND ".join([ "%s = '%s'"%(k, key[k]) for k in key.keys() ])
+        selection = " AND ".join([ "%s = '%s'"%(k, key[k]) for k in list(key.keys()) ])
 
         selectionString = "DELETE FROM {} ".format(self.tableName) + " WHERE {} ".format(selection)
         for i in range(100):

@@ -11,9 +11,9 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         filters            += [ "Flag_HBHENoiseFilter" ]                      # HBHE noise filter
         filters            += [ "Flag_HBHENoiseIsoFilter" ]                   # HBHEiso noise filter
         filters            += [ "Flag_EcalDeadCellTriggerPrimitiveFilter" ]   # ECAL TP filter
-	if not skipULFilter:
-		filters            += [ "Flag_BadPFMuonDzFilter" ]	      # new UL Filter
-        filters        	   += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter
+        if not skipULFilter:
+            filters        += [ "Flag_BadPFMuonDzFilter" ]                    # new UL Filter
+        filters            += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
         if not skipBadChargedCandidate: #recommended to skip for now!!
@@ -28,10 +28,10 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         filters            += [ "Flag_EcalDeadCellTriggerPrimitiveFilter" ]   # ECAL TP filter
 #        filters            += [ "Flag_ecalBadCalibReducedMINIAODFilter" ]     # ECAL bad calibration filter update (needs to be re-run on miniAOD)
         filters            += [ "Flag_ecalBadCalibFilter" ]                   # current replacement for Flag_ecalBadCalibReducedMINIAODFilter -> change to Flag_ecalBadCalibFilterv2
-    	filters        	   += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
+        filters            += [ "Flag_eeBadScFilter" ]                        # ee badSC noise filter (data only)
         filters            += ["Flag_ecalBadCalibFilter"]
-	if not skipULFilter:
-        	filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
+        if not skipULFilter:
+            filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
         if not skipBadChargedCandidate: #recommended to skip for now!!
@@ -53,8 +53,8 @@ def getFilterCut( year, isData=False, ignoreJSON=False, isFastSim=False, skipBad
         filters            += ["Flag_ecalBadCalibFilter"]
         if not skipBadPFMuon:
             filters        += [ "Flag_BadPFMuonFilter" ]                      # Bad PF Muon Filter
-	if not skipULFilter:
-        	filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
+        if not skipULFilter:
+            filters            += [ "Flag_BadPFMuonDzFilter" ]                    # New Filter UL
         if not skipBadChargedCandidate: #recommended to skip for now!!
             filters        += [ "Flag_BadChargedCandidateFilter" ]            # Bad Charged Hadron Filter
         #else:

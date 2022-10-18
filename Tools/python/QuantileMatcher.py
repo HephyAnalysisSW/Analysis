@@ -97,10 +97,11 @@ class QuantileMatcher:
     def get_h2_quantiles( self, quantiles = [ 0.31, 0.5, 0.68] ):
         return self.__get_quantiles( self.h2, quantiles)
 
-if __name__=="__main__":
-    import pickle
-    data=pickle.load(file("/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/recoil_v4.3/_fine/Run2018A/lepSel-njet1p-btag0-relIso0.12-looseLeptonVeto-mll20-onZ/recoil_fitResults_SF.pkl"))
-    qm = QuantileMatcher( data[(0.0, 0.6283185307179586)][(0,50)]['para']['mc']['TH1F'], data[(0.0, 0.6283185307179586)][(0,50)]['para']['data']['TH1F'])
+#if __name__=="__main__":
+
+    #import pickle
+    #data=pickle.load(file("/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/recoil_v4.3/_fine/Run2018A/lepSel-njet1p-btag0-relIso0.12-looseLeptonVeto-mll20-onZ/recoil_fitResults_SF.pkl"))
+    #qm = QuantileMatcher( data[(0.0, 0.6283185307179586)][(0,50)]['para']['mc']['TH1F'], data[(0.0, 0.6283185307179586)][(0,50)]['para']['data']['TH1F'])
 
 
 #    import uuid

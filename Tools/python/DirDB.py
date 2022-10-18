@@ -37,7 +37,7 @@ class DirDB:
 
         result = None
         try:
-            result = pickle.load( file(os.path.join( self.directory, self.__get_filename(key) )) ) 
+            result = pickle.load( open(os.path.join( self.directory, self.__get_filename(key) )) ) 
         except IOError:
             # nothing found
             pass
@@ -62,7 +62,8 @@ class DirDB:
             if os.path.exists( filename ):
                 logger.warning( "Already found key '%r'. Do not store data.", key )
                 return data
-        pickle.dump( data, file( filename, 'w' ) )
+        with open( filename, 'wb' ) as _file:
+            pickle.dump( data, _file )
         return data
 
 if __name__ == "__main__":

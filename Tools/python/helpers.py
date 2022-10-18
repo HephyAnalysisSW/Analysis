@@ -106,13 +106,13 @@ def getFileList(dir, histname='histo', maxN=-1):
     return filelist
 
 def getSortedZCandidates(leptons):
-    inds = range(len(leptons))
+    inds = list(range(len(leptons)))
     vecs = [ ROOT.TLorentzVector() for i in inds ]
     for i, v in enumerate(vecs):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)
     dlMasses = [((vecs[comb[0]] + vecs[comb[1]]).M(), comb[0], comb[1])  for comb in itertools.combinations(inds, 2) if leptons[comb[0]]['pdgId']*leptons[comb[1]]['pdgId'] < 0 and abs(leptons[comb[0]]['pdgId']) == abs(leptons[comb[1]]['pdgId']) ]
     # sort the candidates, only keep the best ones
-    dlMasses = sorted(dlMasses, key=lambda (m,i1,i2):abs(m-91.1876))
+    dlMasses = sorted(dlMasses, key=lambda m_i1_i21:abs(m_i1_i21[0]-91.1876))
     usedIndices = []
     bestCandidates = []
     for m in dlMasses:
@@ -135,26 +135,26 @@ def getChain(sampleList, histname='', maxN=-1, treeName="Events"):
                     i+=1
                     c.Add(f)
                 else:
-                    print "File %s looks broken."%f
-            print "Added ",i,'files from samples %s' %(", ".join([s['name'] for s in sampleList_]))
+                    print("File %s looks broken."%f)
+            print("Added ",i,'files from samples %s' %(", ".join([s['name'] for s in sampleList_])))
         elif type(s)==type({}):
-            if s.has_key('file'):
+            if 'file' in s:
                 c.Add(s['file'])
 #        print "Added file %s"%s['file']
                 i+=1
-            if s.has_key('bins'):
+            if 'bins' in s:
                 for b in s['bins']:
-                    dir = s['dirname'] if s.has_key('dirname') else s['dir']
+                    dir = s['dirname'] if 'dirname' in s else s['dir']
                     for f in getFileList(dir+'/'+b, histname, maxN):
                         if checkRootFile(f, checkForObjects=[treeName]):
                             i+=1
                             c.Add(f)
                         else:
-                            print "File %s looks broken."%f
+                            print("File %s looks broken."%f)
 #      print 'Added %i files from %i elements' %(i, len(sampleList))
         else:
 #      print sampleList
-            print "Could not load chain from sampleList %s"%repr(sampleList)
+            print("Could not load chain from sampleList %s"%repr(sampleList))
     return c
 
 def checkRootFile(f, checkForObjects=[]):
@@ -167,7 +167,7 @@ def checkRootFile(f, checkForObjects=[]):
         return False
     for o in checkForObjects:
         if not rf.GetListOfKeys().Contains(o):
-            print "[checkRootFile] Failed to find object %s in file %s"%(o, f)
+            print("[checkRootFile] Failed to find object %s in file %s"%(o, f))
             rf.Close()
             return False
 #    print "Keys recoveredd %i zombie %i tb %i"%(rf.Recover(), rf.IsZombie(), rf.TestBit(ROOT.TFile.kRecovered))
@@ -400,15 +400,15 @@ def lp( l_pt, l_phi, met_pt, met_phi ):
 
 # Returns (closest mass, index1, index2)
 def closestOSDLMassToMZ(leptons):
-    inds = range(len(leptons))
+    inds = list(range(len(leptons)))
     vecs = [ ROOT.TLorentzVector() for i in inds ]
     for i, v in enumerate(vecs):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)
     dlMasses = [((vecs[comb[0]] + vecs[comb[1]]).M(), comb[0], comb[1])  for comb in itertools.combinations(inds, 2) if leptons[comb[0]]['pdgId']*leptons[comb[1]]['pdgId'] < 0 and abs(leptons[comb[0]]['pdgId']) == abs(leptons[comb[1]]['pdgId']) ]
-    return min(dlMasses, key=lambda (m,i1,i2):abs(m-91.1876)) if len(dlMasses)>0 else (-999, -1, -1)
+    return min(dlMasses, key=lambda m_i1_i2:abs(m_i1_i2[0]-91.1876)) if len(dlMasses)>0 else (-999, -1, -1)
 
 def getMinDLMass(leptons):
-    inds = range(len(leptons))
+    inds = list(range(len(leptons)))
     vecs = [ ROOT.TLorentzVector() for i in inds ]
     for i, v in enumerate(vecs):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)

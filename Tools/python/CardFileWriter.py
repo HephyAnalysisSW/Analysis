@@ -38,7 +38,7 @@ class CardFileWriter:
         if len(name)>30:
             logger.info("Name for bin",name,"too long. Max. length is 30.")
             return
-        if self.niceNames.has_key(name):
+        if name in self.niceNames:
             logger.info("Bin already there! (",name,")")
             return
         for p in processes:
@@ -53,17 +53,17 @@ class CardFileWriter:
     def addUncertainty(self, name, t, n=0):
         assert len(name)<self.maxUncNameWidth,  "That's too long: %s. Max. length is %i"%(name, self.maxUncNameWidth)
         if self.uncertainties.count(name):
-            print "Uncertainty already there! (",name,")"
+            print("Uncertainty already there! (",name,")")
             return
         self.uncertainties.append(name)
         self.uncertaintyString[name] = t
         if t=="gmN":
             if n==0:
-                print "gmN Uncertainty with n=0! Specify n as third argument: addUncertainty(..., 'gmN', n)"
+                print("gmN Uncertainty with n=0! Specify n as third argument: addUncertainty(..., 'gmN', n)")
                 return
             self.uncertaintyString[name] = t+' '+str(n)
         if len(self.uncertaintyString[name])>self.maxUncStrWidth:
-            print "That's too long:",self.uncertaintyString[name],"Max. length is", self.maxUncStrWidth
+            print("That's too long:",self.uncertaintyString[name],"Max. length is", self.maxUncStrWidth)
             del self.uncertaintyString[name]
             return
 
@@ -78,7 +78,7 @@ class CardFileWriter:
 
     def specifyObservation(self, b, obs):
         if not isinstance(obs, int):
-            print "Observation not an integer! (",obs,")"
+            print("Observation not an integer! (",obs,")")
             return
         self.observation[b] = obs
 
@@ -88,25 +88,25 @@ class CardFileWriter:
 
     def specifyFlatUncertainty(self, u,  val):
         if u not in self.uncertainties:
-            print "This uncertainty has not been added yet!",u,"Available:",self.uncertainties
+            print("This uncertainty has not been added yet!",u,"Available:",self.uncertainties)
             return
-        print "Adding ",u,"=",val,"for all bins and processes!"
+        print("Adding ",u,"=",val,"for all bins and processes!")
         for b in self.bins:
             for p in self.processes[b]:
                 self.uncertaintyVal[(u,b,p)] = round(val,self.precision)
 
     def specifyUncertainty(self, u, b, p, val):
         if u not in self.uncertainties:
-            print "This uncertainty has not been added yet!",u,"Available:",self.uncertainties
+            print("This uncertainty has not been added yet!",u,"Available:",self.uncertainties)
             return
         if b not in self.bins:
-            print "This bin has not been added yet!",b,"Available:",self.bins
+            print("This bin has not been added yet!",b,"Available:",self.bins)
             return
         if p not in self.processes[b]:
-            print "Process ", p," is not in bin",b,". Available for ", b,":",self.processes[b]
+            print("Process ", p," is not in bin",b,". Available for ", b,":",self.processes[b])
             return
         if val<0:
-            print "Warning! Found negative uncertainty %f for yield %f in %r. Reversing sign under the assumption that the correlation pattern is irrelevant (check!)."%(val, self.expectation[(b, p)], (u,b,p))
+            print("Warning! Found negative uncertainty %f for yield %f in %r. Reversing sign under the assumption that the correlation pattern is irrelevant (check!)."%(val, self.expectation[(b, p)], (u,b,p)))
             _val=1.0
         else:
             _val = val
@@ -115,31 +115,31 @@ class CardFileWriter:
     def getUncertaintyString(self, k):
         u, b, p = k
         if self.uncertaintyString[u].count('gmN'):
-            if self.uncertaintyVal.has_key((u,b,p)) and self.uncertaintyVal[(u,b,p)]>0.:
+            if (u,b,p) in self.uncertaintyVal and self.uncertaintyVal[(u,b,p)]>0.:
                 n = float(self.uncertaintyString[u].split(" ")[1])
                 return self.mfs(self.expectation[(b, p)]/float(n))
             else: return '-'
-        if self.uncertaintyVal.has_key((u,b,p)):
+        if (u,b,p) in self.uncertaintyVal:
             return self.mfs(self.uncertaintyVal[(u,b,p)])
         return '-'
 
     def checkCompleteness(self):
         for b in self.bins:
-            if not self.observation.has_key(b) or not self.observation[b]<float('inf'):
-                print "No valid observation for bin",b
+            if b not in self.observation or not self.observation[b]<float('inf'):
+                print("No valid observation for bin",b)
                 return False
-            if self.hasContamination and (not self.contamination.has_key(b) or not self.contamination[b] < float('inf')):
-                print "No valid contamination for bin",b
+            if self.hasContamination and (b not in self.contamination or not self.contamination[b] < float('inf')):
+                print("No valid contamination for bin",b)
                 return False
             if len(self.processes[b])==0:
-                print "Warning, bin",b,"has no processes"
+                print("Warning, bin",b,"has no processes")
             for p in self.processes[b]:
-                if not self.expectation.has_key((b,p)) or not self.expectation[(b,p)]<float('inf'):
-                    print "No valid expectation for bin/process ",(b,p)
+                if (b,p) not in self.expectation or not self.expectation[(b,p)]<float('inf'):
+                    print("No valid expectation for bin/process ",(b,p))
                     return False
-            for k in self.uncertaintyVal.keys():
+            for k in list(self.uncertaintyVal.keys()):
                 if not self.uncertaintyVal[k]<float('inf'):
-                    print "Uncertainty invalid for",k,':',self.uncertaintyVal[k]
+                    print("Uncertainty invalid for",k,':',self.uncertaintyVal[k])
                     return False
         return True
 
@@ -149,7 +149,7 @@ class CardFileWriter:
     def writeToFile(self, fname):
         import datetime, os
         if not self.checkCompleteness():
-            print "Incomplete specification."
+            print("Incomplete specification.")
             return
         allProcesses=[]
         numberID = {}
@@ -205,7 +205,7 @@ class CardFileWriter:
 
 
         outfile.close()
-        print "[cardFileWrite] Written card file %s"%fname
+        print("[cardFileWrite] Written card file %s"%fname)
         return fname
 
     def readResFile(self, fname):
@@ -241,7 +241,7 @@ class CardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         if fname is not None:  # Assume card is already written when fname is not none
@@ -254,7 +254,7 @@ class CardFileWriter:
         assert os.path.exists(filename), "File not found: %s"%filename
 
         combineCommand = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine --saveWorkspace -M AsymptoticLimits "+filename
-        print combineCommand
+        print(combineCommand)
         os.system(combineCommand)
 
         tempResFile = uniqueDirname+"/higgsCombineTest.AsymptoticLimits.mH120.root"
@@ -262,7 +262,7 @@ class CardFileWriter:
             res= self.readResFile(tempResFile)
         except:
             res=None
-            print "[cardFileWrite] Did not succeed reeding result."
+            print("[cardFileWrite] Did not succeed reeding result.")
         if res:
             shutil.copyfile(tempResFile, resultFilename)
 
@@ -273,7 +273,7 @@ class CardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'TopEFT', 'Tools', 'python', 'cardFileWriter', 'diffNuisances.py'), os.path.join(uniqueDirname, 'diffNuisances.py'))
 
@@ -315,7 +315,7 @@ class CardFileWriter:
         logger.info("Creating %s", uniqueDirname)
         os.makedirs(uniqueDirname)
 
-        years = cards.keys()
+        years = list(cards.keys())
         cmd = ''
         for year in years:
             cmd += " dc_%s=%s"%(year, cards[year])
@@ -340,7 +340,7 @@ class CardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         if fname is not None:  # Assume card is already written when fname is not none
           filename = os.path.abspath(fname)
@@ -366,7 +366,7 @@ class CardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         if fname is not None:  # Assume card is already written when fname is not none
           filename = os.path.abspath(fname)
@@ -413,7 +413,7 @@ class CardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         combineCommand = "cd "+uniqueDirname+";eval `scramv1 runtime -sh`;combine --saveWorkspace -M Significance --uncapped 1 --significance --rMin -5 "+fname
         os.system(combineCommand)
@@ -422,7 +422,7 @@ class CardFileWriter:
             os.system("rm -rf "+uniqueDirname+"/higgsCombineTest.Significance.mH120.root")
         except:
             res=None
-            print "Did not succeed."
+            print("Did not succeed.")
         shutil.rmtree(uniqueDirname)
 
         return res

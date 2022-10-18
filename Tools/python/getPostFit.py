@@ -48,7 +48,7 @@ def dict_function ( d,  func ):
     but the final values are determined by func(val)
     """
     new_dict = {}
-    for k in d.keys():
+    for k in list(d.keys()):
         v = d.get(k)
         if type(v)==dict:
             ret = dict_function( v , func)         

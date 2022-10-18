@@ -87,7 +87,7 @@ X  = dataset[:,0:n_var_flat]
 Y = dataset[:, n_var_flat]
 
 from sklearn.preprocessing import label_binarize
-classes = range(len(config.training_samples))
+classes = list(range(len(config.training_samples)))
 
 if len(config.training_samples) == 2: Y = label_binarize(Y, classes=classes+[-1])[:,:2]
 else: Y = label_binarize(Y, classes=classes)
@@ -104,16 +104,16 @@ if args.add_LSTM:
         logger.info( "Loading vector branches %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
         with uproot.open(upfile_name) as upfile:
             vec_br_f[i_training_sample]   = {}
-            for name, branch in upfile["Events"].arrays(vector_branches).iteritems():
+            for name, branch in upfile["Events"].arrays(vector_branches).items():
                 vec_br_f[i_training_sample][name] = branch.pad(max_timestep)[:,:max_timestep].fillna(0)
 
     vec_br = {name: awkward.JaggedArray.concatenate( [vec_br_f[i_training_sample][name] for i_training_sample in range(len(config.training_samples))] ) for name in vector_branches}
     if args.small:
-        for key, branch in vec_br.iteritems():
+        for key, branch in vec_br.items():
             vec_br[key] = branch[:n_small_samples]
 
     # put columns side by side and transpose the innermost two axis
-    len_samples = len(vec_br.values()[0])
+    len_samples = len(list(vec_br.values())[0])
     V           = np.column_stack( [vec_br[name] for name in vector_branches] ).reshape( len_samples, len(vector_branches), max_timestep).transpose((0,2,1))
 
 # split data into train and test, test_size = 0.2 is quite standard for this

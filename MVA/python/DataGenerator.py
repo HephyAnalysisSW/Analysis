@@ -132,7 +132,7 @@ class DataGenerator(Sequence):
         Y = dataset[:, n_var_flat] 
 
         from sklearn.preprocessing import label_binarize
-        classes = range(len(self.config.training_samples))
+        classes = list(range(len(self.config.training_samples)))
 
         if len(self.config.training_samples) == 2: Y = label_binarize(Y, classes=classes+[-1])[:,:2]
         else: Y = label_binarize(Y, classes=classes)
@@ -150,16 +150,16 @@ class DataGenerator(Sequence):
 
                 entrystart, entrystop = chunk( self.n_total[training_sample.name], self.n_split, index ) 
 
-                for name, branch in self.events_tree[training_sample.name].arrays(vector_branches, entrystart=entrystart, entrystop=entrystop).iteritems():
+                for name, branch in self.events_tree[training_sample.name].arrays(vector_branches, entrystart=entrystart, entrystop=entrystop).items():
                     vec_br_f[i_training_sample][name] = branch.pad(max_timestep)[:,:max_timestep].fillna(0)
 
             vec_br = {name: awkward.JaggedArray.concatenate( [vec_br_f[i_training_sample][name] for i_training_sample in range(len(self.config.training_samples))] ) for name in vector_branches}
             if self.small:
-                for key, branch in vec_br.iteritems():
+                for key, branch in vec_br.items():
                     vec_br[key] = branch[:n_small_samples]
 
             # put columns side by side and transpose the innermost two axis
-            len_samples = len(vec_br.values()[0])
+            len_samples = len(list(vec_br.values())[0])
             V           = np.column_stack( [vec_br[name] for name in vector_branches] ).reshape( len_samples, len(vector_branches), max_timestep).transpose((0,2,1))
 
         # split data into train and test, test_size = 0.2 is quite standard for this

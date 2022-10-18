@@ -19,7 +19,7 @@ def read_from_file( f, key = None, forgiving = True):
             with open(f) as _f:
                 res = pickle.load(_f)
             if key is not None:
-                if res.has_key( key ):
+                if key in res:
                     return res[ key ]
             else:
                 return res
@@ -117,8 +117,8 @@ class MergingDirDB:
         ''' Get all entries in the database matching the provided key.
         '''
 
-        if self.data_on_disk_dict.has_key( key ): return self.data_on_disk_dict[ key ]
-        if self.data_dict.has_key( key ): return self.data_dict[ key ]
+        if key in self.data_on_disk_dict: return self.data_on_disk_dict[ key ]
+        if key in self.data_dict: return self.data_dict[ key ]
         # if we don't alread have the key, load it from all files and remember it in case you're asked again:
         return self.read_from_all_files(key)
 
@@ -169,7 +169,7 @@ class MergingDirDB:
                     raise e
         else:
             result = {}
-        logger.info( 'Found %i keys in merged file.', len(result.keys()) )
+        logger.info( 'Found %i keys in merged file.', len(list(result.keys())) )
         # result will be 'None' if loading from an existing merge file failed.
         # That will result in an error below which is what we want, because in that case we don't want to write anything
         results = []
@@ -189,7 +189,7 @@ class MergingDirDB:
         except Exception as e:
             logger.error( "Something wrong with file %s", self.merged_file() )
             raise e
-        logger.info( 'Wrote %i keys to merged file.', len(result.keys()) )
+        logger.info( 'Wrote %i keys to merged file.', len(list(result.keys())) )
         
         if clear and os.path.exists( self.merged_file() ):
             try:

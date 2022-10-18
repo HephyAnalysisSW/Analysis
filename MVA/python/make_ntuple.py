@@ -81,7 +81,7 @@ def fill_vector_collection( event, collection_name, collection_varnames, objects
     setattr( event, "n"+collection_name, len(objects) )
     for i_obj, obj in enumerate(objects[:nMax]):
         for var in collection_varnames:
-            if var in obj.keys():
+            if var in list(obj.keys()):
                 if type(obj[var]) == type("string"):
                     obj[var] = int(ord(obj[var]))
                 if type(obj[var]) == type(True):
@@ -94,24 +94,24 @@ def filler( event ):
     r = reader.event
 
     # copy scalar variables
-    for name, func in config.all_mva_variables.iteritems():
+    for name, func in config.all_mva_variables.items():
         setattr( event, name, func(r, sample) )
 
     # copy vector variables
-    for name, vector_var in config.mva_vector_variables.iteritems():
+    for name, vector_var in config.mva_vector_variables.items():
         objs = vector_var["func"]( r, sample) 
         #print name, objs, vector_var['varnames']
-        fill_vector_collection( event, name, vector_var['varnames'], objs, nMax = vector_var['nMax'] if vector_var.has_key('nMax') else None )
+        fill_vector_collection( event, name, vector_var['varnames'], objs, nMax = vector_var['nMax'] if 'nMax' in vector_var else None )
 
 # Create a maker. Maker class will be compiled. 
 
 # scalar variables
-mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
+mva_variables = ["%s/F"%var for var in list(config.all_mva_variables.keys())]
 
 # vector variables, if any
-for name, vector_var in config.mva_vector_variables.iteritems():
+for name, vector_var in config.mva_vector_variables.items():
     #mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
-    mva_variables.append ( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var['nMax'] if vector_var.has_key('nMax') else None ) )
+    mva_variables.append ( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var['nMax'] if 'nMax' in vector_var else None ) )
 ## FIs
 #if hasattr( config, "FIs"):
 #    FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]

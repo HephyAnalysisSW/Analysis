@@ -144,4 +144,4 @@ commands.append( 'wget -O %s "%s"'%(gID_18_med_file, gID_18_med_git) )
 
 for command in commands:
 #    os.system(command)
-    print command
+    print(command)

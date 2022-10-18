@@ -46,8 +46,8 @@ if __name__=="__main__":
     eftTopWidth = EFTTopDecay()
     widths      = eftTopWidth.widths()
     widths_BSM  = eftTopWidth.widths(gLRe=.2) 
-    print "SM",  widths
-    print "BSM", widths_BSM
+    print("SM",  widths)
+    print("BSM", widths_BSM)
 
     fR = ROOT.TF1("FR", "{FR}*(3/8.)*(1+cos(x))**2".format(FR=widths['Gamma_R']/widths['Gamma']),0,pi)
     fL = ROOT.TF1("FL", "{FL}*(3/8.)*(1-cos(x))**2".format(FL=widths['Gamma_L']/widths['Gamma']),0,pi)
@@ -87,5 +87,5 @@ if __name__=="__main__":
     fL_BSM.Draw("same")
     f0_BSM.Draw("same")
 
-    c1.Print('/mnt/hephy/cms/robert.schoefbeck/www/etc/hel.png')
+    c1.Print('./hel.png')
     

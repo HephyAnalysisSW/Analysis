@@ -111,7 +111,7 @@ def makeRemoteGif(directory, pattern, name, delay=50):
 def make_gifs( cmds=gif_cmds ):
     ret = []
     for cmd in cmds:
-        print ("make gif:", cmd )
+        print(("make gif:", cmd ))
         output,error = subprocess.Popen(cmd, shell=True, executable="/bin/bash", stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
         if error:
             ret.append(cmd)

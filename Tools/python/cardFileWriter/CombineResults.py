@@ -63,7 +63,7 @@ class CombineResults:
         """
 
         if isSearch:
-            print "ATTENTION: MAY NOT WORK PROPERLY FOR SEARCHES, please check the output and provide feedback"
+            print("ATTENTION: MAY NOT WORK PROPERLY FOR SEARCHES, please check the output and provide feedback")
 
         if not isinstance( cardFile, str ):
             raise ValueError( "CardFile input needs to be a string with the path to the cardFile" )
@@ -91,7 +91,7 @@ class CombineResults:
         # input shapes created with cardfile writer in the same step as the shapeFile, may be mandatory
         # look for information on the path to the input rootfiles in the shapeCard
         self.shapeRootFile = self.__getShapeDirectoriesFromCard( self.shapeCard ) if self.shapeCard else { dir:None for dir in self.channels }
-        if not all(self.shapeRootFile.values()) or not all( map( os.path.exists, self.shapeRootFile.values() ) ):
+        if not all(self.shapeRootFile.values()) or not all( map( os.path.exists, list(self.shapeRootFile.values()) ) ):
             logger.warning( "Root file with initial shape distributions not found!" )
             logger.warning( "Continuing with limited options!" )
             self.shapeRootFile = { dir:None for dir in self.channels }
@@ -194,8 +194,8 @@ class CombineResults:
 
         shapes = {}
         for line in lines:
-            if   not line.startswith("shapes") and not shapes.keys(): continue
-            elif not line.startswith("shapes") and shapes.keys():     return shapes
+            if   not line.startswith("shapes") and not list(shapes.keys()): continue
+            elif not line.startswith("shapes") and list(shapes.keys()):     return shapes
             info            = line.split()
             if info[2] == "*":
                 info[2] = "Bin0"
@@ -208,13 +208,13 @@ class CombineResults:
         """ get the statOnly fit objects
         """
         # return safed fitResult if available
-        print "self.statOnlyFitResults: {}".format(self.statOnlyFitResults)
+        print("self.statOnlyFitResults: {}".format(self.statOnlyFitResults))
         if self.statOnlyFitResults:
-            if key and key in self.statOnlyFitResults.keys(): return self.statOnlyFitResults[key]
+            if key and key in list(self.statOnlyFitResults.keys()): return self.statOnlyFitResults[key]
             elif not key:                                     return self.statOnlyFitResults
 
         if not self.fitResultStatOnly:
-            print "Stat-only fit result not availabe, creating it!"
+            print("Stat-only fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=True ) # run stat only fit diagnostics
 
         if not self.tStatOnlyRootFile:
@@ -234,11 +234,11 @@ class CombineResults:
         """
         # return safed fitResult if available
         if self.fitResults:
-            if key and key in self.fitResults.keys(): return self.fitResults[key]
+            if key and key in list(self.fitResults.keys()): return self.fitResults[key]
             elif not key:                             return self.fitResults
 
         if not self.fitResult:
-            print "Fit result not availabe, creating it!"
+            print("Fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         if not self.tRootFile:
@@ -259,14 +259,14 @@ class CombineResults:
 
         # return safed fitResult if available
         if self.shapeInputs:
-            if key and key in self.shapeInputs.keys(): return self.shapeInputs[key]
+            if key and key in list(self.shapeInputs.keys()): return self.shapeInputs[key]
             elif not key:                              return self.shapeInputs
 
         if not all(self.shapeRootFile.values()):
             raise ValueError( "Shape root file as input not found! Running in limited mode, thus cannot get the object needed!" )
 
         if not self.fitResult:
-            print "Fit result not availabe, creating it!"
+            print("Fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         self.tShapeFile = {}
@@ -274,7 +274,7 @@ class CombineResults:
 
         for dir in self.channels:
 
-            if not dir in self.tShapeFile.keys():
+            if not dir in list(self.tShapeFile.keys()):
                 self.tShapeFile[dir] = ROOT.TFile( self.shapeRootFile[dir], "READ")
 
             shapes = [ x.GetName() for x in self.tShapeFile[dir].GetListOfKeys() ]
@@ -319,7 +319,7 @@ class CombineResults:
                 try:
                     dir.GetListOfKeys()
                 except:
-                    print "Missing directory %s/%s in root file %s! Continuing..."%(fit, d, rootFile)
+                    print("Missing directory %s/%s in root file %s! Continuing..."%(fit, d, rootFile))
                     continue
                 histList    = [ x.GetName() for x in dir.GetListOfKeys() if x.GetName() != "data" ] + ["data"]
                 n           = nBins if nBins and nBins <= dir.Get(histList[-2]).GetNbinsX() else dir.Get(histList[-2]).GetNbinsX()
@@ -364,7 +364,7 @@ class CombineResults:
             tRootFile.cd(dir)
             for d in self.channels:
                 if not statOnly and not self.combinedCard:
-                    if "total_covar" in result[dir][d].keys():
+                    if "total_covar" in list(result[dir][d].keys()):
                         result[dir][d]["total_covar"].SetName("process_covar")
                         result[dir][d]["total_covar"].Write()
                     result[dir][d]["total_signal"].Write()
@@ -377,7 +377,7 @@ class CombineResults:
                 tRootFile.mkdir(dir+"/"+d+"/")
                 tRootFile.cd(dir+"/"+d+"/")
 
-                for name, hist in result[dir][d].iteritems():
+                for name, hist in result[dir][d].items():
                     hist.Write()
 
                 tRootFile.cd()
@@ -387,7 +387,7 @@ class CombineResults:
 
     def __filter( self, filterDict, var=None ):
         if not isinstance( filterDict, dict ) or not var: return filterDict
-        return { key:val for key, val in filterDict.items() if key==var}
+        return { key:val for key, val in list(filterDict.items()) if key==var}
             
     def __filterDict( self, filterDict, bin=None, estimate=None, nuisance=None ):
         """ filter dicts of dicts for the output
@@ -395,10 +395,10 @@ class CombineResults:
 
         filterDict = self.__filter( filterDict, var=bin )
         if not isinstance( filterDict, dict ): return filterDict
-        for b, b_dict in filterDict.items():
+        for b, b_dict in list(filterDict.items()):
             filterDict[b] = self.__filter( b_dict, var=estimate )
             if not isinstance( filterDict[b], dict ): continue
-            for e, e_dict in filterDict[b].items():
+            for e, e_dict in list(filterDict[b].items()):
                 filterDict[b][e] = self.__filter( e_dict, var=nuisance )
         return filterDict
 
@@ -466,17 +466,17 @@ class CombineResults:
         unc              = self.getUncertaintiesFromTxtCard(   bin=uncBin, postFit=postFit )[directory][uncBin]
 
         rateParamInfo    = self.getRateParameterInfo()
-        rateParamInfo    = { nuisance:rateParamInfo[nuisance][bin] } if nuisance in rateParamInfo.keys() and bin in rateParamInfo[nuisance].keys() else {}
-        rateParam        = { key:val.sigma/val.val if val.val else 0 for key, val in self.getRateParameter( postFit=postFit ).iteritems() }
+        rateParamInfo    = { nuisance:rateParamInfo[nuisance][bin] } if nuisance in list(rateParamInfo.keys()) and bin in list(rateParamInfo[nuisance].keys()) else {}
+        rateParam        = { key:val.sigma/val.val if val.val else 0 for key, val in self.getRateParameter( postFit=postFit ).items() }
 
         y, yup, ydown, sig = 0, 0, 0, 0
         # does not work for total directory, but total is not used
         for p in processes:
             # do not apply rate parameters if the process is not affected
-            unc[p].update( { key:0 for key in rateParam.keys() } if not rateParamInfo or (rateParamInfo and p not in rateParamInfo[nuisance]) else rateParam )
+            unc[p].update( { key:0 for key in list(rateParam.keys()) } if not rateParamInfo or (rateParamInfo and p not in rateParamInfo[nuisance]) else rateParam )
             if p.count('signal') and self.isSearch: continue
-            yproc  = yields[p].val if p in yields.keys() else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
-            yproc_prefit  = yields_prefit[p].val if p in yields_prefit.keys() else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
+            yproc  = yields[p].val if p in list(yields.keys()) else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
+            yproc_prefit  = yields_prefit[p].val if p in list(yields_prefit.keys()) else 0 # yield is 0 when it is not in the results? or throw an error? FIXME
             uproc  = unc[p][nuisance]
             y     += yproc
             sig   += yproc_prefit*uproc # absolute error, the error band is in fact relative to the prefit yield, interesting to know, has litte effect, except for large pulls
@@ -504,14 +504,14 @@ class CombineResults:
         if postFitRateParams and not postFit:
             subkey += "_rateParam"
 
-        if not statOnly and subkey in self.regionHistos[key].keys() and self.regionHistos[key][subkey]:
+        if not statOnly and subkey in list(self.regionHistos[key].keys()) and self.regionHistos[key][subkey]:
             hists = self.regionHistos[key][subkey]
             return hists
 
         if   postFit and not self.bkgOnly: dirName = "shapes_fit_s"
         elif postFit and     self.bkgOnly: dirName = "shapes_fit_b"
         else:                              dirName = "shapes_prefit"
-	print "dir name:", dirName
+        print("dir name:", dirName)
 
         if statOnly: fit = self.__getStatOnlyFitObject( key=dirName )
         else:        fit = self.__getFitObject( key=dirName )
@@ -519,21 +519,21 @@ class CombineResults:
         if postFitRateParams:
             rateParams = self.getRateParameter( postFit=True )
             rateParamInfo = self.getRateParameterInfo()
-            print rateParams, rateParamInfo
+            print(rateParams, rateParamInfo)
 
         for dir in self.channels:
             #histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if (x.GetName() != "data" and x.GetName() != "signal")] + [ "data" ] 
             histList = [ x.GetName() for x in fit.Get(dir).GetListOfKeys() if x.GetName() != "data" ] + [ "data" ] 
-            histList = filter( lambda hist: "total_covar" not in hist and "process_" not in hist, histList )
+            histList = [hist for hist in histList if "total_covar" not in hist and "process_" not in hist]
             histList.sort()
             hists[dir]    = {}
             for hist in histList:
                 hists[dir][hist] = fit.Get(dir+"/"+hist).Clone()
 
                 if postFitRateParams and rateParams:
-                    for rateParam, rateDict in rateParamInfo.iteritems():
-                        if rateParam not in rateParams.keys(): continue # parameter frozen
-                        for rateBin, processList in rateDict.iteritems():
+                    for rateParam, rateDict in rateParamInfo.items():
+                        if rateParam not in list(rateParams.keys()): continue # parameter frozen
+                        for rateBin, processList in rateDict.items():
                             if rateBin.startswith(dir) and hist in processList:
                                 for ibin in range(hists[dir][hist].GetNbinsX()):
                                     if int(rateBin.split("Bin")[-1]) == ibin:
@@ -586,47 +586,47 @@ class CombineResults:
                 hists[dir].update( self.getNuisanceHistosFromShapeCard( postFit=postFit, plotBins=None, bkgSubstracted=bkgSubstracted, nuisances=[n for n in nuisances if n != "r"], directory=dir )[dir] )
 
             #labels = self.getBinLabels( labelFormater=labelFormater )[dir]
-	    labels = ['allSR1vlaX',  'allSR1laX', 'allSR1maX',  'allSR1haX',
-		      'allSR1vlaY',  'allSR1laY', 'allSR1maY',  'allSR1haY',
-		      'allSR1vlbX',  'allSR1lbX', 'allSR1mbX',  'allSR1hbX',
-		      'allSR1vlbY',  'allSR1lbY', 'allSR1mbY',  'allSR1hbY',
-		      'allSR1lcX', 'allSR1mcX',  'allSR1hcX',
-		      'allSR1lcY', 'allSR1mcY',  'allSR1hcY',
-		      'allSR2vlaX',  'allSR2laX', 'allSR2maX',  'allSR2haX',
-		      'allSR2vlaY',  'allSR2laY', 'allSR2maY',  'allSR2haY',
-		      'allSR2vlbX',  'allSR2lbX', 'allSR2mbX',  'allSR2hbX',
-		      'allSR2vlbY',  'allSR2lbY', 'allSR2mbY',  'allSR2hbY',
-		      'allSR2lcX', 'allSR2mcX',  'allSR2hcX',
-		      'allSR2lcY', 'allSR2mcY',  'allSR2hcY'
-		      ]
-	#    labels = ['allCR1maX',  'allCR1haX', 
-	#	      'allCR1maY',  'allCR1haY', 
-	#	      'allCR1mbX',  'allCR1hbX', 
-	#	      'allCR1mbY',  'allCR1hbY', 
-	#	      'allCR1mcX',  'allCR1hcX', 
-	#	      'allCR1mcY',  'allCR1hcY', 
-	#	      'allCR2maX',  'allCR2haX', 
-	#	      'allCR2maY',  'allCR2haY', 
-	#	      'allCR2mbX',  'allCR2hbX', 
-	#	      'allCR2mbY',  'allCR2hbY', 
-	#	      'allCR2mcX',  'allCR2hcX', 
-	#	      'allCR2mcY',  'allCR2hcY']
-	#    labels = ['allCR1maX', 'eCR1maX','muCR1maX', 'allCR1haX', 'eCR1haX', 'muCR1haX',
-	#	      'allCR1maY', 'eCR1maY','muCR1maY', 'allCR1haY', 'eCR1haY', 'muCR1haY',
-	#	      'allCR1mbX', 'eCR1mbX','muCR1mbX', 'allCR1hbX', 'eCR1hbX', 'muCR1hbX',
-	#	      'allCR1mbY', 'eCR1mbY','muCR1mbY', 'allCR1hbY', 'eCR1hbY', 'muCR1hbY',
-	#	      'allCR1mcX', 'eCR1mcX','muCR1mcX', 'allCR1hcX', 'eCR1hcX', 'muCR1hcX',
-	#	      'allCR1mcY', 'eCR1mcY','muCR1mcY', 'allCR1hcY', 'eCR1hcY', 'muCR1hcY',
-	#	      'allCR2maX', 'eCR2maX','muCR2maX', 'allCR2haX', 'eCR2haX', 'muCR2haX',
-	#	      'allCR2maY', 'eCR2maY','muCR2maY', 'allCR2haY', 'eCR2haY', 'muCR2haY',
-	#	      'allCR2mbX', 'eCR2mbX','muCR2mbX', 'allCR2hbX', 'eCR2hbX', 'muCR2hbX',
-	#	      'allCR2mbY', 'eCR2mbY','muCR2mbY', 'allCR2hbY', 'eCR2hbY', 'muCR2hbY',
-	#	      'allCR2mcX', 'eCR2mcX','muCR2mcX', 'allCR2hcX', 'eCR2hcX', 'muCR2hcX',
-	#	      'allCR2mcY', 'eCR2mcY','muCR2mcY', 'allCR2hcY', 'eCR2hcY', 'muCR2hcY']
-	#    labels = ['allCR1aX', 'allCR1aY', 'allCR1bX','allCR1bY','allCR1cX','allCR1cY','allCR2aX', 'allCR2aY', 'allCR2bX','allCR2bY','allCR2cX','allCR2cY']
-	    #labels = ['allCR1aX', 'eCR1aX','muCR1aX','allCR1aY', 'eCR1aY', 'muCR1aY','allCR1bX','eCR1bX','muCR1bX','allCR1bY','eCR1bY','muCR1bY','allCR1cX','eCR1cX','muCR1cX','allCR1cY','eCR1cY','muCR1cY','allCR2aX', 'eCR2aX','muCR2aX','allCR2aY', 'eCR2aY', 'muCR2aY','allCR2bX','eCR2bX','muCR2bX','allCR2bY','eCR2bY','muCR2bY','allCR2cX','eCR2cX','muCR2cX','allCR2cY','eCR2cY','muCR2cY']
+            labels = ['allSR1vlaX',  'allSR1laX', 'allSR1maX',  'allSR1haX',
+              'allSR1vlaY',  'allSR1laY', 'allSR1maY',  'allSR1haY',
+              'allSR1vlbX',  'allSR1lbX', 'allSR1mbX',  'allSR1hbX',
+              'allSR1vlbY',  'allSR1lbY', 'allSR1mbY',  'allSR1hbY',
+              'allSR1lcX', 'allSR1mcX',  'allSR1hcX',
+              'allSR1lcY', 'allSR1mcY',  'allSR1hcY',
+              'allSR2vlaX',  'allSR2laX', 'allSR2maX',  'allSR2haX',
+              'allSR2vlaY',  'allSR2laY', 'allSR2maY',  'allSR2haY',
+              'allSR2vlbX',  'allSR2lbX', 'allSR2mbX',  'allSR2hbX',
+              'allSR2vlbY',  'allSR2lbY', 'allSR2mbY',  'allSR2hbY',
+              'allSR2lcX', 'allSR2mcX',  'allSR2hcX',
+              'allSR2lcY', 'allSR2mcY',  'allSR2hcY'
+              ]
+    #    labels = ['allCR1maX',  'allCR1haX', 
+    #          'allCR1maY',  'allCR1haY', 
+    #          'allCR1mbX',  'allCR1hbX', 
+    #          'allCR1mbY',  'allCR1hbY', 
+    #          'allCR1mcX',  'allCR1hcX', 
+    #          'allCR1mcY',  'allCR1hcY', 
+    #          'allCR2maX',  'allCR2haX', 
+    #          'allCR2maY',  'allCR2haY', 
+    #          'allCR2mbX',  'allCR2hbX', 
+    #          'allCR2mbY',  'allCR2hbY', 
+    #          'allCR2mcX',  'allCR2hcX', 
+    #          'allCR2mcY',  'allCR2hcY']
+    #    labels = ['allCR1maX', 'eCR1maX','muCR1maX', 'allCR1haX', 'eCR1haX', 'muCR1haX',
+    #          'allCR1maY', 'eCR1maY','muCR1maY', 'allCR1haY', 'eCR1haY', 'muCR1haY',
+    #          'allCR1mbX', 'eCR1mbX','muCR1mbX', 'allCR1hbX', 'eCR1hbX', 'muCR1hbX',
+    #          'allCR1mbY', 'eCR1mbY','muCR1mbY', 'allCR1hbY', 'eCR1hbY', 'muCR1hbY',
+    #          'allCR1mcX', 'eCR1mcX','muCR1mcX', 'allCR1hcX', 'eCR1hcX', 'muCR1hcX',
+    #          'allCR1mcY', 'eCR1mcY','muCR1mcY', 'allCR1hcY', 'eCR1hcY', 'muCR1hcY',
+    #          'allCR2maX', 'eCR2maX','muCR2maX', 'allCR2haX', 'eCR2haX', 'muCR2haX',
+    #          'allCR2maY', 'eCR2maY','muCR2maY', 'allCR2haY', 'eCR2haY', 'muCR2haY',
+    #          'allCR2mbX', 'eCR2mbX','muCR2mbX', 'allCR2hbX', 'eCR2hbX', 'muCR2hbX',
+    #          'allCR2mbY', 'eCR2mbY','muCR2mbY', 'allCR2hbY', 'eCR2hbY', 'muCR2hbY',
+    #          'allCR2mcX', 'eCR2mcX','muCR2mcX', 'allCR2hcX', 'eCR2hcX', 'muCR2hcX',
+    #          'allCR2mcY', 'eCR2mcY','muCR2mcY', 'allCR2hcY', 'eCR2hcY', 'muCR2hcY']
+    #    labels = ['allCR1aX', 'allCR1aY', 'allCR1bX','allCR1bY','allCR1cX','allCR1cY','allCR2aX', 'allCR2aY', 'allCR2bX','allCR2bY','allCR2cX','allCR2cY']
+        #labels = ['allCR1aX', 'eCR1aX','muCR1aX','allCR1aY', 'eCR1aY', 'muCR1aY','allCR1bX','eCR1bX','muCR1bX','allCR1bY','eCR1bY','muCR1bY','allCR1cX','eCR1cX','muCR1cX','allCR1cY','eCR1cY','muCR1cY','allCR2aX', 'eCR2aX','muCR2aX','allCR2aY', 'eCR2aY', 'muCR2aY','allCR2bX','eCR2bX','muCR2bX','allCR2bY','eCR2bY','muCR2bY','allCR2cX','eCR2cX','muCR2cX','allCR2cY','eCR2cY','muCR2cY']
             if labels:
-                for h_key, h in hists[dir].iteritems():
+                for h_key, h in hists[dir].items():
                     if isinstance( h, dict ):
                         for i in range(h["up"].GetNbinsX()):
                             h["up"].GetXaxis().SetBinLabel( i+1, labels[i] )
@@ -640,7 +640,7 @@ class CombineResults:
 
             # remove single bins from region plots
             if plotBins:
-                for i_h, (h_key,h) in enumerate(hists[dir].iteritems()):
+                for i_h, (h_key,h) in enumerate(hists[dir].items()):
                     if isinstance( h, dict ):
                         hists[dir][h_key]["up"]   = self.__reduceHistogram( fromHisto=h["up"],   plotBins=plotBins )
                         hists[dir][h_key]["down"] = self.__reduceHistogram( fromHisto=h["down"], plotBins=plotBins )
@@ -651,7 +651,7 @@ class CombineResults:
 
         if bkgSubstracted:
             for dir in self.channels:
-                tot = "total" if "total" in hists[dir].keys() else "total_overall"
+                tot = "total" if "total" in list(hists[dir].keys()) else "total_overall"
 
                 hists[dir]["total_backgroundUp"] = hists[dir]["total_background"].Clone()
                 hists[dir]["total_backgroundDown"] = hists[dir]["total_background"].Clone()
@@ -667,7 +667,7 @@ class CombineResults:
                 # use total - bkg as signal to get the full uncertainty
                 safe = ["data","signal",tot,"total_background", "total_backgroundUp", "total_backgroundDown"]
                 if nuisances: safe += nuisances
-                for key in hists[dir].keys():
+                for key in list(hists[dir].keys()):
                     if key not in safe: del hists[dir][key]
 
                 hists[dir]["dataUp"] = hists[dir]["data"].Clone()
@@ -696,14 +696,14 @@ class CombineResults:
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         if not all(self.shapeRootFile.values()):
             raise ValueError( "Shape root file as input not found! Running in limited mode, thus cannot get the object needed!" )
 
         cmd = "cd "+uniqueDirname+";combine --saveWorkspace -M MultiDimFit %s %s"%(options, self.shapeCard)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         self.rootWorkSpace = self.txtCard.replace(".txt","_shapeCard.root" )
@@ -717,11 +717,11 @@ class CombineResults:
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         if not self.rootWorkSpace:
-            print "Workspace not availabe, creating it!"
+            print("Workspace not availabe, creating it!")
             self.createWorkspace() # run the fit from card inputs
 
         addOptions = ""
@@ -729,7 +729,7 @@ class CombineResults:
         if statOnly: addOptions += " --profilingMode none"
 
         cmd  = "cd "+uniqueDirname+";combine %s -M FitDiagnostics --robustFit 1 --saveNormalizations --saveWithUncertainties --saveShapes --saveOverall %s %s"%(self.rootWorkSpace, options, addOptions)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         if statOnly:
@@ -739,8 +739,8 @@ class CombineResults:
             self.fitResult         = self.shapeCard.replace(".txt","_FD.root" )
             shutil.copyfile(uniqueDirname+'/fitDiagnostics.root', self.fitResult)
 
-        print "Created Result%s: %s"%(" (stat-only)" if statOnly else "", self.fitResultStatOnly if statOnly else self.fitResult)
-        print "Result%s: r=%s"%(" (stat-only)" if statOnly else "", self.getPulls( postFit=True, statOnly=statOnly )["r"])
+        print("Created Result%s: %s"%(" (stat-only)" if statOnly else "", self.fitResultStatOnly if statOnly else self.fitResult))
+        print("Result%s: r=%s"%(" (stat-only)" if statOnly else "", self.getPulls( postFit=True, statOnly=statOnly )["r"]))
         shutil.rmtree( uniqueDirname )
 
     def runLinearityTest( self, factor ):
@@ -749,18 +749,18 @@ class CombineResults:
             only a good idea for fits with expected observation (sum of MC)
         """
 
-        print
-        print "Running linearity test!"
-        print "Make sure you run on expected observations!"
-        print "Scaling signal events by 1./%f = %f"%(factor,1./factor)
-        print
+        print()
+        print("Running linearity test!")
+        print("Make sure you run on expected observations!")
+        print("Scaling signal events by 1./%f = %f"%(factor,1./factor))
+        print()
 
         if not all(self.shapeRootFile.values()) or not self.shapeCard:
             raise ValueError( "Input shape cards not found! Running in limited mode, thus cannot get the object needed!" )
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         logFile = os.path.join( uniqueDirname, "log.log" )
@@ -770,17 +770,17 @@ class CombineResults:
 
         cmd     = "cd %s;"%uniqueDirname
         cmd    += "echo 'linTest rateParam * signal %f [0,5]' >> combineCard.txt"%(1./factor)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         cmd     = "cd %s;"%uniqueDirname
         cmd    += "text2workspace.py combineCard.txt;"
         cmd    += "combine --robustHesse 1 -M FitDiagnostics --justFit --setParameters linTest=%s --freezeParameters linTest -v 2 combineCard.root > log.log 2>&1"%str(1./factor)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
         r_lin = self.__extractPOIResult( logFile )
 
-        print "Extracted lin-test (preFit r=%f) result: %s"%(factor, r_lin)
+        print("Extracted lin-test (preFit r=%f) result: %s"%(factor, r_lin))
         shutil.rmtree( uniqueDirname )
 
         return r_lin
@@ -793,24 +793,24 @@ class CombineResults:
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         if not self.rootWorkSpace:
-            print "Workspace not availabe, creating it!"
+            print("Workspace not availabe, creating it!")
             self.createWorkspace() # run the fit from card inputs
 
-        params = [p for p in self.getPulls().keys() if p !="EGammaResolution"]
+        params = [p for p in list(self.getPulls().keys()) if p !="EGammaResolution"]
         statParams = ",".join( params )
 
         cmd  = "cd %s;combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n bestfit --saveWorkspace %s "%(uniqueDirname,points,rMin,rMax,self.rootWorkSpace)
         cmd += ";combine -M MultiDimFit --algo grid --points %i --rMin %f --rMax %f -n stat --snapshotName MultiDimFit --freezeParameters %s higgsCombinebestfit.MultiDimFit.mH120.root"%(points,rMin,rMax,statParams)
         cmd += ";plot1DScan.py higgsCombinebestfit.MultiDimFit.mH120.root --output scanPOI --others higgsCombinestat.MultiDimFit.mH120.root:StatOnly:2 --breakdown syst,stat"
         cmd += ";mv scanPOI.* %s/"%(self.plotDirectory)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
-        print "Created POI scan plot"
+        print("Created POI scan plot")
         shutil.rmtree( uniqueDirname )
 
 
@@ -823,9 +823,9 @@ class CombineResults:
             if rateParameter: return self.rateParameter[key][rateParameter]
             else:             return self.rateParameter[key]
 
-        rateParamList = self.getRateParameterInfo().keys()
+        rateParamList = list(self.getRateParameterInfo().keys())
         pulls         = self.getPulls( postFit=postFit )
-        rateParams    = { par:pulls[par] for par in rateParamList if par in pulls.keys() }
+        rateParams    = { par:pulls[par] for par in rateParamList if par in list(pulls.keys()) }
 
         self.rateParameter[key] = rateParams
 
@@ -849,8 +849,8 @@ class CombineResults:
                 if "extArg" in line or "rateParam" in line:
                     param, _, bin, proc = line.split()[:4]
                     proc = [ p for p in estimates if proc.replace("*","") in p ] if "*" in proc else [proc]
-                    if param in rateParams.keys():
-                        if bin in rateParams[param].keys():
+                    if param in list(rateParams.keys()):
+                        if bin in list(rateParams[param].keys()):
                             rateParams[param][bin] += proc
                             rateParams[param][bin]  = list( set( rateParams[param][bin] ) )
                         else:
@@ -907,17 +907,17 @@ class CombineResults:
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating "+uniqueDirname
+        print("Creating "+uniqueDirname)
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'mlfitNormsToText.py'), os.path.join(uniqueDirname, 'mlfitNormsToText.py'))
 
         if not self.fitResult:
-            print "Fit result not availabe, creating it!"
+            print("Fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         cmd  = "cd %s;python mlfitNormsToText.py %s --uncertainties > nuisancesTable.txt"%(uniqueDirname,self.fitResult)
         cmd += ";mv nuisancesTable.txt %s/"%(self.plotDirectory)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         shutil.rmtree( uniqueDirname )
@@ -931,24 +931,24 @@ class CombineResults:
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating "+uniqueDirname
+        print("Creating "+uniqueDirname)
         os.makedirs(uniqueDirname)
 
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'systematicsAnalyzer.py'), os.path.join(uniqueDirname, 'systematicsAnalyzer.py'))
 
         cmd = "cd %s;python systematicsAnalyzer.py -a -f html %s > nuisanceReport.html"%(uniqueDirname, self.shapeCard)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
         cmd = "cd %s; mv nuisanceReport.html %s/"%(uniqueDirname, self.plotDirectory)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         # run the same thing in "brief"
         cmd = "cd %s;python systematicsAnalyzer.py -a -f brief %s > nuisanceReport.txt"%(uniqueDirname, self.shapeCard)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
         cmd = "cd %s; mv nuisanceReport.txt %s/"%(uniqueDirname, self.plotDirectory)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         shutil.rmtree( uniqueDirname )
@@ -958,16 +958,16 @@ class CombineResults:
         """
 
         if not self.fitResult:
-            print "Fit result not availabe, creating it!"
+            print("Fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Printing first %i correlations of %s"%(nMax, nuisance)
+        print("Printing first %i correlations of %s"%(nMax, nuisance))
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'printCorrelations.py'), os.path.join(uniqueDirname, 'printCorrelations.py'))
         cmd = "cd %s;python printCorrelations.py -i %s:fit_s -p %s --max %i"%(uniqueDirname, self.fitResult, nuisance, nMax)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
         shutil.rmtree( uniqueDirname )
 
@@ -977,7 +977,7 @@ class CombineResults:
         """
         # return safed labels if available
         if self.binLabels:
-            if labelFormater: return { dir:map( labelFormater, self.binLabels[dir] ) for dir in self.channels }
+            if labelFormater: return { dir:list(map( labelFormater, self.binLabels[dir] )) for dir in self.channels }
             else:             return self.binLabels
 
         if self.combinedCard and self.txtCardRebinned: cardfiles = self.txtCardRebinnedComb
@@ -1000,14 +1000,14 @@ class CombineResults:
 
         if labelFormater:
             for dir in self.channels:
-                binLabels[dir] = map( labelFormater, binLabels[dir] )
+                binLabels[dir] = list(map( labelFormater, binLabels[dir] ))
 
         return binLabels
 
     def getNuisancesList( self, addRateParameter=True ):
         """ get a list of nuisances in the cardfile
         """
-        rateParams = self.getRateParameter( postFit=True ).keys()
+        rateParams = list(self.getRateParameter( postFit=True ).keys())
 
         if self.nuisances:
             if addRateParameter: return self.nuisances
@@ -1139,14 +1139,14 @@ class CombineResults:
         allEst = self.getProcessList( unique=True )
         shapes = self.__getShapeObject()
         uncertainties = {}
-        withMCStat = any( ["prop" in p for p in pulls.keys()] )
-        mcStatUnc = [p for p in pulls.keys() if "prop" in p]
+        withMCStat = any( ["prop" in p for p in list(pulls.keys())] )
+        mcStatUnc = [p for p in list(pulls.keys()) if "prop" in p]
 
         for dir in self.channels:
             uncertainties[dir] = {}
-            for shape, shapeHisto in shapes[dir].iteritems():
+            for shape, shapeHisto in shapes[dir].items():
                 if shape.endswith("Down"): continue
-                unc = [unc for unc in pulls.keys() if shape.endswith(unc+"Up") and unc != "r"]
+                unc = [unc for unc in list(pulls.keys()) if shape.endswith(unc+"Up") and unc != "r"]
                 if not unc and shape not in allEst: continue
                 unc = unc[0] if unc else "stat"
                 est = shape.replace("_"+unc+"Up","")
@@ -1154,14 +1154,14 @@ class CombineResults:
 
                 if unc == "stat":
                     # stat unc
-                    if not "histo" in uncertainties[dir].keys(): uncertainties[dir]["histo"] = {}
-                    if not est in uncertainties[dir]["histo"].keys(): uncertainties[dir]["histo"][est] = {}
+                    if not "histo" in list(uncertainties[dir].keys()): uncertainties[dir]["histo"] = {}
+                    if not est in list(uncertainties[dir]["histo"].keys()): uncertainties[dir]["histo"][est] = {}
                     for i_bin in range(shapeH.GetNbinsX()):
                         _bin = "Bin%i"%i_bin
-                        if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
-                        if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
+                        if not _bin in list(uncertainties[dir].keys()): uncertainties[dir][_bin] = {}
+                        if not est in list(uncertainties[dir][_bin].keys()): uncertainties[dir][_bin][est] = {}
                         err = shapeH.GetBinError( i_bin+1 ) / shapeH.GetBinContent( i_bin+1 ) if shapeH.GetBinContent( i_bin+1 ) and withMCStat else 0
-                        if postFit and withMCStat and "prop_bin%s_bin%i"%(dir,i_bin) in pulls.keys():
+                        if postFit and withMCStat and "prop_bin%s_bin%i"%(dir,i_bin) in list(pulls.keys()):
                             # log normal calculation
 #                            err = ((1+err)**pulls["prop_bin%s_bin%i"%(dir,i_bin)].sigma)-1
                             err *=pulls["prop_bin%s_bin%i"%(dir,i_bin)].sigma # constraints are not from log normal calculations, interesting to know, has little effect except for large constraints
@@ -1184,11 +1184,11 @@ class CombineResults:
 
                     for i_bin in range(shapeH.GetNbinsX()):
                         _bin = "Bin%i"%i_bin
-                        if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
-                        if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
+                        if not _bin in list(uncertainties[dir].keys()): uncertainties[dir][_bin] = {}
+                        if not est in list(uncertainties[dir][_bin].keys()): uncertainties[dir][_bin][est] = {}
                         uncertainties[dir][_bin][est][unc] = shapeH.GetBinContent( i_bin+1 )
-                    if not "histo" in uncertainties[dir].keys(): uncertainties[dir]["histo"] = {}
-                    if not est in uncertainties[dir]["histo"].keys(): uncertainties[dir]["histo"][est] = {}
+                    if not "histo" in list(uncertainties[dir].keys()): uncertainties[dir]["histo"] = {}
+                    if not est in list(uncertainties[dir]["histo"].keys()): uncertainties[dir]["histo"][est] = {}
                     uncertainties[dir]["histo"][est][unc] = shapeH.Clone()
         
         self.uncertaintiesShape[key] = uncertainties
@@ -1229,9 +1229,9 @@ class CombineResults:
                     dir = [ch for ch in self.channels if _bin.startswith(ch) or ch == "Bin0"][0]
                     _bin = _bin.replace(dir+"_","") if dir != "Bin0" else _bin
                     est = allEst[i_bin]
-                    if not dir in uncertainties.keys(): uncertainties[dir] = {}
-                    if not _bin in uncertainties[dir].keys(): uncertainties[dir][_bin] = {}
-                    if not est in uncertainties[dir][_bin].keys(): uncertainties[dir][_bin][est] = {}
+                    if not dir in list(uncertainties.keys()): uncertainties[dir] = {}
+                    if not _bin in list(uncertainties[dir].keys()): uncertainties[dir][_bin] = {}
+                    if not est in list(uncertainties[dir][_bin].keys()): uncertainties[dir][_bin][est] = {}
                     try:
                         uncertainties[dir][_bin][est][unc] = float(line.split()[2:][i_bin])-1
                     except:
@@ -1252,7 +1252,7 @@ class CombineResults:
         """ return data observation in a dictionary
         """
 
-        return {dir:{ b:b_dict["data"] for b, b_dict in o.iteritems() } for dir, o in self.getEstimates( postFit=False, bin=bin, estimate="data" ).iteritems()}
+        return {dir:{ b:b_dict["data"] for b, b_dict in o.items() } for dir, o in self.getEstimates( postFit=False, bin=bin, estimate="data" ).items()}
 
     def getEstimates( self, bin=None, estimate=None, postFit=False, postFitRateParams=False ):
         """ return pre/postfit estimates in a dictionary
@@ -1266,34 +1266,34 @@ class CombineResults:
 
         if self.estimates[key]:
             ests = self.estimates[key]
-            all = { d:self.__filterDict( dic, bin=bin, estimate=estimate ) if bin else dic for d, dic in ests.iteritems() } 
+            all = { d:self.__filterDict( dic, bin=bin, estimate=estimate ) if bin else dic for d, dic in ests.items() } 
             return all
 
         regionHistos = self.getRegionHistos( postFit=postFit, plotBins=None, postFitRateParams=postFitRateParams )
         processes    = self.getProcessesPerBin( bin=None )
         yields       = {}
         tmp          = {}
-        for dir, histoDict in regionHistos.iteritems():
+        for dir, histoDict in regionHistos.items():
             tmp[dir]     = {}
             yields[dir]  = {}
-            for est, h in histoDict.iteritems():
+            for est, h in histoDict.items():
                 tmp[dir][est] = {}
                 for i in range(h.GetNbinsX()):
                     y = h.GetBinContent(i+1)
                     e = h.GetBinError(i+1)
                     key = "Bin%i"%i
-                    if key in tmp[dir][est].keys(): tmp[dir][est][key] += u_float( y, e )
+                    if key in list(tmp[dir][est].keys()): tmp[dir][est][key] += u_float( y, e )
                     else:                           tmp[dir][est][key]  = u_float( y, e )
                     yields[dir][key] = {}
 
             # stupid restructuring to make it compatible w/ other functions
-            for b in yields[dir].keys():
-                for est in tmp[dir].keys():
+            for b in list(yields[dir].keys()):
+                for est in list(tmp[dir].keys()):
                     yields[dir][b][est] = tmp[dir][est][b]
 
         self.estimates[key] = yields
 
-        all = { d:self.__filterDict( dic, bin=bin, estimate=estimate ) if bin else dic for d, dic in yields.iteritems() } 
+        all = { d:self.__filterDict( dic, bin=bin, estimate=estimate ) if bin else dic for d, dic in yields.items() } 
         return all
 
     def getNuisanceHistosFromShapeCard( self, postFit=False, plotBins=None, bkgSubstracted=False, nuisances=None, directory=None ):
@@ -1305,7 +1305,7 @@ class CombineResults:
             raise ValueError( "Directory %s unknown!"%dir )
 
         allEst   = self.getProcessList( unique=True )
-        rateParams = self.getRateParameter( postFit=True ).keys()
+        rateParams = list(self.getRateParameter( postFit=True ).keys())
 
         nuisanceHistos = {}
 
@@ -1333,7 +1333,7 @@ class CombineResults:
                     # quadratically add error histograms for each process
                     yproc = regions[est].Clone()            # process yield
                     y.Add(yproc)                            # total yield
-                    if nuisance not in histDict[est].keys(): continue # nuisance does not apply to process
+                    if nuisance not in list(histDict[est].keys()): continue # nuisance does not apply to process
                     err = histDict[est][nuisance].Clone()   # relative error histogram
 #                    err.Multiply(yproc)                     # absolute error histogram
                     err.Multiply(regions_preFit[est].Clone()) # absolute error histogram, the error band is in fact relative to the prefit yield, interesting to know, has litte effect, except for large pulls. note that rate-parameters need to be applied
@@ -1405,7 +1405,7 @@ class CombineResults:
         # create environment
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating "+uniqueDirname
+        print("Creating "+uniqueDirname)
         os.makedirs(uniqueDirname)
 
         resPath      = self.txtCard.replace(".txt","/")
@@ -1460,12 +1460,12 @@ class CombineResults:
             addOptions += " " + options
 
         # combine fit card and muted card
-        print "combining cards for muted fit"
+        print("combining cards for muted fit")
         cmd  = "cd "+uniqueDirname+";combineCards.py %s %s > combinedCard.txt; text2workspace.py combinedCard.txt --channel-masks"%(optionsFit, optionsMask)
         cmd += ";text2workspace.py combinedCard.txt --channel-masks"
         cmd += ";combineCards.py %s %s > txtCard.txt"%(optionsTxtFit, optionsTxtMask)
         cmd += ";combine combinedCard.root -M FitDiagnostics --robustHesse 1 --forceRecreateNLL --saveShapes --saveNormalizations --saveOverall --saveWithUncertainties %s --setParameters %s"%(addOptions, mask)
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         # copy cards to final location
@@ -1495,9 +1495,9 @@ class CombineResults:
         del rbResults
 
         # run fit with masked (muted) card
-        print "run FitDiagnostics stat only"
+        print("run FitDiagnostics stat only")
         cmd = "cd "+uniqueDirname+";combine combinedCard.root --profilingMode none -M FitDiagnostics --saveWithUncertainties --saveShapes --saveNormalizations --saveOverall --setParameters %s"%mask
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         if not skipStatOnly:
             os.system(cmd)
             shutil.copyfile(uniqueDirname+"/fitDiagnostics.root", resShapeFile.replace(".txt","_statOnly_FD.root"))
@@ -1530,8 +1530,8 @@ class CombineResults:
         if addStatOnlyHistos:
             # only makes sense for postFit
             hists_stat = self.__regionHistos( postFit=True, plotBins=plotBins, nuisances=None, bkgSubstracted=bkgSubstracted, labelFormater=labelFormater, statOnly=True, postFitRateParams=postFitRateParams )
-            for dir, dic in hists_stat.iteritems():
-                for h_key, h in dic.iteritems():
+            for dir, dic in hists_stat.items():
+                for h_key, h in dic.items():
                     hists[dir][h_key+"_stat"] = h.Clone()
 
         return hists
@@ -1553,7 +1553,7 @@ class CombineResults:
                 histList[0] +=  [ [regionHistos["data"]] ]
                 histList[1] +=  [ (len(histList[0])-1,0) ]
             for n in nuisances:
-                if n in regionHistos.keys():
+                if n in list(regionHistos.keys()):
                     histList[0] +=  [ [regionHistos[n]["up"]], [regionHistos[n]["down"]] ]
                     histList[1] +=  [ (len(histList[0])-2,0), (len(histList[0])-1,0) ]
             return tuple(histList)
@@ -1562,7 +1562,7 @@ class CombineResults:
             raise ValueError( "Directory %s unknown!"%dir )
 
         for p in processes:
-            if not p in regionHistos.keys():
+            if not p in list(regionHistos.keys()):
                 # some histograms are 0, still should be in the legend
                 logger.info("Histogram for %s not found! Creating one and setting it to 0! Continuing..."%p)
                 regionHistos[p] = regionHistos["signal"].Clone()
@@ -1596,8 +1596,8 @@ class CombineResults:
                     if i == 0 or binLabelStarter != labels[i-1].split(" ")[-1][:2]:
                         yields = []
                         for p in binProcesses[key]:
-                            yields.append( (p,regionHistos[p].GetBinContent(i+1) if p in regionHistos.keys() else 0) )
-                        yields.sort( key=lambda (p,y): -y )
+                            yields.append( (p,regionHistos[p].GetBinContent(i+1) if p in list(regionHistos.keys()) else 0) )
+                        yields.sort( key=lambda p_y: -p_y[1] )
                         processList = [p for p,y in yields]
 
                 else:
@@ -1605,7 +1605,7 @@ class CombineResults:
 
                 for p in processList:
 
-                    if p in regionHistos.keys():
+                    if p in list(regionHistos.keys()):
                         # set only one bin != 0
                         tmp = regionHistos[p].Clone()
                         tmp.Scale(0.)
@@ -1635,7 +1635,7 @@ class CombineResults:
                 histoList[0] += proc_list
 
         else:
-            histoList = [ [p_h for p, p_h in regionHistos.iteritems() if p in binProcesses[binProcesses.keys()[0]] ] ]
+            histoList = [ [p_h for p, p_h in regionHistos.items() if p in binProcesses[list(binProcesses.keys())[0]] ] ]
             histoList[0].sort( key=lambda h: -regionHistos[p].Integral() )
 
         # add data histos
@@ -1643,12 +1643,12 @@ class CombineResults:
             histoList   += [ [regionHistos["data"]] ]
             ratioHistos += [ (1,0) ]
             i_n         += 1
-	# for searches,plot signal Histo on top, for search regions, may be not plot them
+    # for searches,plot signal Histo on top, for search regions, may be not plot them
         histoList   += [ [regionHistos["signal"]] ]
-	#i_n         += 1
+    #i_n         += 1
         # add nuisance histos at last
         for n in nuisances:
-            if n in regionHistos.keys() and isinstance( regionHistos[n], dict ):
+            if n in list(regionHistos.keys()) and isinstance( regionHistos[n], dict ):
                 histoList   += [ [regionHistos[n]["up"]], [regionHistos[n]["down"]] ]
                 ratioHistos += [ ((i_n)*2,0),((i_n)*2+1,0) ]
                 i_n         += 1
@@ -1670,7 +1670,7 @@ class CombineResults:
 
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join("/tmp/%s"%user, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         plotName = "impacts"
@@ -1681,7 +1681,7 @@ class CombineResults:
         else:            options += " --rMin 0 --rMax 2"
 
         if not self.rootWorkSpace:
-            print "Workspace not availabe, creating it!"
+            print("Workspace not availabe, creating it!")
             self.createWorkspace() # run the fit from card inputs
 
         cd             = "cd %s"%uniqueDirname
@@ -1691,7 +1691,7 @@ class CombineResults:
         plotImpacts    = "plotImpacts.py -i impacts.json -o %s"%plotName
         cmd            = ";".join( [ cd, robustFit, impactFits, extractImpact, plotImpacts ] )
 
-        print "Executing command: %s"%cmd
+        print("Executing command: %s"%cmd)
         os.system(cmd)
 
         shutil.copyfile( uniqueDirname+"/%s.pdf"%plotName, "%s/%s.pdf"%(self.plotDirectory,plotName) )
@@ -1707,7 +1707,7 @@ class CombineResults:
         """
 
         if not self.fitResult:
-            print "Fit result not availabe, creating it!"
+            print("Fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         if self.correlationHisto:
@@ -1729,7 +1729,7 @@ class CombineResults:
         """
 
         if not self.fitResult:
-            print "Fit result not availabe, creating it!"
+            print("Fit result not availabe, creating it!")
             self.runFitDiagnostics( statOnly=False ) # run fit diagnostics
 
         key = "postFit" if postFit else "preFit"
@@ -1791,23 +1791,23 @@ class CombineResults:
 
         hists = copy.deepcopy(hists)
 
-        if not "total" in hists.keys():
+        if not "total" in list(hists.keys()):
             raise ValueError( "Total Histogram needs to be provided to sum up nuisance histos!" )
 
         allNuisances = self.getNuisancesList() if not nuisances else nuisances
 
-        unKnown = [n for n in hists.keys() if not n in nuisances + allNuisances + ["total"] ]
+        unKnown = [n for n in list(hists.keys()) if not n in nuisances + allNuisances + ["total"] ]
         if unKnown:
-            print "Histograms not known as nuisances will not be summed: %s"%", ".join(unKnown+["total"])
+            print("Histograms not known as nuisances will not be summed: %s"%", ".join(unKnown+["total"]))
 
-        summedNuisances = [ n for n in allNuisances if n in hists.keys() ]
+        summedNuisances = [ n for n in allNuisances if n in list(hists.keys()) ]
 
         for i_n, ni in enumerate(summedNuisances):
-            if "up" not in hists[ni].keys():
+            if "up" not in list(hists[ni].keys()):
                 raise ValueError( "Nuisance histograms not given in the format hists = { 'total':TH1F, Nuisance1:{'up':TH1F, 'down':TH1F}, Nuisance2:{'up':TH1F, 'down':TH1F} } for nuisance: %s"%ni )
             hists[ni]["up"].Add( hists["signal" if bkgSubstracted else "total"], -1 )
 
-        print "Summing uncertainties of the nuisances:: %s"%", ".join(summedNuisances)
+        print("Summing uncertainties of the nuisances:: %s"%", ".join(summedNuisances))
 
         totalRelUp = hists["signal" if bkgSubstracted else "total"].Clone()
         totalRelUp.Scale(0)

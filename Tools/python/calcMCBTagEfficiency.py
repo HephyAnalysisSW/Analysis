@@ -13,7 +13,7 @@ ROOT.gROOT.LoadMacro('deltaPhi.C')
 from Analysis.Tools.BTagEfficiency import *
 
 def getBTagMCTruthEfficiencies( c, cut="(1)", overwrite=False, btagVar='Jet_btagCSVV2', btagWP='0.8484', etaBins=[] ):
-    print c, cut
+    print(c, cut)
 
     etaBorders = sorted( list( set( sum( etaBins, [] ) ) ) )
 
@@ -39,7 +39,7 @@ def getBTagMCTruthEfficiencies( c, cut="(1)", overwrite=False, btagVar='Jet_btag
             mceff[tuple(ptBin)][tuple(etaBin)]["c"]     = hcQuark.GetMean()
             mceff[tuple(ptBin)][tuple(etaBin)]["other"] = hOther.GetMean()
 
-            print "Eta",etaBin,etaCut,"Pt",ptBin,ptCut,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"]
+            print("Eta",etaBin,etaCut,"Pt",ptBin,ptCut,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"])
 
             del hbQuark, hcQuark, hOther
 
@@ -56,10 +56,10 @@ def getBTagMCTruthEfficiencies2D( c, cut="(1)", overwrite=False, btagVar='Jet_bt
     c.SetEventList(0)
 
     if cut and cut.replace(" ","")!= "(1)":
-        print "Setting Event List with cut: %s"%cut
+        print("Setting Event List with cut: %s"%cut)
         eListName = "eList_%s"%hashlib.md5("%s"%time.time()).hexdigest()
-        print eListName
-        print cut
+        print(eListName)
+        print(cut)
         c.Draw(">>%s"%eListName,cut)
         c.SetEventList( getattr(ROOT,eListName))
 
@@ -78,10 +78,10 @@ def getBTagMCTruthEfficiencies2D( c, cut="(1)", overwrite=False, btagVar='Jet_bt
                         'other':'(abs(Jet_hadronFlavour) < 4  || abs(Jet_hadronFlavour) > 5)', 
                    }
    
-    flavors = flavor_cuts.keys()
+    flavors = list(flavor_cuts.keys())
  
     for flavor in flavors:
-        print "flavor", flavor
+        print("flavor", flavor)
         passed_name = 'passed_%s'%flavor
         passed_hists[flavor] = ROOT.TH2D( passed_name, passed_name , len(ptBorders)-1, array('d',ptBorders), len(etaBorders)-1, array('d', etaBorders) )
         total_name = 'total_%s'%flavor
@@ -92,20 +92,20 @@ def getBTagMCTruthEfficiencies2D( c, cut="(1)", overwrite=False, btagVar='Jet_bt
         ratios[flavor].Divide( total_hists[flavor]) 
 
     for ipt, ptBin in enumerate( ptBins ,1):
-        print "ptBin", ipt
+        print("ptBin", ipt)
         mceff[tuple(ptBin)]={}
         for jeta, etaBin in enumerate( etaBins ,1):
             mceff[tuple(ptBin)][tuple(etaBin)] = {}
             for flavor in flavors:
                 mceff[tuple(ptBin)][tuple(etaBin)][flavor] = ratios[flavor].GetBinContent(ipt, jeta)
-		print "error on ptBin: %s, etaBin: %s , flavor: %s is: %s"%(ptBin,etaBin,flavor,ratios[flavor].GetBinError(ipt, jeta))
-            print "Eta",etaBin,"Pt",ptBin,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"]
-	    
+            print("error on ptBin: %s, etaBin: %s , flavor: %s is: %s"%(ptBin,etaBin,flavor,ratios[flavor].GetBinError(ipt, jeta)))
+            print("Eta",etaBin,"Pt",ptBin,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"])
+        
 
     return mceff
 
 def writeToFile( mcEff, filename ):
-    print "write to file: ", filename
+    print("write to file: ", filename)
     path = os.path.expandvars( '$CMSSW_BASE/src/Analysis/Tools/data/btagEfficiencyData/' )
     pickle.dump( mcEff, file( os.path.join( path, filename + ".pkl" ), 'w' ) )
 
@@ -137,7 +137,6 @@ if __name__ == "__main__":
     from Samples.Tools.config import redirector_global, redirector
     redirector = redirector
 
-
     if options.year == 2016:
     # 2016
         #from Samples.nanoAOD.UL16v2_private import TTSingleLep_pow_CP5 as tt16
@@ -146,8 +145,8 @@ if __name__ == "__main__":
         #print res
         #print
         #writeToFile ( res, "TTLep_pow_2016_2j_2l_CSVv2_eta" )
-	
-	#UL changes
+    
+        #UL changes
         #from Samples.nanoAOD.UL16v2_private import TTGJets as tt16
         #from Samples.nanoAOD.UL16v9_private import TTLep_pow_CP5 as tt16
         #from Samples.nanoAOD.UL16v9_private import TTSingleLep_pow_CP5 as ttsemil16
@@ -165,38 +164,38 @@ if __name__ == "__main__":
 
         #res = getBTagMCTruthEfficiencies2D( tt16.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.1918', etaBins=etaBins2016 )
         #res = getBTagMCTruthEfficiencies2D( ttsemil16.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.1918', etaBins=etaBins2016 )
-	print type(sample)
-	if type(sample) == list:
-		for s in sample:
-			print "sample in the list", s.name
-			##MediumWP for postVFP  btagWP='0.5847'
-			#res = getBTagMCTruthEfficiencies2D( s.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.5847', etaBins=etaBins2016 )
-			##MediumWP for preVFP 0.6001
-			res = getBTagMCTruthEfficiencies2D( s.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.6001', etaBins=etaBins2016 )
-			print "Efficiencies %s 2016:"%s.name
-			print res
-			print
-			writeToFile ( res, "%s_2016APV_2j_1l_DeepB_eta_v2"%s.name)
-	else:
-		print "sample as a chain, not list: ", sample.name
-		##MediumWP for postVFP  btagWP='0.5847'
-		res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.5847', etaBins=etaBins2016 )
-		##MediumWP for preVFP 0.6001
-		#res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.6001', etaBins=etaBins2016 )
-		print "Efficiencies %s 2016:"%sample.name
-		print res
-		print
-		#writeToFile ( res, "%s_2016APV_2j_1l_DeepB_eta_v2"%sample.name)
-		writeToFile ( res, "%s_2016_2j_1l_DeepB_eta_v3"%sample.name)
+        print(type(sample))
+        if type(sample) == list:
+            for s in sample:
+                print("sample in the list", s.name)
+                ##MediumWP for postVFP  btagWP='0.5847'
+                #res = getBTagMCTruthEfficiencies2D( s.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.5847', etaBins=etaBins2016 )
+                ##MediumWP for preVFP 0.6001
+                res = getBTagMCTruthEfficiencies2D( s.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.6001', etaBins=etaBins2016 )
+                print("Efficiencies %s 2016:"%s.name)
+                print(res)
+                print()
+                writeToFile ( res, "%s_2016APV_2j_1l_DeepB_eta_v2"%s.name)
+        else:
+            print("sample as a chain, not list: ", sample.name)
+            ##MediumWP for postVFP  btagWP='0.5847'
+            res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.5847', etaBins=etaBins2016 )
+            ##MediumWP for preVFP 0.6001
+            #res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.6001', etaBins=etaBins2016 )
+            print("Efficiencies %s 2016:"%sample.name)
+            print(res)
+            print()
+            #writeToFile ( res, "%s_2016APV_2j_1l_DeepB_eta_v2"%sample.name)
+            writeToFile ( res, "%s_2016_2j_1l_DeepB_eta_v3"%sample.name)
 
-        #res = getBTagMCTruthEfficiencies2D( DYM5016.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.1918', etaBins=etaBins2016 )
-        #print "Efficiencies DYM50 2016:"
-        #print res
-        #print
-        ##writeToFile ( res, "TTGJets_2016UL_2j_1l_DeepB_eta_v2" )
-        ##writeToFile ( res, "TTLep_pow_CP5_2016_2j_1l_DeepB_eta_v3" )
-        ##writeToFile ( res, "TTSemiLep_pow_CP5_2016_2j_1l_DeepB_eta_v2" )
-        #writeToFile ( res, "DYJetsM50HT_2016_2j_1l_DeepB_eta_v2" )
+            #res = getBTagMCTruthEfficiencies2D( DYM5016.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.1918', etaBins=etaBins2016 )
+            #print "Efficiencies DYM50 2016:"
+            #print res
+            #print
+            ##writeToFile ( res, "TTGJets_2016UL_2j_1l_DeepB_eta_v2" )
+            ##writeToFile ( res, "TTLep_pow_CP5_2016_2j_1l_DeepB_eta_v3" )
+            ##writeToFile ( res, "TTSemiLep_pow_CP5_2016_2j_1l_DeepB_eta_v2" )
+            #writeToFile ( res, "DYJetsM50HT_2016_2j_1l_DeepB_eta_v2" )
 
 
     elif options.year == 2017:
@@ -205,12 +204,12 @@ if __name__ == "__main__":
         #from Samples.nanoAOD.UL17v9_private   import TTLep_pow_CP5 as sample
         #from Samples.nanoAOD.UL17v9_private   import TTSingleLep_pow_CP5 as ttsemil17
         #from Samples.nanoAOD.UL17v9_private   import TTGJets as sample
-	print "sample as a chain, not list: ", sample.name
-	res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.4506', etaBins=etaBins2017 )
-	print "Efficiencies %s 2017:"%sample.name
-	print res
-	print
-	writeToFile ( res, "%s_2017_2j_1l_DeepB_eta_v3"%sample.name)
+        print("sample as a chain, not list: ", sample.name)
+        res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.4506', etaBins=etaBins2017 )
+        print("Efficiencies %s 2017:"%sample.name)
+        print(res)
+        print()
+        writeToFile ( res, "%s_2017_2j_1l_DeepB_eta_v3"%sample.name)
 
         #res = getBTagMCTruthEfficiencies2D( ttsemil17.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.4506', etaBins=etaBins2017 )
         #print "Efficiencies 2017:"
@@ -220,7 +219,7 @@ if __name__ == "__main__":
         #writeToFile ( res, "TTLep_pow_2017UL_2j_1l_DeepB_eta_v3" )
         #writeToFile ( res, "TTSemiLep_pow_2017UL_2j_1l_DeepB_eta_v2" )
 
-	##OLD outdated:
+        ##OLD outdated:
         #res = getBTagMCTruthEfficiencies2D( tt17.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagCSVV2', btagWP='0.8838', etaBins=etaBins2017 )
         #print "Efficiencies 2017:"
         #print res
@@ -238,10 +237,10 @@ if __name__ == "__main__":
         from Samples.nanoAOD.UL18v9_private import TTGJets as sample
 
         res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepB', btagWP='0.4168', etaBins=etaBins2018 )
-	print "Efficiencies %s 2016:"%sample.name
-	print res
-	print
-	writeToFile ( res, "%s_2018_2j_1l_DeepB_eta_v2"%sample.name)
+        print("Efficiencies %s 2016:"%sample.name)
+        print(res)
+        print()
+        writeToFile ( res, "%s_2018_2j_1l_DeepB_eta_v2"%sample.name)
         #res = getBTagMCTruthEfficiencies2D( tt18.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagCSVV2', btagWP='0.8838', etaBins=etaBins2017 )
         #print "Efficiencies 2018:"
         #print res

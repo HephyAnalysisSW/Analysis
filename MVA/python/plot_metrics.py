@@ -12,7 +12,7 @@ def plot_metrics(history, plot_directory):
 
     # Get all keys (only store strings without 'val_')
     keys = []
-    for key in history.history.keys():
+    for key in list(history.history.keys()):
         if "val_" in key:
             continue
         else:
@@ -21,8 +21,8 @@ def plot_metrics(history, plot_directory):
     # Loop over keys
     for key in keys:
         # security check
-        if 'val_'+key not in history.history.keys():
-            print '[ERROR] val_'+key+' not in history.keys(). The '+key+' metric will not be plotted.'
+        if 'val_'+key not in list(history.history.keys()):
+            print('[ERROR] val_'+key+' not in history.keys(). The '+key+' metric will not be plotted.')
             continue
 
         # Get the numbers

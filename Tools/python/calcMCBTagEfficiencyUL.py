@@ -11,7 +11,7 @@ import hashlib
 from Analysis.Tools.BTagEfficiencyUL import *
 
 def getBTagMCTruthEfficiencies( c, cut="(1)", overwrite=False, btagVar='Jet_btagCSVV2', btagWP='0.8484', etaBins=[] ):
-    print c, cut
+    print(c, cut)
 
     etaBorders = sorted( list( set( sum( etaBins, [] ) ) ) )
 
@@ -37,7 +37,7 @@ def getBTagMCTruthEfficiencies( c, cut="(1)", overwrite=False, btagVar='Jet_btag
             mceff[tuple(ptBin)][tuple(etaBin)]["c"]     = hcQuark.GetMean()
             mceff[tuple(ptBin)][tuple(etaBin)]["other"] = hOther.GetMean()
 
-            print "Eta",etaBin,etaCut,"Pt",ptBin,ptCut,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"]
+            print("Eta",etaBin,etaCut,"Pt",ptBin,ptCut,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"])
 
             del hbQuark, hcQuark, hOther
 
@@ -54,10 +54,10 @@ def getBTagMCTruthEfficiencies2D( c, cut="(1)", overwrite=False, btagVar='Jet_bt
     c.SetEventList(0)
 
     if cut and cut.replace(" ","")!= "(1)":
-        print "Setting Event List with cut: %s"%cut
+        print("Setting Event List with cut: %s"%cut)
         eListName = "eList_%s"%hashlib.md5("%s"%time.time()).hexdigest()
-        print eListName
-        print cut
+        print(eListName)
+        print(cut)
         c.Draw(">>%s"%eListName,cut)
         c.SetEventList( getattr(ROOT,eListName))
 
@@ -76,10 +76,10 @@ def getBTagMCTruthEfficiencies2D( c, cut="(1)", overwrite=False, btagVar='Jet_bt
                         'other':'(abs(Jet_hadronFlavour) < 4  || abs(Jet_hadronFlavour) > 5)', 
                    }
    
-    flavors = flavor_cuts.keys()
+    flavors = list(flavor_cuts.keys())
  
     for flavor in flavors:
-        print "flavor", flavor
+        print("flavor", flavor)
         passed_name = 'passed_%s'%flavor
         passed_hists[flavor] = ROOT.TH2D( passed_name, passed_name , len(ptBorders)-1, array('d',ptBorders), len(etaBorders)-1, array('d', etaBorders) )
         total_name = 'total_%s'%flavor
@@ -90,18 +90,18 @@ def getBTagMCTruthEfficiencies2D( c, cut="(1)", overwrite=False, btagVar='Jet_bt
         ratios[flavor].Divide( total_hists[flavor]) 
 
     for ipt, ptBin in enumerate( ptBins ,1):
-        print "ptBin", ipt
+        print("ptBin", ipt)
         mceff[tuple(ptBin)]={}
         for jeta, etaBin in enumerate( etaBins ,1):
             mceff[tuple(ptBin)][tuple(etaBin)] = {}
             for flavor in flavors:
                 mceff[tuple(ptBin)][tuple(etaBin)][flavor] = ratios[flavor].GetBinContent(ipt, jeta)
-                print "error on ptBin: %s, etaBin: %s , flavor: %s is: %s"%(ptBin,etaBin,flavor,ratios[flavor].GetBinError(ipt, jeta))
-            print "Eta",etaBin,"Pt",ptBin,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"]
+                print("error on ptBin: %s, etaBin: %s , flavor: %s is: %s"%(ptBin,etaBin,flavor,ratios[flavor].GetBinError(ipt, jeta)))
+            print("Eta",etaBin,"Pt",ptBin,"Found b/c/other", mceff[tuple(ptBin)][tuple(etaBin)]["b"], mceff[tuple(ptBin)][tuple(etaBin)]["c"], mceff[tuple(ptBin)][tuple(etaBin)]["other"])
     return mceff
 
 def writeToFile( mcEff, filename ):
-    print "write to file: ", filename
+    print("write to file: ", filename)
     path = os.path.expandvars( '$CMSSW_BASE/src/Analysis/Tools/data/btagEfficiencyData/' )
     pickle.dump( mcEff, file( os.path.join( path, filename + ".pkl" ), 'w' ) )
 
@@ -114,13 +114,12 @@ if __name__ == "__main__":
         import argparse
         argParser = argparse.ArgumentParser(description = "Argument parser")
         argParser.add_argument('--overwrite', action='store_true', help="Overwrite existing output files")
-        argParser.add_argument('--year',      action='store', type=str, help="Overwrite existing output files")
+        argParser.add_argument('--year',      action='store', default = 'UL2016',  type=str, help="Overwrite existing output files")
         return argParser
 
     options = get_parser().parse_args()
 
     preSel = "(Sum$(Electron_pt>10&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>10&&abs(Muon_eta)<2.4)) >=3 "
-
 
     from Samples.Tools.config import redirector_global, redirector
     redirector = redirector
@@ -142,19 +141,19 @@ if __name__ == "__main__":
         bTagWP = '0.2783'
         etaBins = etaBins2018
 
-    print type(sample)
+    print(type(sample))
 	
     if type(sample) == list:
         for s in sample:
-            print "sample in the list", s.name
+            print("sample in the list", s.name)
             res = getBTagMCTruthEfficiencies2D( s.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepFlavB', btagWP=bTagWP, etaBins=etaBins )
-            print "Efficiencies %s %s:"%(s.name, options.year)
-            print res
+            print("Efficiencies %s %s:"%(s.name, options.year))
+            print(res)
             writeToFile ( res, "%s_%s"%(s.name, options.year) )
     else:
-        print "sample as a chain, not list: ", sample.name
+        print("sample as a chain, not list: ", sample.name)
         res = getBTagMCTruthEfficiencies2D( sample.chain, cut=preSel, overwrite=options.overwrite, btagVar='Jet_btagDeepFlavB', btagWP=bTagWP, etaBins=etaBins )
-        print "Efficiencies %s %s:"%(sample.name, options.year)
-        print res
+        print("Efficiencies %s %s:"%(sample.name, options.year))
+        print(res)
         writeToFile ( res, "%s_%s"%(sample.name, options.year) )
     

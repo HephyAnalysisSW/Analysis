@@ -16,32 +16,33 @@ import numpy as np
 
 # Logger
 import logging
+from functools import reduce
 logger = logging.getLogger(__name__)
 
 class WeightInfo:
     def __init__( self, filename ):
         data = pickle.load(file(filename))
 
-        if 'rw_dict' in data.keys(): self.data = data['rw_dict']
+        if 'rw_dict' in list(data.keys()): self.data = data['rw_dict']
         else: self.data = data
 
-        if 'order' in data.keys(): self.pkl_order = data['order']['order']
+        if 'order' in list(data.keys()): self.pkl_order = data['order']['order']
         else: self.pkl_order = None
 
-        if 'ref_point' in data.keys(): self.ref_point = data['ref_point']
+        if 'ref_point' in list(data.keys()): self.ref_point = data['ref_point']
         else: 
             self.ref_point = None
             logger.warning( "No reference point found in pkl file!" )
 
         # store all variables (Wilson coefficients)
-        self.variables = self.data.keys()[0].split('_')[::2]
+        self.variables = list(self.data.keys())[0].split('_')[::2]
         self.nvar      = len(self.variables)
 
         # compute reference point coordinates
-        self.ref_point_coordinates = { var: float( self.ref_point[var] ) if ( self.ref_point is not None and var in self.ref_point.keys() ) else 0 for var in self.variables }
+        self.ref_point_coordinates = { var: float( self.ref_point[var] ) if ( self.ref_point is not None and var in list(self.ref_point.keys()) ) else 0 for var in self.variables }
 
         # Sort wrt to position in ntuple
-        self.id = self.data.keys()
+        self.id = list(self.data.keys())
         self.id.sort(key=lambda w: self.data[w])
         self.nid = len(self.id)
 
@@ -56,13 +57,13 @@ class WeightInfo:
 
     @staticmethod
     def get_ndof( nvar, order ):
-        return sum( [ int(scipy.special.binom(nvar + o - 1, o)) for o in xrange(order+1) ] )
+        return sum( [ int(scipy.special.binom(nvar + o - 1, o)) for o in range(order+1) ] )
 
     # static method to make combinations 
     @staticmethod
     def make_combinations( variables, order ):
         combinations = []
-        for o in xrange(order+1):
+        for o in range(order+1):
             combinations.extend( list(itertools.combinations_with_replacement( variables, o )) )
         return combinations
 
@@ -97,7 +98,7 @@ class WeightInfo:
 
         # append reference point
         for var in self.variables:
-            if var not in args.keys():
+            if var not in list(args.keys()):
                 args[var]=0.
 
         # check if WC in args that are not in the gridpack
@@ -203,7 +204,7 @@ class WeightInfo:
 
         sample.setSelectionString( selectionString ) 
 
-        variables = map( TreeVariable.fromString, [ "np/I" ] )
+        variables = list(map( TreeVariable.fromString, [ "np/I" ] ))
         variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=1000) )
 
         reader = sample.treeReader( variables = variables )
@@ -239,7 +240,7 @@ class WeightInfo:
         expo = 1. / len(variables)
         y_graph = array( 'd', [ abs(detI)**expo for detI in detIList ] )
 
-        paramNameList = kwargs.keys() if len(kwargs.keys())!=0 else ['SM']
+        paramNameList = list(kwargs.keys()) if len(list(kwargs.keys()))!=0 else ['SM']
         histoName = 'histo_%s_%s'%(variableString,'_'.join( variables + ['params'] + paramNameList ))
         histo = ROOT.TH1F( histoName, histoName, binning[0], binning[1], binning[2] )
         for i in range(binning[0]):
@@ -392,27 +393,27 @@ class WeightInfo:
 
         return lambda event, sample: sum( event.p_C[term[0]]*term[1] for term in terms )
 
-    def get_double_diff_weight_func(self, var, **kwargs):
-        '''construct a lambda function that evaluates the diff weight in terms of the event.p_C coefficient vector using the kwargs as WC
-	'''
-
-	if var not in self.variables:
-	    raise ValueError( "Variable %s not in gridpack: %r" % ( var, self.variables ) )
-     
-    	self.set_default_args( kwargs )
-
-	terms = []
-	for i_comb, comb in enumerate(self.combinations):
-	    if False in [v in kwargs for v in comb]: continue
-	    prefac, diff_comb = WeightInfo.differentiate( comb, var )
-	    if prefac < 2 : continue
-	    fac = float(prefac)
-	    for v in diff_comb:
-		if fac == 0.: break
-	    if fac == 0.: continue
-	    terms.append( [ i_comb, fac ] )
-
-	return lambda event, sample: sum( event.p_C[term[0]]*term[1] for term in terms )
+#    def get_double_diff_weight_func(self, var, **kwargs):
+#        '''construct a lambda function that evaluates the diff weight in terms of the event.p_C coefficient vector using the kwargs as WC
+#        '''
+#
+#        if var not in self.variables:
+#            raise ValueError( "Variable %s not in gridpack: %r" % ( var, self.variables ) )
+#     
+#        self.set_default_args( kwargs )
+#
+#        terms = []
+#        for i_comb, comb in enumerate(self.combinations):
+#            if False in [v in kwargs for v in comb]: continue
+#            prefac, diff_comb = WeightInfo.differentiate( comb, var )
+#            if prefac < 2 : continue
+#            fac = float(prefac)
+#            for v in diff_comb:
+#                if fac == 0.: break
+#            if fac == 0.: continue
+#            terms.append( [ i_comb, fac ] )
+#
+#        return lambda event, sample: sum( event.p_C[term[0]]*term[1] for term in terms )
 
     def get_total_weight_yield( self, coeffLists, **kwargs ):
         '''compute yield from a list of coefficients (in the usual order of p_C) using the kwargs as WC
@@ -524,7 +525,7 @@ class WeightInfo:
 
         res = [ ' '.join( map( "{:>9}".format, variables ) ) ]
         for i_line, line in enumerate(matrix.tolist()):
-            res.append( ' '.join( map('{:+.2E}'.format, line) + [variables[i_line]] ) )
+            res.append( ' '.join( list(map('{:+.2E}'.format, line)) + [variables[i_line]] ) )
 
         return '\n'.join( res ) 
 
@@ -590,7 +591,7 @@ class WeightInfo:
                 #print "weight_yield", weight_yield
                 diff_weight_yield  =  { i_var:self.get_diff_weight_yield( var, coeffList, **kwargs_ ) for i_var, var in enumerate(_variables) }
                 diff2_weight_yield = { (i_var_1, i_var_2):self.get_diff_weight_yield( (var_1, var_2), coeffList, **kwargs_ ) for i_var_1, var_1 in enumerate(_variables) for i_var_2, var_2 in enumerate(_variables) }
-                for l in xrange(len(_variables)):
+                for l in range(len(_variables)):
                     gil = metric_inverse[index][l]
                     #print "i,l,gil",i,l,gil
                     if gil==0.: continue

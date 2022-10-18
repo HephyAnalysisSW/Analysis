@@ -82,7 +82,7 @@ def getTotalPostFitUncertainty(cardFile, binName):
         if uncertainties:
             uncDict[line.split()[0]] = [ 0 if a =='-' else float(a)-1 for a in line.split()[2:][ind[1]:ind[-1]+1] ]
     nuisanceFile = cardFile.replace('.txt','_nuisances_full.txt')
-    for unc in uncDict.keys():
+    for unc in list(uncDict.keys()):
         totalUnc[unc] = 0
         for i in range(len(estimates)):
             #totalUnc[unc] += uncDict[unc][i] * estimates[i] * ( 1 + getPull(nuisanceFile,unc)*uncDict[unc][i] ) #* getConstrain(nuisanceFile, unc)
@@ -90,7 +90,7 @@ def getTotalPostFitUncertainty(cardFile, binName):
             #totalUnc[unc] += (uncDict[unc][i] * estimates[i] * math.exp( getPull(nuisanceFile,unc)*uncDict[unc][i] ))**2
         #totalUnc[unc] = math.sqrt(totalUnc[unc])
     total = 0
-    for unc in totalUnc.keys():
+    for unc in list(totalUnc.keys()):
         total += totalUnc[unc]**2
     estimatesPostFit = []
     for e in estimateList:
@@ -246,7 +246,7 @@ def scaleCardFile(cardFile, outFile=None, scale=1., scaledProcesses=None, copyUn
     regions      = getAllBinNames(cardFile)
     processDict  = getAllProcesses(cardFile)
     allProcesses = []
-    for key, val in processDict.iteritems():
+    for key, val in processDict.items():
         allProcesses += val
     allProcesses = list( set( allProcesses ) )
 

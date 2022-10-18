@@ -8,6 +8,7 @@ from correctionlib import _core
 
 # Logging
 import logging
+from functools import reduce
 logger = logging.getLogger(__name__)
 
 #binning in pt and eta
@@ -88,7 +89,7 @@ class BTagEfficiency:
             tagWeight[i]*=twfSum
 
         for i in range(maxMultBTagWeight+1):
-            if not tagWeight.has_key(i):
+            if i not in tagWeight:
                 tagWeight[i] = 0.
 
         return tagWeight
@@ -124,57 +125,57 @@ class BTagEfficiency:
             self.btagWeightNames += [ 'SF_FS_Up', 'SF_FS_Down']
 
         # Input files
-    	if year == 'UL2016_preVFP':
+        if year == 'UL2016_preVFP':
             self.etaBins = etaBins2016
-    	    tag = '2016preVFP_UL'
+            tag = '2016preVFP_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2016preVFPULDeepCSV ) )
-    	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepJet ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2016preVFPULDeepJet ) )
-    	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
-    	if year == 'UL2016':
+        if year == 'UL2016':
             self.etaBins = etaBins2016
-    	    tag = '2016postVFP_UL'
+            tag = '2016postVFP_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2016postVFPULDeepCSV ) )
-    	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepJet ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2016postVFPULDeepJet ) )
-    	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
         if year == 'UL2017':
             self.etaBins = etaBins2017
-    	    tag = '2017_UL'
+            tag = '2017_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2017ULDeepCSV ) )
-    	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepJet ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2017ULDeepJet ) )
-    	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
         if year == 'UL2018':
             self.etaBins = etaBins2018
-    	    tag = '2018_UL'
+            tag = '2018_UL'
             if tagger == 'DeepCSV':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepCSV ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2018ULDeepCSV ) )
-    	    	self.WP = 'deepCSV'
+                self.WP = 'deepCSV'
             elif tagger == 'DeepJet':
                 self.scaleFactorFile   = os.path.expandvars( os.path.join( self.dataDir, tag, sfFileULDeepJet ) )
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2018ULDeepJet ) )
-    	    	self.WP = 'deepJet'
+                self.WP = 'deepJet'
 
 
         logger.info ( "Loading scale factors from %s", self.scaleFactorFile )
-    	self.correction = _core.CorrectionSet.from_file(self.scaleFactorFile)
+        self.correction = _core.CorrectionSet.from_file(self.scaleFactorFile)
 
         # Load MC efficiency
         logger.info( "Loading MC efficiency %s", self.mcEfficiencyFile )
@@ -223,13 +224,13 @@ class BTagEfficiency:
             sf_fs_d = 1
         
         #FullSim SFs (times FSSF)
-    	# UPDATE: evaluate('systematic', 'working_point', 'flavor', 'abseta', 'pt')
+        # UPDATE: evaluate('systematic', 'working_point', 'flavor', 'abseta', 'pt')
 
         if abs(pdgId)==5 or abs(pdgId)==4:
             #SF for b/c
             WP = self.WP + '_comb'
             self.evaltr = self.correction[WP]
-            sf      	= sf_fs*self.evaltr.evaluate('central', working_point, abs(pdgId) , abs(eta), pt)
+            sf          = sf_fs*self.evaltr.evaluate('central', working_point, abs(pdgId) , abs(eta), pt)
             sf_b_d      = sf_fs*self.evaltr.evaluate('down',    working_point, abs(pdgId) , abs(eta), pt)
             sf_b_u      = sf_fs*self.evaltr.evaluate('up',      working_point, abs(pdgId) , abs(eta), pt)
             sf_l_d  = 1.
@@ -238,7 +239,7 @@ class BTagEfficiency:
             #SF for light flavours
             WP = self.WP + '_incl'
             self.evaltr = self.correction[WP]
-            sf      	= sf_fs*self.evaltr.evaluate('central', working_point, abs(pdgId) , abs(eta), pt)
+            sf          = sf_fs*self.evaltr.evaluate('central', working_point, abs(pdgId) , abs(eta), pt)
             sf_b_d  = 1.
             sf_b_u  = 1.
             sf_l_d      = sf_fs*self.evaltr.evaluate('down',    working_point, abs(pdgId) , abs(eta), pt)
@@ -274,7 +275,7 @@ class btagEfficiency_1d:
         j['beff'] = {sys: 1. if sys not in flavourSys_1d[abs(j['hadronFlavour'])] else self.readers[sys].eval(toFlavourKey(j['hadronFlavour']), j['eta'], j['pt'], j['btagCSV']) for sys in self.btagWeightNames}
 
     def __init__(self,  WP = ROOT.BTagEntry.OP_MEDIUM):
-        self.btagWeightNames = reduce(or_, flavourSys_1d.values())
+        self.btagWeightNames = reduce(or_, list(flavourSys_1d.values()))
         self.scaleFactorFile = sfFile_1d
         logger.info( "Loading scale factors from %s", self.scaleFactorFile )
         self.calib = ROOT.BTagCalibration("csvv2", self.scaleFactorFile )
@@ -282,4 +283,4 @@ class btagEfficiency_1d:
 
 
 if __name__ == "__main__":
-	pass
+    pass

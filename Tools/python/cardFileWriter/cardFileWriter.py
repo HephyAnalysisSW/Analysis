@@ -50,21 +50,21 @@ class cardFileWriter:
         self.rateParameters = []
         self.freeParameters = []
         self.precision = 10
-	self.freeParamBins={}
-	self.regionMapping = {}
-	self.CR = []
-	self.SR = []
+        self.freeParamBins={}
+        self.regionMapping = {}
+        self.CR = []
+        self.SR = []
     def addFreeParamBin(self,name,binlist):
-	self.freeParamBins= {name:binlist}
+        self.freeParamBins= {name:binlist}
 
     def addMap(self,regionMapping):
-	self.regionMapping=regionMapping
+        self.regionMapping=regionMapping
     def addCR(self,CRbins):
         self.CR=CRbins
         self.nCR = len(CRbins)
 
     def addSR(self,SRbins):
-	self.SR=SRbins
+        self.SR=SRbins
 
     def setPrecision(self, prec):
         self.precision = prec
@@ -73,7 +73,7 @@ class cardFileWriter:
         if len(name)>30:
             logger.info("Name for bin",name,"too long. Max. length is 30.")
             return
-        if self.niceNames.has_key(name):
+        if name in self.niceNames:
             logger.info("Bin already there! (",name,")")
             return
         for p in processes:
@@ -88,17 +88,17 @@ class cardFileWriter:
     def addUncertainty(self, name, t, n=0):
         assert len(name)<self.maxUncNameWidth,  "That's too long: %s. Max. length is %i"%(name, self.maxUncNameWidth)
         if self.uncertainties.count(name):
-            print "Uncertainty already there! (",name,")"
+            print("Uncertainty already there! (",name,")")
             return
         self.uncertainties.append(name)
         self.uncertaintyString[name] = t
         if t=="gmN":
             if n==0:
-                print "gmN Uncertainty with n=0! Specify n as third argument: addUncertainty(..., 'gmN', n)"
+                print("gmN Uncertainty with n=0! Specify n as third argument: addUncertainty(..., 'gmN', n)")
                 return
             self.uncertaintyString[name] = t+' '+str(n)
         if len(self.uncertaintyString[name])>self.maxUncStrWidth:
-            print "That's too long:",self.uncertaintyString[name],"Max. length is", self.maxUncStrWidth
+            print("That's too long:",self.uncertaintyString[name],"Max. length is", self.maxUncStrWidth)
             del self.uncertaintyString[name]
             return
     
@@ -119,7 +119,7 @@ class cardFileWriter:
 
     def specifyObservation(self, b, obs):
         if not isinstance(obs, int):
-            print "Observation not an integer! (",obs,")"
+            print("Observation not an integer! (",obs,")")
             return
         self.observation[b] = obs
 
@@ -129,25 +129,25 @@ class cardFileWriter:
 
     def specifyFlatUncertainty(self, u,  val):
         if u not in self.uncertainties:
-            print "This uncertainty has not been added yet!",u,"Available:",self.uncertainties
+            print("This uncertainty has not been added yet!",u,"Available:",self.uncertainties)
             return
-        print "Adding ",u,"=",val,"for all bins and processes!"
+        print("Adding ",u,"=",val,"for all bins and processes!")
         for b in self.bins:
             for p in self.processes[b]:
                 self.uncertaintyVal[(u,b,p)] = round(val,self.precision)
 
     def specifyUncertainty(self, u, b, p, val):
         if u not in self.uncertainties:
-            print "This uncertainty has not been added yet!",u,"Available:",self.uncertainties
+            print("This uncertainty has not been added yet!",u,"Available:",self.uncertainties)
             return
         if b not in self.bins:
-            print "This bin has not been added yet!",b,"Available:",self.bins
+            print("This bin has not been added yet!",b,"Available:",self.bins)
             return
         if p not in self.processes[b]:
-            print "Process ", p," is not in bin",b,". Available for ", b,":",self.processes[b]
+            print("Process ", p," is not in bin",b,". Available for ", b,":",self.processes[b])
             return
         if val<0:
-            print "Warning! Found negative uncertainty %f for yield %f in %r. Reversing sign under the assumption that the correlation pattern is irrelevant (check!)."%(val, self.expectation[(b, p)], (u,b,p))
+            print("Warning! Found negative uncertainty %f for yield %f in %r. Reversing sign under the assumption that the correlation pattern is irrelevant (check!)."%(val, self.expectation[(b, p)], (u,b,p)))
             _val=1.0
         else:
             _val = val
@@ -156,31 +156,31 @@ class cardFileWriter:
     def getUncertaintyString(self, k):
         u, b, p = k
         if self.uncertaintyString[u].count('gmN'):
-            if self.uncertaintyVal.has_key((u,b,p)) and self.uncertaintyVal[(u,b,p)]>0.:
+            if (u,b,p) in self.uncertaintyVal and self.uncertaintyVal[(u,b,p)]>0.:
                 n = float(self.uncertaintyString[u].split(" ")[1])
                 return self.mfs(self.expectation[(b, p)]/float(n))
             else: return '-'
-        if self.uncertaintyVal.has_key((u,b,p)):
+        if (u,b,p) in self.uncertaintyVal:
             return self.mfs(self.uncertaintyVal[(u,b,p)])
         return '-'
 
     def checkCompleteness(self):
         for b in self.bins:
-            if not self.observation.has_key(b) or not self.observation[b]<float('inf'):
-                print "No valid observation for bin",b
+            if b not in self.observation or not self.observation[b]<float('inf'):
+                print("No valid observation for bin",b)
                 return False
-            if self.hasContamination and (not self.contamination.has_key(b) or not self.contamination[b] < float('inf')):
-                print "No valid contamination for bin",b
+            if self.hasContamination and (b not in self.contamination or not self.contamination[b] < float('inf')):
+                print("No valid contamination for bin",b)
                 return False
             if len(self.processes[b])==0:
-                print "Warning, bin",b,"has no processes"
+                print("Warning, bin",b,"has no processes")
             for p in self.processes[b]:
-                if not self.expectation.has_key((b,p)) or not self.expectation[(b,p)]<float('inf'):
-                    print "No valid expectation for bin/process ",(b,p)
+                if (b,p) not in self.expectation or not self.expectation[(b,p)]<float('inf'):
+                    print("No valid expectation for bin/process ",(b,p))
                     return False
-            for k in self.uncertaintyVal.keys():
+            for k in list(self.uncertaintyVal.keys()):
                 if not self.uncertaintyVal[k]<float('inf'):
-                    print "Uncertainty invalid for",k,':',self.uncertaintyVal[k]
+                    print("Uncertainty invalid for",k,':',self.uncertaintyVal[k])
                     return False
         return True
 
@@ -189,11 +189,11 @@ class cardFileWriter:
 
     def writeToFile(self, fname, shapeFile=False, noMCStat=False):
 
-        print "noMCStat: {}".format(noMCStat)
+        print("noMCStat: {}".format(noMCStat))
 
         import datetime, os
         if not self.checkCompleteness():
-            print "Incomplete specification."
+            print("Incomplete specification.")
             return
         allProcesses=[]
         numberID = {}
@@ -244,13 +244,13 @@ class cardFileWriter:
             outfile.write( u.ljust(self.maxUncNameWidth)+' '+self.uncertaintyString[u].ljust(self.maxUncStrWidth)+' '+
                                           ' '.join( [' '.join([self.getUncertaintyString((u,b,p)).rjust(self.defWidth) for p in self.processes[b]] ) for b in unmutedBins]) +'\n')
 
-	print self.rateParameters
+        print(self.rateParameters)
         for p in self.rateParameters:
-            print self.rateParameters
+            print(self.rateParameters)
             outfile.write('\n')
 
             nCR= len(self.CR)
-            print "length of CR: ", nCR
+            print("length of CR: ", nCR)
             #print self.regionMapping
             shift_SR=0
 
@@ -266,20 +266,20 @@ class cardFileWriter:
             else :
                 for i_cr, cr in enumerate(self.CR):
                         outfile.write('%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0],"Bin{}".format(i_cr), p[0] ))
-                        print '%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0],"Bin{}".format(i_cr), p[0] )
+                        print('%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(i_cr), p[0], "Bin{}".format(i_cr), p[0],"Bin{}".format(i_cr), p[0] ))
                         corr_SR = self.SR[shift_SR:shift_SR+self.regionMapping[i_cr]]
                         
                         for i_sr, sr in enumerate(corr_SR):
-                            print '%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(nCR+shift_SR+i_sr), p[0], "Bin{}".format(nCR+shift_SR+i_sr), p[0],"Bin{}".format(i_cr), p[0] )
+                            print('%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(nCR+shift_SR+i_sr), p[0], "Bin{}".format(nCR+shift_SR+i_sr), p[0],"Bin{}".format(i_cr), p[0] ))
                             outfile.write('%s_norm_%s rateParam %s %s (@0*1) %s_norm_%s\n'%("Bin{}".format(nCR+shift_SR+i_sr), p[0], "Bin{}".format(nCR+shift_SR+i_sr), p[0],"Bin{}".format(i_cr), p[0] ))
                         
                         shift_SR +=len(corr_SR)
                         # outfile.write('%s_norm_%s extArg %s %s\n'%("Bin{}".format(i_cr), p[0], str(p[1]), str(p[2])))
-		
+
         for p in self.freeParameters:
             outfile.write('\n')
             #for b in self.freeParamBins[p[0]]:
-	    #bins = [val for keys,val in region.items() if p[0] in names]
+        #bins = [val for keys,val in region.items() if p[0] in names]
 
             for b in self.bins:
                 outfile.write('%s rateParam %s %s %s %s\n'%(p[0], b, p[1], str(p[2]), str(p[3])))
@@ -290,7 +290,7 @@ class cardFileWriter:
             outfile.write('* autoMCStats 10 \n')
 
         outfile.close()
-        print "[cardFileWrite] Written card file %s"%fname
+        print("[cardFileWrite] Written card file %s"%fname)
         return fname
 
     def makeHist(self, name):
@@ -352,7 +352,7 @@ class cardFileWriter:
             # create the histograms for all uncertainties that are relevant for the process
             for unc in nuisances:
                 for i,b in enumerate(bins):
-                    if self.uncertaintyVal.has_key((unc, b, process)):
+                    if (unc, b, process) in self.uncertaintyVal:
                         if not (unc.lower().count('up') or unc.lower().count('down')):
                             nuisForProc[process].append(unc)
                             up      = '%s_%sUp'%(process, unc)
@@ -372,7 +372,7 @@ class cardFileWriter:
 
             # fill the histograms of central values and uncertainties. if no uncertainty exists for a bin the up/down variations are set to the central values as well.
             for i,b in enumerate(bins):
-                if self.expectation.has_key((b, process)):
+                if (b, process) in self.expectation:
                     expect  = self.expectation[(b, process)]
                     try:
                         relUnc  = self.uncertaintyVal[('Stat_'+b+'_'+process, b, process)]
@@ -382,7 +382,7 @@ class cardFileWriter:
                     histos[process].SetBinContent(i+1, expect)
                     histos[process].SetBinError(i+1, unc)
                     for unc in nuisances:
-                        if self.uncertaintyVal.has_key((unc, b, process)):
+                        if (unc, b, process) in self.uncertaintyVal:
                             relUnc  = self.uncertaintyVal[(unc, b, process)]
                         else:
                             relUnc = 1.
@@ -403,7 +403,7 @@ class cardFileWriter:
 
         # self.niceNames[bins[0]] = 'inclusive bin'
         shift_SR = 0
-        for i_bin in xrange(self.nCR) :
+        for i_bin in range(self.nCR) :
             s_start = self.nCR + shift_SR 
                 
             for process in processes:
@@ -456,7 +456,7 @@ class cardFileWriter:
         logger.info("Creating %s", uniqueDirname)
         os.makedirs(uniqueDirname)
 
-        years = cards.keys()
+        years = list(cards.keys())
         cmd = ''
         for year in years:
             cmd += " dc_%s=%s"%(year, cards[year])
@@ -492,7 +492,7 @@ class cardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
 
         if fname is not None:  # Assume card is already written when fname is not none
@@ -509,7 +509,7 @@ class cardFileWriter:
             filename += " > output.txt"
         
         combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M AsymptoticLimits %s %s"%(options,filename)
-        print combineCommand
+        print(combineCommand)
         os.system(combineCommand)
 
         tempResFile = uniqueDirname+"/higgsCombineTest.AsymptoticLimits.mH120.root"
@@ -518,7 +518,7 @@ class cardFileWriter:
             res= self.readResFile(tempResFile)
         except:
             res=None
-            print "[cardFileWrite] Did not succeed reeding result."
+            print("[cardFileWrite] Did not succeed reeding result.")
         if res:
             shutil.copyfile(tempResFile, resultFilename)
         
@@ -551,7 +551,7 @@ class cardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         if fname is not None:  # Assume card is already written when fname is not none
           filename = os.path.abspath(fname)
@@ -572,14 +572,14 @@ class cardFileWriter:
         Compute the prefit NLL from expectation and observation without using combine
         '''
         obs_sorted = [self.observation[b] for b in self.bins]
-        exp_sorted = map( lambda l: sum([self.expectation[k] for k in l]), [filter( lambda k:k[0]==bin, self.expectation.keys() ) for bin in self.bins ])
+        exp_sorted = [sum([self.expectation[k] for k in l]) for l in [[k for k in list(self.expectation.keys()) if k[0]==bin] for bin in self.bins ]]
         return -sum([ -lam + obs*log(lam) - sum( [log(n_) for n_ in range(1, obs+1 )] ) for obs, lam in zip(obs_sorted, exp_sorted)])
 
     def calcNuisances(self, fname=None, options="", outputFileAddon = "", bonly=False):
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         shutil.copyfile(os.path.join(os.environ['CMSSW_BASE'], 'src', 'Analysis', 'Tools', 'python', 'cardFileWriter', 'diffNuisances.py'), os.path.join(uniqueDirname, 'diffNuisances.py'))
 
@@ -604,7 +604,7 @@ class cardFileWriter:
         else:
           combineCommand +=";python diffNuisances.py -f latex fitDiagnosticsTest.root &> nuisances.tex"
           combineCommand +=";python diffNuisances.py -af latex fitDiagnosticsTest.root &> nuisances_full.tex"
-        print combineCommand
+        print(combineCommand)
         os.system(combineCommand)
 
         if outputFileAddon: outputFileAddon = "_"+outputFileAddon
@@ -627,7 +627,7 @@ class cardFileWriter:
         import uuid, os
         ustr          = str(uuid.uuid4())
         uniqueDirname = os.path.join(self.releaseLocation, ustr)
-        print "Creating %s"%uniqueDirname
+        print("Creating %s"%uniqueDirname)
         os.makedirs(uniqueDirname)
         combineCommand = "cd "+uniqueDirname+";combine --saveWorkspace -M ProfileLikelihood --uncapped 1 --significance --rMin -5 %s %s"%(options,fname)
         os.system(combineCommand)
@@ -636,7 +636,7 @@ class cardFileWriter:
             os.system("rm -rf "+uniqueDirname+"/higgsCombineTest.ProfileLikelihood.mH120.root")
         except:
             res=None
-            print "Did not succeed."
+            print("Did not succeed.")
         shutil.rmtree(uniqueDirname)
 
         return res
