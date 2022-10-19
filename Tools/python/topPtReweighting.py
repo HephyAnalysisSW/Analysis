@@ -5,10 +5,12 @@ from math import exp, sqrt
 #https://indico.cern.ch/event/463433/contribution/5/attachments/1193635/1733505/MSavitskyi_ToppTRew13TeV_TopModGen.pdf
 #updated a and b parameters for 13 TeV: https://twiki.cern.ch/twiki/bin/view/CMS/TopSystematics#pt_top_Reweighting
 
-def getUnscaledTopPairPtReweightungFunction():
-    a = 0.0615
-    b = -0.0005
-
+def getUnscaledTopPairPtReweightungFunction(selection = "dilep"):
+    if selection == "dilep":
+        a = 0.0615
+        b = -0.0005
+    else:
+        raise ValueError ("top pt reweighting implemented only for 'dilep' ")
     def f(topPts):
         assert len(topPts)<=2, "Found too many top pts: %i"%len(topPts)
         res=1.
@@ -18,9 +20,13 @@ def getUnscaledTopPairPtReweightungFunction():
     return f
 
 #https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting
-def getTopPtDrawString():
-    a = 0.0615
-    b = -0.0005
+def getTopPtDrawString(selection = "dilep"):
+    if selection == "dilep":
+        a = 0.0615
+        b = -0.0005
+    else:
+        raise ValueError ("top pt reweighting implemented only for 'dilep' ")
+
     return "sqrt(exp(Sum$(("+str(a)+"+("+str(b)+")*GenPart_pt)*(abs(GenPart_pdgId)==6&&GenPart_status==62&&GenPart_pt<=400))))"
 
 def getTopPtsForReweighting(r):

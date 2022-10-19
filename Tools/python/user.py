@@ -46,6 +46,11 @@ elif os.environ['USER'] in ['robert.schoefbeck']:
     dpm_directory          = '/dpm/oeaw.ac.at/home/cms/store/user/schoef/'
     remote_host            = 'schoef@lxplus.cern.ch'
     remote_www_directory   = '/eos/user/s/schoef/www'
+elif os.environ['USER'] in ['lena.wild']:
+    plot_directory         = "/groups/hephy/cms/lena.wild/www/Analysis/"
+    cache_directory        = "/groups/hephy/cms/lena.wild/caches/"
+    remote_host            = 'lwild@lxplus.cern.ch'
+    remote_www_directory   = '/eos/user/l/lwild/www'
 elif os.environ['USER'] in ['schoef']:
     plot_directory         = "/afs/hephy.at/user/r/rschoefbeck/www/StopsDilepton/"
     cache_directory        = "/afs/hephy.at/data/rschoefbeck01/cache/"
