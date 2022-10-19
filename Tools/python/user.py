@@ -69,6 +69,10 @@ elif os.environ['USER'] in ['cristina.giordano']:
     plot_directory         = "/groups/hephy/cms/cristina.giordano/www/tttt/"
     cache_directory        = "/users/cristina.giordano/public/cache/"
     cern_proxy_certificate = "/users/cristina.giordano/private/.proxy"
+elif os.environ['USER'] in ['maryam.shooshtari']:
+    plot_directory         = "/groups/hephy/cms/maryam.shooshtari/www/tttt/"
+    cache_directory        = "/users/maryam.shooshtari/public/cache/"
+    cern_proxy_certificate = "/users/maryam.shooshtari/private/.proxy"
 else:
     plot_directory         = "/afs/hephy.at/user/%s/%s/www/Analysis/"%(os.environ['USER'][0],os.environ['USER'])
     cache_directory        = "/afs/hephy.at/data/%s01/Analysis/"%os.environ['USER']
