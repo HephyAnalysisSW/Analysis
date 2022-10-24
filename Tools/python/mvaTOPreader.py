@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class mvaTOPreader:
-    def __init__(self, year):
+    def __init__(self, year, versions = [ "v1", "v2"]):
         yearstring = 'UL18'
         if year == "UL2016":
             yearstring = 'UL16'
@@ -16,35 +16,36 @@ class mvaTOPreader:
             yearstring = 'UL17'
         elif year == "UL2018":
             yearstring = 'UL18'
+
+        self.versions = versions
+
+        # Working points
+        self.WPs = {'v1': [0.20, 0.41, 0.64, 0.81], 
+                    'v2': [0.59, 0.81, 0.90, 0.94] }
             
         cmsswbase=os.environ["CMSSW_BASE"]
         directory = cmsswbase+"/src/Analysis/Tools/data/mvaWeights/"
-        
+
         # Load Electron weights
-        # v1
-        self.bst_el = xgb.Booster() 
-        self.bst_el.load_model(directory+'el_TOP'+yearstring+'_XGB.weights.bin') 
-        self.bst_elv2 = xgb.Booster() 
-        #v2
-        self.bst_elv2.load_model(directory+'el_TOPv2'+yearstring+'_XGB.weights.bin') 
+        self.bst_el = {}
+        self.bst_mu = {}
+        if "v1" in self.versions:        
+            self.bst_el['v1'] = xgb.Booster() 
+            self.bst_el['v1'].load_model(directory+'el_TOP'+yearstring+'_XGB.weights.bin') 
+        if "v2" in self.versions: 
+            self.bst_el['v2'] = xgb.Booster() 
+            self.bst_el['v2'].load_model(directory+'el_TOPv2'+yearstring+'_XGB.weights.bin') 
         
         # Load Muon weights
-        # v1
-        self.bst_mu = xgb.Booster()    
-        self.bst_mu.load_model(directory+'mu_TOP'+yearstring+'_XGB.weights.bin') 
-        # v2
-        self.bst_muv2 = xgb.Booster()    
-        self.bst_muv2.load_model(directory+'mu_TOPv2'+yearstring+'_XGB.weights.bin')         
+        if "v1" in self.versions:        
+            self.bst_mu['v1'] = xgb.Booster() 
+            self.bst_mu['v1'].load_model(directory+'mu_TOP'+yearstring+'_XGB.weights.bin') 
+        if "v2" in self.versions:        
+            self.bst_mu['v2'] = xgb.Booster() 
+            self.bst_mu['v2'].load_model(directory+'mu_TOPv2'+yearstring+'_XGB.weights.bin')         
         
-        # Working points
-        self.WPs    = [0.20, 0.41, 0.64, 0.81]
-        self.WPs_v2 = [0.59, 0.81, 0.90, 0.94]
-
-        
-
     def getmvaTOPScore(self, lep):
-        mvaScore = -1
-        mvaScorev2 = -1
+        results = []
         if abs(lep['pdgId']) == 11:
             features = np.array([[
                 lep['pt'], 
@@ -63,8 +64,14 @@ class mvaTOPreader:
                 ord(lep['lostHits']), # eleMissingHits
             ]])
             dtest = xgb.DMatrix(features)
-            mvaScore = self.bst_el.predict(dtest)
-            mvaScorev2 = self.bst_elv2.predict(dtest)
+            for v in self.versions:
+                mvaScore = self.bst_el[v].predict(dtest)
+                WP = 0
+                for wp in self.WPs[v]:
+                    if mvaScore > wp:
+                        WP += 1
+                results.append(mvaScore)
+                results.append(WP)
         elif abs(lep['pdgId']) == 13:
             features = np.array([[
                 lep['pt'], 
@@ -82,18 +89,12 @@ class mvaTOPreader:
                 lep['segmentComp'], # segComp
             ]])
             dtest = xgb.DMatrix(features)
-            mvaScore = self.bst_mu.predict(dtest)
-            mvaScorev2 = self.bst_muv2.predict(dtest)
-        
-        # Now get Working point for v1 and v2
-        WPv1 = 0
-        for wp in self.WPs:
-            if mvaScore > wp:
-                WPv1 += 1
-        WPv2 = 0
-        for wp in self.WPs_v2:
-            if mvaScorev2 > wp:
-                WPv2 += 1
-        ####
-        
-        return mvaScore, WPv1, mvaScorev2, WPv2
+            for v in self.versions:
+                mvaScore = self.bst_mu[v].predict(dtest)
+                WP = 0
+                for wp in self.WPs[v]:
+                    if mvaScore > wp:
+                        WP += 1
+                results.append(mvaScore)
+                results.append(WP)
+        return tuple(results)
