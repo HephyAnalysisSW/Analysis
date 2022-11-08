@@ -19,9 +19,9 @@ maps_mu =            {"tight":  "NUM_LeptonMvaTight_DEN_TrackerMuons_abseta_pt.r
                      }
 
 class leptonSF:
-    def __init__(self, year=2016, ID = None):
+    def __init__(self, year, ID = None):
 
-        if year not in [2016, 2017, 2018 ]:
+        if year not in ["2016_HIPM", "2016", "2017", "2018" ]:
             raise Exception("Lepton SF for year %i not known"%year)
 
         self.dataDir = "$CMSSW_BASE/src/Analysis/Tools/data/leptonSFData/LeptonMva_v1"
@@ -29,14 +29,14 @@ class leptonSF:
 
         self.SFmaps = {
             "elec" : {
-                "SF" :  getObjFromFile(self.dataDir+self.year+maps_el[ID],"EGamma_SF2D"),
-                "syst":  getObjFromFile(self.dataDir+self.year+maps_el[ID],"syst"),
-                "stat": getObjFromFile(self.dataDir+self.year+maps_el[ID],"stat"),
+                "SF" :  getObjFromFile(self.dataDir+"/"+self.year+"/"+maps_el[ID],"EGamma_SF2D"),
+                "syst": getObjFromFile(self.dataDir+"/"+self.year+"/"+maps_el[ID],"sys"),
+                "stat": getObjFromFile(self.dataDir+"/"+self.year+"/"+maps_el[ID],"stat"),
             },
             "muon" : {
-                "SF" :  getObjFromFile(self.dataDir+self.year+maps_mu[ID],"NUM_LeptonMvaTight_DEN_TrackerMuons"),
-                "syst":  getObjFromFile(self.dataDir+self.year+maps_mu[ID],"syst"),
-                "stat": getObjFromFile(self.dataDir+self.year+maps_mu[ID],"stat"),
+                "SF" :  getObjFromFile(self.dataDir+"/"+self.year+"/"+maps_mu[ID],"NUM_LeptonMvaTight_DEN_TrackerMuons"),
+                "syst": getObjFromFile(self.dataDir+"/"+self.year+"/"+maps_mu[ID],"syst"),
+                "stat": getObjFromFile(self.dataDir+"/"+self.year+"/"+maps_mu[ID],"stat"),
             }
         }
 
