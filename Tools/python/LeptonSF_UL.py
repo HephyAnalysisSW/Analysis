@@ -6,7 +6,7 @@ from Analysis.Tools.helpers import getObjFromFile
 
 
 
-maps_ele =           {"medium": "egammaEffi_EGM2D_Medium.root",
+maps_el =           {"medium": "egammaEffi_EGM2D_Medium.root",
                       "tight":  "egammaEffi_EGM2D_Tight.root",
                       "loose":  "egammaEffi_EGM2D_Loose.root",
                       "Vloose": "egammaEffi_EGM2D_VLoose.root",
@@ -19,24 +19,29 @@ maps_mu =            {"tight":  [("NUM_LeptonMvaTight_DEN_TrackerMuons_abseta_pt
                      }
 
 class LeptonSF:
-    def __init__(self, era, ID = None):
+    def __init__(self, era, muID = None, elID = None):
 
         if era not in ["UL2016_preVFP", "UL2016", "UL2017", "UL2018" ]:
             raise Exception("Lepton SF for era %i not known"%era)
+        if not elID in maps_el.keys():
+            raise Exception("Don't know electron ID %s"%elID)
+
+        if not muID in maps_mu.keys():
+            raise Exception("Don't know muon ID %s"%muID)
 
         self.dataDir = "$CMSSW_BASE/src/Analysis/Tools/data/leptonSFData/LeptonMva_v1"
         self.era = era
 
         self.SFmaps = {
             "elec" : {
-                "SF" :  getObjFromFile(self.dataDir+"/"+self.era+"/"+maps_el[ID],"EGamma_SF2D"),
-                "syst": getObjFromFile(self.dataDir+"/"+self.era+"/"+maps_el[ID],"sys"),
-                "stat": getObjFromFile(self.dataDir+"/"+self.era+"/"+maps_el[ID],"stat"),
+                "SF" :  getObjFromFile(self.dataDir+"/"+self.era+"/"+maps_el[elID],"EGamma_SF2D"),
+                "syst": getObjFromFile(self.dataDir+"/"+self.era+"/"+maps_el[elID],"sys"),
+                "stat": getObjFromFile(self.dataDir+"/"+self.era+"/"+maps_el[elID],"stat"),
             },
             "muon" : {
-                "SF" :  [getObjFromFile(os.path.expandvars(os.path.join(self.dataDir+"/"+self.era, file)), key) for (file, key) in maps_mu[ID]],
-                "syst": [getObjFromFile(os.path.expandvars(os.path.join(self.dataDir+"/"+self.era, file)), key+"_syst") for (file, key) in maps_mu[ID]],
-                "stat": [getObjFromFile(os.path.expandvars(os.path.join(self.dataDir+"/"+self.era, file)), key+"_stat") for (file, key) in maps_mu[ID]],
+                "SF" :  [getObjFromFile(os.path.expandvars(os.path.join(self.dataDir+"/"+self.era, file)), key) for (file, key) in maps_mu[muID]],
+                "syst": [getObjFromFile(os.path.expandvars(os.path.join(self.dataDir+"/"+self.era, file)), key+"_syst") for (file, key) in maps_mu[muID]],
+                "stat": [getObjFromFile(os.path.expandvars(os.path.join(self.dataDir+"/"+self.era, file)), key+"_stat") for (file, key) in maps_mu[muID]],
             }
         }
 
@@ -77,3 +82,8 @@ class LeptonSF:
           raise Exception("Lepton SF for PdgId %i not known"%pdgId)
 
         return SF+sigma*err
+
+if __name__ == '__main__':
+    
+    #sf = LeptonSF("UL2016_preVFP", muID="Vloose", elID="tight")
+    #print sf.getSF(pdgId=13, pt=20, eta= 0.5)
