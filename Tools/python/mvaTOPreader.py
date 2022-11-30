@@ -65,7 +65,7 @@ class mvaTOPreader:
             ]])
             dtest = xgb.DMatrix(features)
             for v in self.versions:
-                mvaScore = self.bst_el[v].predict(dtest)
+                mvaScore = self.bst_el[v].predict(dtest)[0]
                 WP = 0
                 for wp in self.WPs[v]:
                     if mvaScore > wp:
@@ -90,7 +90,7 @@ class mvaTOPreader:
             ]])
             dtest = xgb.DMatrix(features)
             for v in self.versions:
-                mvaScore = self.bst_mu[v].predict(dtest)
+                mvaScore = self.bst_mu[v].predict(dtest)[0]
                 WP = 0
                 for wp in self.WPs[v]:
                     if mvaScore > wp:
