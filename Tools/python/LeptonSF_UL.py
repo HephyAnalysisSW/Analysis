@@ -76,7 +76,7 @@ class LeptonSF:
             etabin = self.SFmaps[lepton]["SF"][0].GetXaxis().FindBin(eta)
             ptbin  = self.SFmaps[lepton]["SF"][0].GetYaxis().FindBin(pt)
             SF = self.SFmaps[lepton]["SF"][0].GetBinContent(etabin, ptbin)
-            err = self.SFmaps[lepton][uncert][0].GetBinContent(etabin, ptbin)
+            err = self.SFmaps[lepton][uncert][0].GetBinError(etabin, ptbin)
 
         else:
           raise Exception("Lepton SF for PdgId %i not known"%pdgId)
@@ -84,6 +84,8 @@ class LeptonSF:
         return SF+sigma*err
 
 if __name__ == '__main__':
-    
-    #sf = LeptonSF("UL2016_preVFP", muID="Vloose", elID="tight")
-    #print sf.getSF(pdgId=13, pt=20, eta= 0.5)
+
+    sf = LeptonSF("UL2016_preVFP", muID="Vloose", elID="tight")
+    print sf.getSF(pdgId=13, pt=20, eta= 0.5)
+    print sf.getSF(pdgId=13, pt=20, eta= 0.5, sigma=1)
+    print sf.getSF(pdgId=13, pt=20, eta= 0.5, sigma=-1)
