@@ -378,13 +378,17 @@ def cosThetaStar( Z_mass, Z_pt, Z_eta, Z_phi, l_pt, l_eta, l_phi ):
     beta    = sqrt( 1 - 1/gamma**2 )
     return (-beta + cosTheta) / (1 - beta*cosTheta)
 
-def deltaPhi(phi1, phi2):
+def deltaPhi(phi1, phi2, returnAbs = True):
+    if isnan(phi1) or isnan(phi2): return float('nan')
     dphi = phi2-phi1
     if  dphi > pi:
         dphi -= 2.0*pi
     if dphi <= -pi:
         dphi += 2.0*pi
-    return abs(dphi)
+    if returnAbs:
+        return abs(dphi)
+    else:
+        return dphi
 
 def deltaR2(l1, l2):
     return deltaPhi(l1['phi'], l2['phi'])**2 + (l1['eta'] - l2['eta'])**2
