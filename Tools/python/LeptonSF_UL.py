@@ -84,14 +84,8 @@ class LeptonSF:
         return SF+sigma*err
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    pass 
-    #sf = LeptonSF("UL2016_preVFP", muID="Vloose", elID="tight")
-    #print sf.getSF(pdgId=13, pt=20, eta= 0.5)
-=======
 
     sf = LeptonSF("UL2016_preVFP", muID="Vloose", elID="tight")
     print sf.getSF(pdgId=13, pt=20, eta= 0.5)
     print sf.getSF(pdgId=13, pt=20, eta= 0.5, sigma=1)
     print sf.getSF(pdgId=13, pt=20, eta= 0.5, sigma=-1)
->>>>>>> a80107f65ecac05ea7074f52dfff0d85f5a5e551
