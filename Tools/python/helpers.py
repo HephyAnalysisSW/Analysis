@@ -4,7 +4,7 @@
 import os, sys, uuid, subprocess
 import ROOT
 import itertools
-from math                             import pi, sqrt, cosh, cos, sin
+from math                             import pi, sqrt, cosh, cos, sin, isnan
 from array                            import array
 
 # Logging
@@ -515,7 +515,6 @@ def deepCheckWeight( file ):
         but not those from the filler, e.g. the weight branch
         Those files are identified here, as weight==nan and thus the yield is nan
     """
-    from math import isnan
     from RootTools.core.Sample import Sample
 
     # convert dpm file pathes
