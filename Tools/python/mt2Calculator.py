@@ -4,7 +4,8 @@ from math import pi, sqrt, cos, sin
 #wrapper class for MT2 variables
 class mt2Calculator:
     def __init__(self):
-        ROOT.gROOT.ProcessLine(".L $CMSSW_BASE/src/Analysis/Tools/scripts/mt2_bisect.cpp+")
+        #ROOT.gROOT.ProcessLine(".L $CMSSW_BASE/src/Analysis/Tools/scripts/mt2_bisect.cpp+") # FIXME
+        ROOT.gROOT.ProcessLine(".L $CMSSW_BASE/src/Analysis/Tools/scripts/mt2_bisect.cpp")
         self.mt2 = ROOT.mt2()
         self.reset()
         self.leptonMass = 0.

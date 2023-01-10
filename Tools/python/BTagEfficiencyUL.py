@@ -173,7 +173,6 @@ class BTagEfficiency:
                 self.mcEfficiencyFile  = os.path.expandvars( os.path.join( self.dataDir, tag, effFile2018ULDeepJet ) )
                 self.WP = 'deepJet'
 
-
         logger.info ( "Loading scale factors from %s", self.scaleFactorFile )
         self.correction = _core.CorrectionSet.from_file(self.scaleFactorFile)
 
