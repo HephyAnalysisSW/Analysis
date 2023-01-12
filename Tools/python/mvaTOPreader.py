@@ -20,6 +20,7 @@ class mvaTOPreader:
         self.versions = versions
 
         # Working points
+        
         self.WPs = {'v1': [0.20, 0.41, 0.64, 0.81], 
                     'v2': [0.59, 0.81, 0.90, 0.94] }
             
