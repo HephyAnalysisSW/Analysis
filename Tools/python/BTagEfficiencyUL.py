@@ -100,7 +100,7 @@ class BTagEfficiency:
             ref = reduce(mul, [j['beff']['MC'] for j in bJets] + [1-j['beff']['MC'] for j in nonBJets], 1 )
             if ref>0:
                 result = reduce(mul, [j['beff'][var] for j in bJets] + [1-j['beff'][var] for j in nonBJets], 1 )/ref
-                return result 
+                return result
             else:
                 logger.warning( "getBTagSF_1a: MC efficiency is zero. Return SF 1. MC efficiencies: %r "% (  [j['beff']['MC'] for j in bJets] + [1-j['beff']['MC'] for j in nonBJets] ) )
                 return 1
@@ -119,7 +119,7 @@ class BTagEfficiency:
         self.fastSim = fastSim
 
         # All btag weight names per jet
-        self.btagWeightNames = [ 'MC', 'SF', 'SF_b_Down', 'SF_b_Up', 'SF_l_Down', 'SF_l_Up' ]
+        self.btagWeightNames = [ 'MC', 'SF', 'SF_b_Down', 'SF_b_Up', 'SF_l_Down', 'SF_l_Up', 'SF_b_Down_Correlated', 'SF_b_Up_Correlated', 'SF_l_Down_Correlated', 'SF_l_Up_Correlated', 'SF_b_Down_Uncorrelated', 'SF_b_Up_Uncorrelated', 'SF_l_Down_Uncorrelated', 'SF_l_Up_Uncorrelated' ]
         if self.fastSim:
             self.btagWeightNames += [ 'SF_FS_Up', 'SF_FS_Down']
 
@@ -198,18 +198,18 @@ class BTagEfficiency:
     def getSF(self, pdgId, pt, eta):
         working_point = 'M'
         # BTag SF Not implemented below 20 GeV
-        if pt<20: 
+        if pt<20:
             if self.fastSim:
                 return (1,1,1,1,1,1,1)
             else:
-                return (1,1,1,1,1)
+                return (1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.)
 
         # BTag SF Not implemented above absEta 2.4
-        if abs(eta)>=2.4: 
+        if abs(eta)>=2.4:
             if self.fastSim:
                 return (1,1,1,1,1,1,1)
             else:
-                return (1,1,1,1,1)
+                return (1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.)
 
         #autobounds are implemented now, no doubling of uncertainties necessary anymore
         flavKey = toFlavourKey(pdgId)
@@ -221,7 +221,7 @@ class BTagEfficiency:
             sf_fs = 1
             sf_fs_u = 1
             sf_fs_d = 1
-        
+
         #FullSim SFs (times FSSF)
     	# UPDATE: evaluate('systematic', 'working_point', 'flavor', 'abseta', 'pt')
 
@@ -232,30 +232,57 @@ class BTagEfficiency:
             sf      	= sf_fs*self.evaltr.evaluate('central', working_point, abs(pdgId) , abs(eta), pt)
             sf_b_d      = sf_fs*self.evaltr.evaluate('down',    working_point, abs(pdgId) , abs(eta), pt)
             sf_b_u      = sf_fs*self.evaltr.evaluate('up',      working_point, abs(pdgId) , abs(eta), pt)
-            sf_l_d  = 1.
-            sf_l_u  = 1.
+            sf_l_d  = sf
+            sf_l_u  = sf
+            sf_b_d_cor     = sf_fs*self.evaltr.evaluate('down_correlated',    working_point, abs(pdgId) , abs(eta), pt)
+            sf_b_u_cor     = sf_fs*self.evaltr.evaluate('up_correlated',      working_point, abs(pdgId) , abs(eta), pt)
+            sf_l_d_cor = sf
+            sf_l_u_cor = sf
+            sf_b_d_uncor     = sf_fs*self.evaltr.evaluate('down_uncorrelated',    working_point, abs(pdgId) , abs(eta), pt)
+            sf_b_u_uncor     = sf_fs*self.evaltr.evaluate('up_uncorrelated',      working_point, abs(pdgId) , abs(eta), pt)
+            sf_l_d_uncor = sf
+            sf_l_u_uncor = sf
         else:
             #SF for light flavours
             WP = self.WP + '_incl'
             self.evaltr = self.correction[WP]
             sf      	= sf_fs*self.evaltr.evaluate('central', working_point, abs(pdgId) , abs(eta), pt)
-            sf_b_d  = 1.
-            sf_b_u  = 1.
+            sf_b_d  = sf
+            sf_b_u  = sf
             sf_l_d      = sf_fs*self.evaltr.evaluate('down',    working_point, abs(pdgId) , abs(eta), pt)
             sf_l_u      = sf_fs*self.evaltr.evaluate('up',      working_point, abs(pdgId) , abs(eta), pt)
+            sf_b_d_cor  = sf
+            sf_b_u_cor  = sf
+            sf_l_d_cor      = sf_fs*self.evaltr.evaluate('down_correlated',    working_point, abs(pdgId) , abs(eta), pt)
+            sf_l_u_cor      = sf_fs*self.evaltr.evaluate('up_correlated',      working_point, abs(pdgId) , abs(eta), pt)
+            sf_b_d_uncor  = sf
+            sf_b_u_uncor  = sf
+            sf_l_d_uncor      = sf_fs*self.evaltr.evaluate('down_uncorrelated',    working_point, abs(pdgId) , abs(eta), pt)
+            sf_l_u_uncor      = sf_fs*self.evaltr.evaluate('up_uncorrelated',      working_point, abs(pdgId) , abs(eta), pt)
         # print pdgId, sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u
         if self.fastSim:
-            return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u, sf*sf_fs_u/sf_fs, sf*sf_fs_d/sf_fs)
+            return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u, sf_b_d_cor, sf_b_u_cor, sf_l_d_cor, sf_l_u_cor, sf_b_d_uncor, sf_b_u_uncor, sf_l_d_uncor, sf_l_u_uncor, sf*sf_fs_u/sf_fs, sf*sf_fs_d/sf_fs)
         else:
-            return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u)
+            return (sf, sf_b_d, sf_b_u, sf_l_d, sf_l_u, sf_b_d_cor, sf_b_u_cor, sf_l_d_cor, sf_l_u_cor, sf_b_d_uncor, sf_b_u_uncor, sf_l_d_uncor, sf_l_u_uncor)
 
     def addBTagEffToJet(self, j):
         mcEff = self.getMCEff(j['hadronFlavour'], j['pt'], j['eta'])
         sf =    self.getSF(j['hadronFlavour'], j['pt'], j['eta'])
         if self.fastSim:
-            j['beff'] =  {'MC':mcEff, 'SF':mcEff*sf[0], 'SF_b_Down':mcEff*sf[1], 'SF_b_Up':mcEff*sf[2], 'SF_l_Down':mcEff*sf[3], 'SF_l_Up':mcEff*sf[4], 'SF_FS_Up':mcEff*sf[5], 'SF_FS_Down':mcEff*sf[6]}
+            j['beff'] =  {
+                'MC':mcEff, 'SF':mcEff*sf[0],
+                'SF_b_Down':mcEff*sf[1], 'SF_b_Up':mcEff*sf[2], 'SF_l_Down':mcEff*sf[3], 'SF_l_Up':mcEff*sf[4],
+                'SF_b_Down_Correlated':mcEff*sf[5], 'SF_b_Up_Correlated':mcEff*sf[6], 'SF_l_Down_Correlated':mcEff*sf[7], 'SF_l_Up_Correlated':mcEff*sf[8],
+                'SF_b_Down_Uncorrelated':mcEff*sf[9], 'SF_b_Up_Uncorrelated':mcEff*sf[10], 'SF_l_Down_Uncorrelated':mcEff*sf[11], 'SF_l_Up_Uncorrelated':mcEff*sf[12],
+                'SF_FS_Up':mcEff*sf[13], 'SF_FS_Down':mcEff*sf[14],
+            }
         else:
-            j['beff'] =  {'MC':mcEff, 'SF':mcEff*sf[0], 'SF_b_Down':mcEff*sf[1], 'SF_b_Up':mcEff*sf[2], 'SF_l_Down':mcEff*sf[3], 'SF_l_Up':mcEff*sf[4]}
+            j['beff'] =  {
+                'MC':mcEff, 'SF':mcEff*sf[0],
+                'SF_b_Down':mcEff*sf[1], 'SF_b_Up':mcEff*sf[2], 'SF_l_Down':mcEff*sf[3], 'SF_l_Up':mcEff*sf[4],
+                'SF_b_Down_Correlated':mcEff*sf[5], 'SF_b_Up_Correlated':mcEff*sf[6], 'SF_l_Down_Correlated':mcEff*sf[7], 'SF_l_Up_Correlated':mcEff*sf[8],
+                'SF_b_Down_Uncorrelated':mcEff*sf[9], 'SF_b_Up_Uncorrelated':mcEff*sf[10], 'SF_l_Down_Uncorrelated':mcEff*sf[11], 'SF_l_Up_Uncorrelated':mcEff*sf[12],
+            }
 
 #Method 1d
 #https://twiki.cern.ch/twiki/bin/view/CMS/BTagShapeCalibration
