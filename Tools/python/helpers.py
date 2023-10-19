@@ -97,6 +97,9 @@ def bestDRMatchInCollection(l, coll, deltaR = 0.2, deltaRelPt = 0.5 ):
     else:
         return None
 
+def getCollection(c, prefix, variables, counter_variable):
+    return [getObjDict(c, prefix+'_', variables, i) for i in range(int(getVarValue(c, counter_variable)))]
+
 def getFileList(dir, histname='histo', maxN=-1):
     import os
     filelist = os.listdir(os.path.expanduser(dir))

@@ -47,7 +47,7 @@ import scipy.special
 import itertools
 
 # Helpers
-from Analysis.Tools.helpers import timeit as timeit
+#from Analysis.Tools.helpers import timeit as timeit
 
 class HyperPoly:
 
@@ -100,7 +100,7 @@ class HyperPoly:
 
         # Now we solve A.x = b for a system of dimension DOF
         # Fill A
-        A = np.empty( [self.ndof, self.ndof ] )
+        A = np.empty( [self.ndof, self.ndof ], dtype='float64')
         for d in range(self.ndof):
             for e in range(self.ndof):
                 if d > e:
@@ -108,18 +108,45 @@ class HyperPoly:
                 else:
                     A[d][e] = self.expectation(self.combination[d] + self.combination[e]) 
 
+        self.A = A
         # Invert (Yes, n^3. But ... only the inhomongeneity depends on the weights, so Ainv is universal for the sample!)
+        #self.Ainv = timeit(np.linalg.inv)(A)
+        self.Ainv = np.linalg.inv(A)
 
-        self.Ainv = timeit(np.linalg.inv)(A)
+        # translation matrix from reference point to SM point
+
+        # C_new(theta) = C0 - Ca * ThetaRef_a + Cab * ThetaRef_a * ThetaRef_b
+        #              + Theta_a (Ca - Cab ThetaRef_b - Cba ThetarRef_b)
+        #              + Theta_a Theta_b Cab
+
+        if self.order == 2:
+            self.translate = np.identity( self.ndof, dtype='float64')
+            for n in range(self.ndof):
+                # upper triangular matrix, and diagonal is already ones
+                for m in range(n+1,self.ndof):
+                    if   n==0 and len(self.combination[m])==1:
+                        # contribution from linear term to constant
+                        self.translate[n][m] = - ref_point[self.combination[m][0]] 
+                    elif n==0 and len(self.combination[m])==2:
+                        self.translate[n][m] =   ref_point[self.combination[m][0]]*ref_point[self.combination[m][1]] 
+                    elif len(self.combination[1])==1 and len(self.combination[m])==2:
+                        self.translate[n][m] = - (self.combination[n][0] == self.combination[m][0])*ref_point[self.combination[m][1]]\
+                                               - (self.combination[n][0] == self.combination[m][1])*ref_point[self.combination[m][0]] 
+
         self.initialized = True
 
-    def get_parametrization( self, weights ): 
+    def get_parametrization( self, weights, translate_to_SM=False): 
         ''' Obtain the parametrization for given weights
         '''
         if len(weights)!=self.N:
             raise ValueError( "Need %i weights that correspond to the same number of param_points. Got %i." % (self.N, len(weights)) )
         b = np.array( [ self.wEXT_expectation( weights, self.combination[d] ) for d in range(self.ndof) ] )
-        return np.dot(self.Ainv, b)
+        if translate_to_SM:
+            if self.order!=2:
+                raise NotImplementedError
+            return np.dot(self.translate, np.dot(self.Ainv, b))
+        else:
+            return np.dot(self.Ainv, b)
 
     def wEXT_expectation(self, weights, combination ):
         ''' Compute <wEXT ijk...> = 1/Nmeas Sum_meas( wEXT_meas*i_meas*j_meas*k_meas... )
@@ -158,24 +185,24 @@ class HyperPoly:
                     if power>0:
 #                        sub_substring.append( "x%i" % (var) if power==1 else "x%i**%i" % (var, power)  )
                         if abs(self.ref_point[var])>self.min_abs_float:
-                            sub_substring.append( "(x%i-%f)" % (var, self.ref_point[var]) if power==1 else "(x%i-%f)**%i" % (var, self.ref_point[var], power)  )
+                            sub_substring.append( "(theta%i-%f)" % (var, self.ref_point[var]) if power==1 else "(theta%i-%f)**%i" % (var, self.ref_point[var], power)  )
                         else:
-                            sub_substring.append( "x%i" % (var) if power==1 else "x%i**%i" % (var, power)  )
+                            sub_substring.append( "theta%i" % (var) if power==1 else "theta%i**%i" % (var, power)  )
                 substrings.append( "*".join(sub_substring) ) 
         return  ( "+".join( filter( lambda s: len(s)>0, substrings) ) ).replace("+-","-")
 
 if __name__ == "__main__":
 
-    # 3rd order parametrization
-    def f1(x,y,z):
-        return (x-z)**3+(y-2)**2
-    ref_point = (0,3,0)
-
     p = HyperPoly(3)
 
-    param_points = [ (x,y,z) for x in range(-3,3) for y in range(-3,3) for z in range( -3,3)]
+    param_points = [ (theta0,theta1,theta2) for theta0 in range(-3,3) for theta1 in range(-3,3) for theta2 in range( -3,3)]
+    ref_point = (0,0,0)
+
     p.initialize( param_points, ref_point)
-    
+
+    # 3rd order parametrization
+    def f1(theta0,theta1,theta2):
+        return theta2**2 + (theta0-theta1)**3
     weights     = [ f1(*point) for point in param_points]
     coeff = p.get_parametrization( weights )
 
@@ -185,10 +212,15 @@ if __name__ == "__main__":
     print "ndof", p.ndof
     print "String:", p.root_func_string(coeff)
 
-    #def f2(x,y,z):
-    #    return (x-z)**3 + y
-    #weights     = [ f2(*point) for point in param_points]
-    #coeff = p.get_parametrization( weights )
+    print 
+    for n_coefficient in range(p.get_ndof( nvar=3, order=3)):
+        if n_coefficient==0:
+            print "const".ljust(30),
+        else:
+            print "*".join(map( lambda c:"theta%i"%c, p.combination[n_coefficient])).ljust(30),
+        print "%+4.3e"%round(coeff[n_coefficient],4)
 
-    #print "chi2/ndof", p.chi2_ndof(coeff, weights)
-    #print "String:", p.root_func_string(coeff)
+#    def f2(theta0,theta1,theta2):
+#        return theta2**3 + (theta0-theta1)**2 + 1
+#    weights     = [ f2(*point) for point in param_points]
+#    coeff = p.get_parametrization( weights )
