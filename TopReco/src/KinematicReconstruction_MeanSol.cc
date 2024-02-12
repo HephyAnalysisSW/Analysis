@@ -10,7 +10,7 @@
 
 
 
-KinematicReconstruction_MeanSol::KinematicReconstruction_MeanSol(const double& topm):
+KinematicReconstruction_MeanSol::KinematicReconstruction_MeanSol(const float& topm):
 sum_weight_(0),
 max_sum_weight_(0),
 mass_top_(topm)
@@ -36,7 +36,7 @@ void KinematicReconstruction_MeanSol::clear()
 
 
 
-void KinematicReconstruction_MeanSol::add(const TLorentzVector& top, const TLorentzVector& topbar, const TLorentzVector& n, const TLorentzVector& nbar,const double& weight,const double& mbl_weight)
+void KinematicReconstruction_MeanSol::add(const TLorentzVector& top, const TLorentzVector& topbar, const TLorentzVector& n, const TLorentzVector& nbar,const float& weight,const float& mbl_weight)
 {
     v_top_.push_back(top);
     v_topbar_.push_back(topbar);
@@ -50,7 +50,7 @@ void KinematicReconstruction_MeanSol::add(const TLorentzVector& top, const TLore
 
 
 
-void KinematicReconstruction_MeanSol::add(const TLorentzVector& top, const TLorentzVector& topbar,const TLorentzVector& n,const TLorentzVector& nbar,const double& weight)
+void KinematicReconstruction_MeanSol::add(const TLorentzVector& top, const TLorentzVector& topbar,const TLorentzVector& n,const TLorentzVector& nbar,const float& weight)
 {
     v_top_.push_back(top);
     v_topbar_.push_back(topbar);
@@ -64,14 +64,14 @@ void KinematicReconstruction_MeanSol::add(const TLorentzVector& top, const TLore
 
 
 
-void KinematicReconstruction_MeanSol::getMeanVect(TLorentzVector& lv, const std::vector<TLorentzVector>& vlv, const double& mass)const
+void KinematicReconstruction_MeanSol::getMeanVect(TLorentzVector& lv, const std::vector<TLorentzVector>& vlv, const float& mass)const
 {
-    double px_sum=0;
-    double py_sum=0;
-    double pz_sum=0;
-    double px=0;
-    double py=0;
-    double pz=0;
+    float px_sum=0;
+    float py_sum=0;
+    float pz_sum=0;
+    float px=0;
+    float py=0;
+    float pz=0;
     
     for(int i=0;i<((int)vlv.size());++i)
     {
@@ -99,7 +99,7 @@ void KinematicReconstruction_MeanSol::getMeanSol(TLorentzVector& top, TLorentzVe
 
 
 
-double KinematicReconstruction_MeanSol::getSumWeight()const
+float KinematicReconstruction_MeanSol::getSumWeight()const
 {
     return sum_weight_; // for 1 weight
 //     return max_sum_weight_; // for 2 weights

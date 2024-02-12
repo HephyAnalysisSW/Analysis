@@ -4,11 +4,12 @@
 # Standard imports
 import ROOT
 ROOT.KinematicReconstruction
+import os
 
 # efficiciency directory
 
 if "clip" in os.getenv("HOSTNAME").lower(): # load from CLIP
-    directory = "/mnt/hephy/cms/lukas.lechner/TopReco/data"
+    directory = "/groups/hephy/cms/robert.schoefbeck/TopReco/data"
 else:
     directory = "/afs/hephy.at/data/rschoefbeck01/TopReco/data"
 
@@ -18,10 +19,9 @@ def massless_LorentzVector( particle_dict ):
 
 class TopReco:
 
-    def __init__( self, era, minNumberOfBtags, preferBtags, massLoop, b_tagger, b_threshold):
-        self.kinReco    = ROOT.KinematicReconstruction( directory, era, minNumberOfBtags, preferBtags, massLoop, b_threshold)
+    def __init__( self, era, minNumberOfBtags, preferBtags, massLoop, b_tagger):
+        self.kinReco    = ROOT.KinematicReconstruction( directory, era, minNumberOfBtags, preferBtags, massLoop)
         self.tagger     = b_tagger
-        #self.threshold  = b_threshold
 
     def evaluate( self, leptons, jets,  met ):
        
@@ -48,4 +48,4 @@ class TopReco:
             return self.kinReco.getSol() 
 
 # 2016 top reco with >=1 btag and w/o mass loop
-topReco = TopReco( ROOT.Era.run2_13tev_2016_25ns, 2, 1, 0, 'btagDeepB', 0.6321 )
+topReco = TopReco( ROOT.Era.run2_13tev_2016_25ns, 2, 1, 0, 'btagDeepB' )

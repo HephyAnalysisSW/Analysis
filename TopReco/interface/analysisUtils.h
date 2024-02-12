@@ -8,6 +8,7 @@
 class TLorentzVector;
 
 #include "Analysis/TopReco/interface/classesFwd.h"
+#include "Analysis/TopReco/interface/sampleHelpers.h"
 
 
 
@@ -16,25 +17,30 @@ class TLorentzVector;
 // --- Several conversion functions -------------------------------------------------------------------------------------
 
 namespace common{
+
+    /// Convert LorentzVector to an array[E, px, py, pz]
+    void LVtof4(const LV& lv, float* f);
+
     /// Convert LorentzVector to an array[E, px, py, pz]
     void LVtod4(const LV& lv, double* d);
-    
+
+    /// Convert float to string (smart number of digits)
+    std::string f2s(const float& f);
+
     /// Convert double to string (smart number of digits)
     std::string d2s(const double& d);
-    
-    
-    /// Conversion from TLorentzVector to our LV type (ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double> >)
+
+    /// Conversion from TLorentzVector to our LV type (ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<float> >)
     const LV TLVtoLV(const TLorentzVector& lv);
-    
-    
-    /// Conversion from our LV type to TLorentzVector (ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double> >)
+
+
+    /// Conversion from our LV type to TLorentzVector (ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<float> >)
     const TLorentzVector LVtoTLV(const LV& lv);
 
 
-    /// Conversion from our VLV type to vector of TLorentzVector (std::vector<ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double> >)
+    /// Conversion from our VLV type to vector of TLorentzVector (std::vector<ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<float> >)
     const std::vector<TLorentzVector> VLVtoVTLV(const VLV& vlv);
 }
-
 
 
 
@@ -87,7 +93,7 @@ namespace common{
     enum LVParameter{LVpt, LVet, LVeta};
     
     /// Extract a specific value for each entry of a vector of LVs
-    std::vector<double> parametersLV(const VLV& v_lv, const LVParameter& parameter);
+    std::vector<float> parametersLV(const VLV& v_lv, const LVParameter& parameter);
     
     /// Function to order two indices by comparison operator for the parameter of the LVs of a vector
     /// corresponding to the indices of a given variable
@@ -104,7 +110,7 @@ namespace common{
     /// Function to select from a vector of indices those whose corresponding value of a LV parameter
     /// in the vector survive the cut
     void selectIndices(std::vector<int>& v_index, const VLV& v_lv, const LVParameter& parameter,
-                                         const double cutValue, const bool lowerThreshold =true);
+                                         const float cutValue, const bool lowerThreshold =true);
     
     /// Function returning the index of a vector whose parameter of the LVs has the most extreme value (in case of several, will be the first one found)
     /// Result is (if maximumValue==true): Index of element with maximum value of LV parameter
@@ -118,14 +124,18 @@ namespace common{
     /// Result is (if absoluteValue==false): lv1.parameter > lv2.parameter
     /// Result is (if absoluteValue==true): |lv1.parameter| > |lv2.parameter|
     void orderLV(LV& lv1, LV& lv2, const LV& inputLv1, const LV& inputLv2, const LVParameter& parameter, const bool absoluteValue =false);
+
+    // Function to update the list of lepton indices (v_index) based on vector of IDs (v_lepID)
+    //  - index is retained if the corresponding entry if "v_lepID.at(index) >= min_lepID"
+    //  - if only_absPdgID is >0, the ID-selection is applied only on indices that satisfy "abs(v_pdgID->at(index)) == only_absPdgID" (other indices are retained)
+    //  - selectMuonIndicesID and selectElectronIndicesID simply call selectLeptonIndicesID for only muons (only_absPdgID=13) and electrons (only_absPdgID=11), respectively
+    void selectLeptonIndicesID  (std::vector<int>& v_index, const std::vector<int>* const v_lepID, const int min_lepID=1, const int only_absPdgID=-1, const std::vector<int>* const v_pdgID=nullptr);
+    void selectMuonIndicesID    (std::vector<int>& v_index, const std::vector<int>* const v_lepID, const int min_lepID, const std::vector<int>* const v_pdgID);
+    void selectElectronIndicesID(std::vector<int>& v_index, const std::vector<int>* const v_lepID, const int min_lepID, const std::vector<int>* const v_pdgID);
+
+    // Function to correct PF-MET phi
+    LV metWithXYCorrection(const LV& uncormet, const int runnb, const Era::Era& era, const bool isMC, const int nPV);
 }
-
-
-
-
-
-
-
 
 template<class T> std::vector<int> common::initialiseIndices(const std::vector<T>& v_variable)
 {
