@@ -38,13 +38,13 @@ class TopReco:
         met_vec         = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(met['pt'], met['phi'], 0., 0.)
         
         jets_vec = ROOT.std.vector('ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double> >')()
-        btags    = ROOT.std.vector('double')()
+        btags    = ROOT.std.vector('float')()
         for jet in jets:
             jets_vec.push_back( massless_LorentzVector( jet ) )
             btags.push_back( jet[ self.tagger ] )
 
         self.kinReco.kinReco( leptonMinus_vec, leptonPlus_vec, jets_vec, btags, met_vec )
-        if self.kinReco.foundSolution: #It's important to request this, otherwise can have double counting (kinReco code returns in case of too few b-tags which lead to the same solution being returned)
+        if self.kinReco.getNSol()>0: #It's important to request this, otherwise can have double counting (kinReco code returns in case of too few b-tags which lead to the same solution being returned)
             return self.kinReco.getSol() 
 
 # 2016 top reco with >=1 btag and w/o mass loop
