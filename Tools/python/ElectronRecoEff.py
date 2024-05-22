@@ -4,6 +4,8 @@ import os
 
 from Analysis.Tools.helpers import getObjFromFile
 
+#https://twiki.cern.ch/twiki/bin/view/CMS/EgammaUL2016To2018
+#eta has to be supercluster eta
 
 map_el = {"UL2016_preVFP":{"below20pt":"egammaEffi_ptBelow20.txt_EGM2D_UL2016preVFP.root", "above20pt":"egammaEffi_ptAbove20.txt_EGM2D_UL2016preVFP.root"},
           "UL2016":{"below20pt":"egammaEffi_ptBelow20.txt_EGM2D_UL2016postVFP.root", "above20pt":"egammaEffi_ptAbove20.txt_EGM2D_UL2016postVFP.root"},
@@ -45,7 +47,7 @@ class ElectronRecoSF:
 
 if __name__ == '__main__':
 
-    sf = ElectronRecoSF("2016_preVFP")
+    sf = ElectronRecoSF("UL2016_preVFP")
     print sf.getSF(pt=20, eta= 0.5)
     print sf.getSF(pt=50, eta= 0.5, sigma=1)
     print sf.getSF(pt=15, eta= 0.5, sigma=-1)
