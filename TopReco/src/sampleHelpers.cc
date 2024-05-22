@@ -11,11 +11,6 @@
 
 #include "Analysis/TopReco/interface/sampleHelpers.h"
 
-
-
-
-
-
 // --------------------- Functions defined in namespace Era -------------------------
 
 Era::Era Era::convert(const TString& era)
@@ -26,9 +21,131 @@ Era::Era Era::convert(const TString& era)
     if(era == "run2_13tev_2015_25ns") return run2_13tev_2015_25ns;
     if(era == "run2_13tev_2016_25ns") return run2_13tev_2016_25ns;
     if(era == "run2_13tev_25ns_74X") return run2_13tev_25ns_74X;
+    if(era == "run2_13tev_2016"){ return run2_13tev_2016; }
+    if(era == "run2_13tev_2017"){ return run2_13tev_2017; }
+    if(era == "run2_13tev_2018"){ return run2_13tev_2018; }
+    if(era == "run2_13tev_full"){ return run2_13tev_full; }
     if(era == "") return undefined;
     std::cerr<<"Error in Era::convert()! Following conversion is not implemented: "<<era<<"\n...break\n"<<std::endl;
     exit(97);
+}
+
+lepSF::readoutFormat lepSF::convertReadoutFormat(const std::string& readoutFormat_)
+{
+
+    if(readoutFormat_=="pt_vs_eta") return lepSF::pt_vs_eta;
+    if(readoutFormat_=="eta_vs_pt") return lepSF::eta_vs_pt;
+    if(readoutFormat_=="pt_vs_absEta") return lepSF::pt_vs_absEta;
+    if(readoutFormat_=="absEta_vs_pt") return lepSF::absEta_vs_pt;
+    if(readoutFormat_=="pt_vs_etaSc") return lepSF::pt_vs_etaSc;
+    if(readoutFormat_=="etaSc_vs_pt") return lepSF::etaSc_vs_pt;
+    if(readoutFormat_=="pt_vs_absEtaSc") return lepSF::pt_vs_absEtaSc;
+    if(readoutFormat_=="absEtaSc_vs_pt") return lepSF::absEtaSc_vs_pt;
+    std::cerr<<"ERROR in constructor of LeptonScaleFactors! No readout format given!"
+             <<"\n...break\n"<<std::endl;
+    exit(764);
+    return lepSF::undefined;
+}
+
+lepSF::SFHisto::SFHisto():
+fileName(""),
+histName(""),
+histName_Stat(""),
+histName_Sys(""),
+readout(undefined)
+{}
+
+lepSF::SFHisto::SFHisto(const std::string& fileName_, const std::string& histName_,
+        const std::string& readout_, const std::string& histNameStat_,
+        const std::string& histNameSys_)
+{
+  fileName=fileName_;
+  histName=histName_;
+  histName_Sys=histNameSys_;
+  histName_Stat=histNameStat_;
+  readout=convertReadoutFormat(readout_);
+}
+std::string lepSF::SFHisto::getFile()const
+{
+  return fileName;
+}
+std::string lepSF::SFHisto::getHisto()const
+{
+  return histName;
+}
+std::string lepSF::SFHisto::getSysHisto()const
+{
+  return histName_Sys;
+}
+std::string lepSF::SFHisto::getStatHisto()const
+{
+  return histName_Stat;
+}
+lepSF::readoutFormat lepSF::SFHisto::getFormat()const
+{
+  return readout;
+}
+
+
+
+triggerSF::readoutFormat triggerSF::convertReadoutFormat(const std::string& readoutFormat_)
+{
+
+    if(readoutFormat_=="el0_pt_vs_el1_pt") return triggerSF::el0_pt_vs_el1_pt;
+    if(readoutFormat_=="el0_abseta_vs_el1_abseta") return triggerSF::el0_abseta_vs_el1_abseta;
+    if(readoutFormat_=="el0_pt_vs_el0_abseta") return triggerSF::el0_pt_vs_el0_abseta;
+    if(readoutFormat_=="el1_pt_vs_el1_abseta") return triggerSF::el1_pt_vs_el1_abseta;
+    if(readoutFormat_=="mu0_pt_vs_mu0_abseta") return triggerSF::mu0_pt_vs_mu0_abseta;
+    if(readoutFormat_=="mu1_pt_vs_mu1_abseta") return triggerSF::mu1_pt_vs_mu1_abseta;
+    if(readoutFormat_=="mu0_pt_vs_mu1_pt") return triggerSF::mu0_pt_vs_mu1_pt;
+    if(readoutFormat_=="mu0_abseta_vs_mu1_abseta") return triggerSF::mu0_abseta_vs_mu1_abseta;
+    if(readoutFormat_=="mu0_pt_vs_el0_pt") return triggerSF::mu0_pt_vs_el0_pt;
+    if(readoutFormat_=="mu0_abseta_vs_el0_abseta") return triggerSF::mu0_abseta_vs_el0_abseta;
+    if(readoutFormat_=="el0_pt_vs_mu0_pt") return triggerSF::el0_pt_vs_mu0_pt;
+    if(readoutFormat_=="el0_abseta_vs_mu0_abseta") return triggerSF::el0_abseta_vs_mu0_abseta;
+    std::cerr<<"ERROR in constructor of TriggerScaleFactors! No readout format given!"
+             <<"\n...break\n"<<std::endl;
+    exit(764);
+    return triggerSF::undefined;
+  }
+
+triggerSF::SFHisto::SFHisto():
+fileName(""),
+histName(""),
+histName_Stat(""),
+histName_Sys(""),
+readout(undefined)
+{}
+
+triggerSF::SFHisto::SFHisto(const std::string& fileName_, const std::string& histName_,
+        const std::string& readout_, const std::string& histNameStat_,
+        const std::string& histNameSys_)
+{
+  fileName=fileName_;
+  histName=histName_;
+  histName_Sys=histNameSys_;
+  histName_Stat=histNameStat_;
+  readout=convertReadoutFormat(readout_);
+}
+std::string triggerSF::SFHisto::getFile()const
+{
+  return fileName;
+}
+std::string triggerSF::SFHisto::getHisto()const
+{
+  return histName;
+}
+std::string triggerSF::SFHisto::getSysHisto()const
+{
+  return histName_Sys;
+}
+std::string triggerSF::SFHisto::getStatHisto()const
+{
+  return histName_Stat;
+}
+triggerSF::readoutFormat triggerSF::SFHisto::getFormat()const
+{
+  return readout;
 }
 
 
@@ -39,8 +156,11 @@ TString Era::convert(const Era& era)
     if(era == run2_13tev_50ns) return "run2_13tev_50ns";
     if(era == run2_13tev_25ns) return "run2_13tev_25ns";
     if(era == run2_13tev_2015_25ns) return "run2_13tev_2015_25ns";
-    if(era == run2_13tev_2016_25ns) return "run2_13tev_2016_25ns";
     if(era == run2_13tev_25ns_74X) return "run2_13tev_25ns_74X";
+    if(era == run2_13tev_2016){ return "run2_13tev_2016"; }
+    if(era == run2_13tev_2017){ return "run2_13tev_2017"; }
+    if(era == run2_13tev_2018){ return "run2_13tev_2018"; }
+    if(era == run2_13tev_full){ return "run2_13tev_full"; }
     if(era == undefined) return "";
     std::cerr<<"Error in Era::convert()! Conversion is not implemented\n...break\n"<<std::endl;
     exit(97);
@@ -48,7 +168,7 @@ TString Era::convert(const Era& era)
 
 
 
-double Era::energyInTev(const Era era)
+float Era::energyInTev(const Era era)
 {
     if(era == run1_8tev) return 8.;
     if(era == run2_13tev_50ns) return 13.;
@@ -56,6 +176,10 @@ double Era::energyInTev(const Era era)
     if(era == run2_13tev_2015_25ns) return 13.;
     if(era == run2_13tev_2016_25ns) return 13.;
     if(era == run2_13tev_25ns_74X) return 13.;
+    if(era == run2_13tev_2016){ return 13.; }
+    if(era == run2_13tev_2017){ return 13.; }
+    if(era == run2_13tev_2018){ return 13.; }
+    if(era == run2_13tev_full){ return 13.; }
     if(era == undefined) return -1.;
     std::cerr<<"Error in Era::energyInTev()! No energy value defined for requested era\n...break\n"<<std::endl;
     exit(97);
@@ -113,17 +237,30 @@ int JetPileupId::cutValue(const JetPileupId::WorkingPoint& wp)
 
 Btag::Algorithm Btag::convertAlgorithm(const std::string& algo)
 {
-    if(algo == "csv") return csv;
-    if(algo == "cmvav2") return cmvav2;
-    if(algo == "cmvav2_2016") return cmvav2_2016;    
-    if(algo == "csvv2") return csvv2;
-    if(algo == "csvv2_2016") return csvv2_2016;    
-    if(algo == "csvv2_74X") return csvv2_74X;
-    if(algo == "csvv2_50ns") return csvv2_50ns;
-    if(algo == "csvv2HIP") return csvv2HIP;
-    if(algo == "") return undefinedAlgorithm;
+    if     (algo == "csv") return csv;
+    else if(algo == "cmvav2") return cmvav2;
+    else if(algo == "cmvav2_2016") return cmvav2_2016;
+    else if(algo == "csvv2") return csvv2;
+    else if(algo == "csvv2_2016") return csvv2_2016;
+    else if(algo == "csvv2_74X") return csvv2_74X;
+    else if(algo == "csvv2_50ns") return csvv2_50ns;
+    else if(algo == "csvv2HIP") return csvv2HIP;
+
+    else if(algo == "DeepCSV_2016_94X"){ return DeepCSV_2016_94X; }
+    else if(algo == "DeepJet_2016_94X"){ return DeepJet_2016_94X; }
+
+    else if(algo ==   "CSVv2_2017_94X"){ return   CSVv2_2017_94X; }
+    else if(algo == "DeepCSV_2017_94X"){ return DeepCSV_2017_94X; }
+    else if(algo == "DeepJet_2017_94X"){ return DeepJet_2017_94X; }
+
+    else if(algo == "DeepCSV_2018_102X"){ return DeepCSV_2018_102X; }
+    else if(algo == "DeepJet_2018_102X"){ return DeepJet_2018_102X; }
+
+    else if(algo == ""){ return undefinedAlgorithm; }
+
     std::cerr<<"Error in Btag::convertAlgorithm()! Following conversion is not implemented: "
              <<algo<<"\n...break\n"<<std::endl;
+
     exit(96);
 }
 
@@ -131,15 +268,27 @@ Btag::Algorithm Btag::convertAlgorithm(const std::string& algo)
 
 std::string Btag::convertAlgorithm(const Btag::Algorithm& algo)
 {
-    if(algo == csv) return "csv";
-    if(algo == cmvav2) return "cmvav2";
-    if(algo == cmvav2_2016) return "cmvav2_2016";    
-    if(algo == csvv2) return "csvv2";
-    if(algo == csvv2_2016) return "csvv2_2016";    
-    if(algo == csvv2_74X) return "csvv2_74X";
-    if(algo == csvv2_50ns) return "csvv2_50ns";
-    if(algo == csvv2HIP) return "csvv2HIP";
-    if(algo == undefinedAlgorithm) return "";
+    if     (algo == csv) return "csv";
+    else if(algo == cmvav2) return "cmvav2";
+    else if(algo == cmvav2_2016) return "cmvav2_2016";
+    else if(algo == csvv2) return "csvv2";
+    else if(algo == csvv2_2016) return "csvv2_2016";
+    else if(algo == csvv2_74X) return "csvv2_74X";
+    else if(algo == csvv2_50ns) return "csvv2_50ns";
+    else if(algo == csvv2HIP) return "csvv2HIP";
+
+    else if(algo == DeepCSV_2016_94X){ return "DeepCSV_2016_94X"; }
+    else if(algo == DeepJet_2016_94X){ return "DeepJet_2016_94X"; }
+
+    else if(algo ==   CSVv2_2017_94X){ return   "CSVv2_2017_94X"; }
+    else if(algo == DeepCSV_2017_94X){ return "DeepCSV_2017_94X"; }
+    else if(algo == DeepJet_2017_94X){ return "DeepJet_2017_94X"; }
+
+    else if(algo == DeepCSV_2018_102X){ return "DeepCSV_2018_102X"; }
+    else if(algo == DeepJet_2018_102X){ return "DeepJet_2018_102X"; }
+
+    else if(algo == undefinedAlgorithm){ return ""; }
+
     std::cerr<<"Error in Btag::convertAlgorithm()! Conversion is not implemented\n...break\n"<<std::endl;
     exit(96);
 }
@@ -205,8 +354,11 @@ std::string Btag::convertCorrectionMode(const Btag::CorrectionMode& mode)
 Met::Algorithm Met::convertAlgorithm(const std::string& algo)
 {
     if(algo == "pf") return pf;
+    if(algo == "pfT1") return pfT1;
+    if(algo == "pfT01XY") return pfT01XY;
     if(algo == "mva") return mva;
     if(algo == "pfNoHf") return pfNoHf;
+    if(algo == "puppi") return puppi;
     if(algo == "") return undefinedAlgorithm;
     std::cerr<<"Error in Met::convertAlgorithm()! Following conversion is not implemented: "
              <<algo<<"\n...break\n"<<std::endl;
@@ -218,20 +370,17 @@ Met::Algorithm Met::convertAlgorithm(const std::string& algo)
 std::string Met::convertAlgorithm(const Met::Algorithm& algo)
 {
     if(algo == pf) return "pf";
+    if(algo == pfT1) return "pfT1";
+    if(algo == pfT01XY) return "pfT01XY";
     if(algo == mva) return "mva";
     if(algo == pfNoHf) return "pfNoHf";
+    if(algo == puppi) return "puppi";
     if(algo == undefinedAlgorithm) return "";
     std::cerr<<"Error in Mva::convertAlgorithm()! Conversion is not implemented\n...break\n"<<std::endl;
     exit(96);
 }
 
-
-
-
-
 // --------------------- Functions defined in namespace Systematic for Type -------------------------
-
-
 
 Systematic::Type Systematic::convertType(const TString& type)
 {
@@ -245,16 +394,48 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("mH130")) return mH130;
     if(type.BeginsWith("mH135")) return mH135;
     if(type.BeginsWith("mH140")) return mH140;
+    if(type.BeginsWith("mTop166")) return mTop166;
+    if(type.BeginsWith("mTop169")) return mTop169;
+    if(type.BeginsWith("mTop171")) return mTop171;
+    if(type.BeginsWith("mTop173")) return mTop173;
+    if(type.BeginsWith("mTop175")) return mTop175;
+    if(type.BeginsWith("mTop178")) return mTop178;
     if(type.BeginsWith("LEPT")) return lept;
+    if(type.BeginsWith("ELE_SCALE_SYST")) return eleScaleSyst;
+    if(type.BeginsWith("ELE_SCALE_ET")) return eleScaleEt;
+    if(type.BeginsWith("ELE_SCALE_GAIN")) return eleScaleGain;
+    if(type.BeginsWith("ELE_SCALE_STAT")) return eleScaleStat;
+    if(type.BeginsWith("ELE_SCALESMEARING")) return eleScaleSmearing;
+    if(type.BeginsWith("ELE_SMEARING_PHI")) return eleSmearingPhi;
+    if(type.BeginsWith("ELE_SMEARING_RHO")) return eleSmearingRho;
+    if(type.BeginsWith("ELE_ID_STAT")) return eleIDStat;
+    if(type.BeginsWith("ELE_ID_SYST")) return eleIDSyst;
+    if(type.BeginsWith("ELE_ID")) return eleID;
+    if(type.BeginsWith("ELE_RECO_STAT")) return eleRecoStat;
+    if(type.BeginsWith("ELE_RECO_SYST")) return eleRecoSyst;
+    if(type.BeginsWith("ELE_RECO")) return eleReco;
     if(type.BeginsWith("ELE")) return ele;
+    if(type.BeginsWith("MUON_SCALE_EWK2")) return muonScaleEwk2;
+    if(type.BeginsWith("MUON_SCALE_STAT")) return muonScaleStat;
+    if(type.BeginsWith("MUON_SCALE_ZPT")) return muonScaleZpt;
+    if(type.BeginsWith("MUON_SCALE_DELTAM")) return muonScaleDeltaM;
+    if(type.BeginsWith("MUON_SCALe_EWK")) return muonScaleEwk;
+    if(type.BeginsWith("MUON_SCALE")) return muonScale;
+    if(type.BeginsWith("MUON_ISO_STAT")) return muonIsoStat;
+    if(type.BeginsWith("MUON_ISO_SYST")) return muonIsoSyst;
+    if(type.BeginsWith("MUON_ISO")) return muonIso;
+    if(type.BeginsWith("MUON_ID_STAT")) return muonIDStat;
+    if(type.BeginsWith("MUON_ID_SYST")) return muonIDSyst;
+    if(type.BeginsWith("MUON_ID")) return muonID;
     if(type.BeginsWith("MUON")) return muon;
     if(type.BeginsWith("TRIG_ETA")) return trigEta;
     if(type.BeginsWith("TRIG")) return trig;
-    if(type.BeginsWith("PU")) return pu;    
+    if(type.BeginsWith("PU")) return pu;
     if(type.BeginsWith("DYNORM")) return dynorm;
     if(type.BeginsWith("DY")) return dy;
     if(type.BeginsWith("BG")) return bg;
     if(type.BeginsWith("KIN")) return kin;
+    if(type.BeginsWith("JetPileupID")) return jetPileupID;
     if(type.BeginsWith("BTAGDISCR_BSTAT1")) return btagDiscrBstat1;
     if(type.BeginsWith("BTAGDISCR_BSTAT2")) return btagDiscrBstat2;
     if(type.BeginsWith("BTAGDISCR_LSTAT1")) return btagDiscrLstat1;
@@ -272,6 +453,22 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("BTAG_PT")) return btagPt;
     if(type.BeginsWith("BTAG_ETA")) return btagEta;
     if(type.BeginsWith("BTAG")) return btag;
+    if(type.BeginsWith("SUBJETBTAGDISCR_BSTAT1" )){ return subjetbtagDiscrBstat1; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_BSTAT2" )){ return subjetbtagDiscrBstat2; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_LSTAT1" )){ return subjetbtagDiscrLstat1; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_LSTAT2" )){ return subjetbtagDiscrLstat2; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_BPURITY")){ return subjetbtagDiscrBpurity; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_LPURITY")){ return subjetbtagDiscrLpurity; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_CERR1"  )){ return subjetbtagDiscrCerr1; }
+    if(type.BeginsWith("SUBJETBTAGDISCR_CERR2"  )){ return subjetbtagDiscrCerr2; }
+    if(type.BeginsWith("SUBJETBTAG_HEAVYFLAVOR" )){ return subjetbtagHeavyFlavor; }
+    if(type.BeginsWith("SUBJETBTAG_LIGHTFLAVOR" )){ return subjetbtagLightFlavor; }
+    if(type.BeginsWith("JEREta0")) return jerEta0;
+    if(type.BeginsWith("JEREta1")) return jerEta1;
+    if(type.BeginsWith("JEREta2Pt0")) return jerEta2Pt0;
+    if(type.BeginsWith("JEREta2Pt1")) return jerEta2Pt1;
+    if(type.BeginsWith("JEREta3Pt0")) return jerEta3Pt0;
+    if(type.BeginsWith("JEREta3Pt1")) return jerEta3Pt1;
     if(type.BeginsWith("JER")) return jer;
     if(type.BeginsWith("JESAbsoluteStat")) return jesAbsoluteStat;
     if(type.BeginsWith("JESAbsoluteScale")) return jesAbsoluteScale;
@@ -290,7 +487,8 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("JESRelativePtEC1")) return jesRelativePtEC1;
     if(type.BeginsWith("JESRelativePtEC2")) return jesRelativePtEC2;
     if(type.BeginsWith("JESRelativePtHF")) return jesRelativePtHF;
-    if(type.BeginsWith("JESRelativeBal")) return jesRelativeBal;    
+    if(type.BeginsWith("JESRelativeBal")) return jesRelativeBal;
+    if(type.BeginsWith("JESRelativeSample")) return jesRelativeSample;
     if(type.BeginsWith("JESRelativeFSR")) return jesRelativeFSR;
     if(type.BeginsWith("JESRelativeStatFSR")) return jesRelativeStatFSR;
     if(type.BeginsWith("JESRelativeStatEC")) return jesRelativeStatEC;
@@ -320,12 +518,27 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("JESFlavorPureQuark")) return jesFlavorPureQuark;
     if(type.BeginsWith("JESFlavorPureCharm")) return jesFlavorPureCharm;
     if(type.BeginsWith("JESFlavorPureBottom")) return jesFlavorPureBottom;
+    if(type.BeginsWith("JESFlavorRealistic")) return jesFlavorRealistic;
     if(type.BeginsWith("JESCorrelationGroupMPFInSitu")) return jesCorrelationGroupMPFInSitu;
     if(type.BeginsWith("JESCorrelationGroupIntercalibration")) return jesCorrelationGroupIntercalibration;
     if(type.BeginsWith("JESCorrelationGroupbJES")) return jesCorrelationGroupbJES;
     if(type.BeginsWith("JESCorrelationGroupFlavor")) return jesCorrelationGroupFlavor;
     if(type.BeginsWith("JESCorrelationGroupUncorrelated")) return jesCorrelationGroupUncorrelated;
+    if(type.BeginsWith("JESHttEta0to5")) return jesHttEta0to5;
+    if(type.BeginsWith("JESHttEta0to3")) return jesHttEta0to3;
+    if(type.BeginsWith("JESHttEta3to5")) return jesHttEta3to5;
+    if(type.BeginsWith("JESHttEC2")) return jesHttEC2;
+    if(type.BeginsWith("JESAbsoluteYear")) return jesAbsoluteYear;
+    if(type.BeginsWith("JESAbsolute")) return jesAbsolute;
+    if(type.BeginsWith("JESBBEC1Year")) return jesBBEC1Year;
+    if(type.BeginsWith("JESBBEC1")) return jesBBEC1;
+    if(type.BeginsWith("JESEC2Year")) return jesEC2Year;
+    if(type.BeginsWith("JESEC2")) return jesEC2;
+    if(type.BeginsWith("JESHFYear")) return jesHFYear;
+    if(type.BeginsWith("JESHF")) return jesHF;
+    if(type.BeginsWith("JESUserDefinedHEM1516")) return jesUserDefinedHEM1516;
     if(type.BeginsWith("JES")) return jes;
+
     if(type.BeginsWith("FRAC_TTHF")) return frac_tthf;
     if(type.BeginsWith("FRAC_TTOTHER")) return frac_ttother;
     if(type.BeginsWith("LUMI")) return lumi;
@@ -337,7 +550,7 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("XSEC_TTZ")) return xsec_ttZ;
     if(type.BeginsWith("XSEC_TTW")) return xsec_ttW;
     if(type.BeginsWith("XSEC_TTG")) return xsec_ttG;
-    if(type.BeginsWith("XSEC_TTV")) return xsec_ttV;    
+    if(type.BeginsWith("XSEC_TTV")) return xsec_ttV;
     if(type.BeginsWith("XSEC_TTH")) return xsec_ttH;
     if(type.BeginsWith("XSEC_TTDM")) return xsec_ttDM;
     if(type.BeginsWith("XSEC_TT")) return xsec_tt;
@@ -346,9 +559,9 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("XSEC_V")) return xsec_v;
     if(type.BeginsWith("XSEC_W")) return xsec_w;
     if(type.BeginsWith("XSEC_Z")) return xsec_z;
-    if(type.BeginsWith("TOP_PT_THEORY")) return topPtTheory; 
+    if(type.BeginsWith("TOP_PT_THEORY")) return topPtTheory;
     if(type.BeginsWith("TOP_PT_FITPARAM0")) return topPtFitparam0;
-    if(type.BeginsWith("TOP_PT_FITPARAM1")) return topPtFitparam1;           
+    if(type.BeginsWith("TOP_PT_FITPARAM1")) return topPtFitparam1;
     if(type.BeginsWith("TOP_PT")) return topPt;
     if(type.BeginsWith("MASS")) return mass;
     if(type.BeginsWith("MATCH_TTBB"))    return match_ttbb;
@@ -377,13 +590,13 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("MEFACSCALE_TTG")) return meFacScale_ttg;
     if(type.BeginsWith("MEFACSCALE_TTDM")) return meFacScale_ttdm;
     if(type.BeginsWith("MEFACSCALE_HTOTT_RES")) return meFacScale_htott_res;
-    if(type.BeginsWith("MEFACSCALE_HTOTT_INT")) return meFacScale_htott_int;       
+    if(type.BeginsWith("MEFACSCALE_HTOTT_INT")) return meFacScale_htott_int;
     if(type.BeginsWith("MEFACSCALE_TT")) return meFacScale_tt;
     if(type.BeginsWith("MEFACSCALE_Z")) return meFacScale_z;
     if(type.BeginsWith("MEFACSCALE_W")) return meFacScale_w;
     if(type.BeginsWith("MEFACSCALE_ST")) return meFacScale_st;
     if(type.BeginsWith("MEFACSCALE_VV")) return meFacScale_vv;
-    if(type.BeginsWith("MEFACSCALE")) return meFacScale;  
+    if(type.BeginsWith("MEFACSCALE")) return meFacScale;
     if(type.BeginsWith("MERENSCALE_TTBB")) return meRenScale_ttbb;
     if(type.BeginsWith("MERENSCALE_TTB")) return meRenScale_ttb;
     if(type.BeginsWith("MERENSCALE_TT2B")) return meRenScale_tt2b;
@@ -394,19 +607,20 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("MERENSCALE_TTW")) return meRenScale_ttw;
     if(type.BeginsWith("MERENSCALE_TTG")) return meRenScale_ttg;
     if(type.BeginsWith("MERENSCALE_TTDM")) return meRenScale_ttdm;
-    if(type.BeginsWith("MERENSCALE_HTOTT_RES")) return meRenScale_htott_res; 
+    if(type.BeginsWith("MERENSCALE_HTOTT_RES")) return meRenScale_htott_res;
     if(type.BeginsWith("MERENSCALE_HTOTT_INT")) return meRenScale_htott_int;
     if(type.BeginsWith("MERENSCALE_TT")) return meRenScale_tt;
     if(type.BeginsWith("MERENSCALE_Z")) return meRenScale_z;
     if(type.BeginsWith("MERENSCALE_W")) return meRenScale_w;
     if(type.BeginsWith("MERENSCALE_ST")) return meRenScale_st;
     if(type.BeginsWith("MERENSCALE_VV")) return meRenScale_vv;
-    if(type.BeginsWith("MERENSCALE")) return meRenScale;      
+    if(type.BeginsWith("MERENSCALE")) return meRenScale;
     if(type.BeginsWith("PSSCALE_TTBB")) return psScale_ttbb;
     if(type.BeginsWith("PSSCALE_TTB")) return psScale_ttb;
     if(type.BeginsWith("PSSCALE_TT2B")) return psScale_tt2b;
     if(type.BeginsWith("PSSCALE_TTCC")) return psScale_ttcc;
     if(type.BeginsWith("PSSCALE_TTOTHER")) return psScale_ttother;
+    if(type.BeginsWith("PSSCALE_WEIGHT")) return psScaleWeight;
     if(type.BeginsWith("PSSCALE")) return psScale;
     if(type.BeginsWith("PSISRSCALE_TTBB"))    return psISRScale_ttbb;
     if(type.BeginsWith("PSISRSCALE_TT2B"))    return psISRScale_tt2b;
@@ -426,10 +640,10 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("SCALE_TTCC")) return scale_ttcc;
     if(type.BeginsWith("SCALE_TTOTHER")) return scale_ttother;
     if(type.BeginsWith("SCALE")) return scale;
-    if(type.BeginsWith("BFRAG_CENTRAL")) return bFrag_central;  
-    if(type.BeginsWith("BFRAG_PETERSON")) return bFrag_Peterson;  
-    if(type.BeginsWith("BFRAG")) return bFrag;  
-    if(type.BeginsWith("BSEMILEP")) return bSemilep;  
+    if(type.BeginsWith("BFRAG_CENTRAL")) return bFrag_central;
+    if(type.BeginsWith("BFRAG_PETERSON")) return bFrag_Peterson;
+    if(type.BeginsWith("BFRAG")) return bFrag;
+    if(type.BeginsWith("BSEMILEP")) return bSemilep;
     if(type.BeginsWith("UETUNE_TTBB"))    return ueTune_ttbb;
     if(type.BeginsWith("UETUNE_TT2B"))    return ueTune_tt2b;
     if(type.BeginsWith("UETUNE_TTB"))     return ueTune_ttb;
@@ -438,20 +652,24 @@ Systematic::Type Systematic::convertType(const TString& type)
     if(type.BeginsWith("UETUNE")) return ueTune;
     if(type.BeginsWith("POWHEGV2HERWIG")) return powhegv2Herwig;
     if(type.BeginsWith("POWHEGHERWIG")) return powhegHerwig;
+    if(type.BeginsWith("POWHEGHELAC")) return powhegHelac;
+    if(type.BeginsWith("POWHEGOPENLOOPS")) return powhegOpenloops;
     if(type.BeginsWith("POWHEGV2")) return powhegv2;
     if(type.BeginsWith("POWHEG")) return powheg;
     if(type.BeginsWith("AMCATNLOFXFX")) return amcatnlofxfx;
     if(type.BeginsWith("MCATNLO")) return mcatnlo;
     if(type.BeginsWith("MADGRAPHMLM")) return madgraphmlm;
+    if(type.BeginsWith("CP5")) return cp5;
     if(type.BeginsWith("PERUGIA11NoCR")) return perugia11NoCR;
     if(type.BeginsWith("PERUGIA11")) return perugia11;
     if(type.BeginsWith("PDF_ALPHAS")) return alphasPdf;
+    if(type.BeginsWith("L1PREFIRING")) return l1prefiring;
     if(type.BeginsWith("NORMPDFGG")) return normPdfGg;
     if(type.BeginsWith("NORMPDFGQ")) return normPdfGq;
     if(type.BeginsWith("NORMPDFQQ")) return normPdfQq;
     if(type.BeginsWith("NORMPDFTTH")) return normPdfTth;
     if(type.BeginsWith("PDF_PCA_1")) return pdf_pca_1;
-    if(type.BeginsWith("PDF_PCA_2")) return pdf_pca_2;        
+    if(type.BeginsWith("PDF_PCA_2")) return pdf_pca_2;
     if(type.BeginsWith("PDF")) return pdf;
     if(type.BeginsWith("UNCLUSTERED")) return unclustered;
     if(type.BeginsWith("closure")) return closure;
@@ -475,16 +693,48 @@ TString Systematic::convertType(const Type& type)
     if(type == mH130) return "mH130";
     if(type == mH135) return "mH135";
     if(type == mH140) return "mH140";
+    if(type == mTop166) return "mTop166";
+    if(type == mTop169) return "mTop169";
+    if(type == mTop171) return "mTop171";
+    if(type == mTop173) return "mTop173";
+    if(type == mTop175) return "mTop175";
+    if(type == mTop178) return "mTop178";
     if(type == lept) return "LEPT";
     if(type == ele) return "ELE";
+    if(type == eleID) return "ELE_ID";
+    if(type == eleIDSyst) return "ELE_ID_SYST";
+    if(type == eleIDStat) return "ELE_ID_STAT";
+    if(type == eleReco) return "ELE_RECO";
+    if(type == eleRecoSyst) return "ELE_RECO_SYST";
+    if(type == eleRecoStat) return "ELE_RECO_STAT";
+    if(type == eleScaleSyst) return "ELE_SCALE_SYST";
+    if(type == eleScaleStat) return "ELE_SCALE_STAT";
+    if(type == eleScaleGain) return "ELE_SCALE_GAIN";
+    if(type == eleScaleEt) return "ELE_SCALE_ET";
+    if(type == eleScaleSmearing) return "ELE_SCALESMEARING";
+    if(type == eleSmearingRho) return "ELE_SMEARING_RHO";
+    if(type == eleSmearingPhi) return "ELE_SMEARING_PHI";
     if(type == muon) return "MUON";
+    if(type == muonID) return "MUON_ID";
+    if(type == muonIDSyst) return "MUON_ID_SYST";
+    if(type == muonIDStat) return "MUON_ID_STAT";
+    if(type == muonIso) return "MUON_ISO";
+    if(type == muonIsoSyst) return "MUON_ISO_SYST";
+    if(type == muonIsoStat) return "MUON_ISO_STAT";
+    if(type == muonScale) return "MUON_SCALE";
+    if(type == muonScaleZpt) return "MUON_SCALE_ZPT";
+    if(type == muonScaleEwk) return "MUON_SCALe_EWK";
+    if(type == muonScaleEwk2) return "MUON_SCALE_EWK2";
+    if(type == muonScaleStat) return "MUON_SCALE_STAT";
+    if(type == muonScaleDeltaM) return "MUON_SCALE_DELTAM";
     if(type == trigEta) return "TRIG_ETA";
     if(type == trig) return "TRIG";
     if(type == pu) return "PU";
     if(type == dy) return "DY";
     if(type == bg) return "BG";
-    if(type == dynorm) return "DYNORM";    
+    if(type == dynorm) return "DYNORM";
     if(type == kin) return "KIN";
+    if(type == jetPileupID) return "JetPileupID";
     if(type == btagDiscrBstat1) return "BTAGDISCR_BSTAT1";
     if(type == btagDiscrBstat2) return "BTAGDISCR_BSTAT2";
     if(type == btagDiscrLstat1) return "BTAGDISCR_LSTAT1";
@@ -502,6 +752,22 @@ TString Systematic::convertType(const Type& type)
     if(type == btagPt) return "BTAG_PT";
     if(type == btagEta) return "BTAG_ETA";
     if(type == btag) return "BTAG";
+    if(type == subjetbtagDiscrBstat1 ){ return "SUBJETBTAGDISCR_BSTAT1" ; }
+    if(type == subjetbtagDiscrBstat2 ){ return "SUBJETBTAGDISCR_BSTAT2" ; }
+    if(type == subjetbtagDiscrLstat1 ){ return "SUBJETBTAGDISCR_LSTAT1" ; }
+    if(type == subjetbtagDiscrLstat2 ){ return "SUBJETBTAGDISCR_LSTAT2" ; }
+    if(type == subjetbtagDiscrBpurity){ return "SUBJETBTAGDISCR_BPURITY"; }
+    if(type == subjetbtagDiscrLpurity){ return "SUBJETBTAGDISCR_LPURITY"; }
+    if(type == subjetbtagDiscrCerr1  ){ return "SUBJETBTAGDISCR_CERR1"  ; }
+    if(type == subjetbtagDiscrCerr2  ){ return "SUBJETBTAGDISCR_CERR2"  ; }
+    if(type == subjetbtagHeavyFlavor ){ return "SUBJETBTAG_HEAVYFLAVOR" ; }
+    if(type == subjetbtagLightFlavor ){ return "SUBJETBTAG_LIGHTFLAVOR" ; }
+    if(type == jerEta0) return "JEREta0";
+    if(type == jerEta1) return "JEREta1";
+    if(type == jerEta2Pt0) return "JEREta2Pt0";
+    if(type == jerEta2Pt1) return "JEREta2Pt1";
+    if(type == jerEta3Pt0) return "JEREta3Pt0";
+    if(type == jerEta3Pt1) return "JEREta3Pt1";
     if(type == jer) return "JER";
     if(type == jes) return "JES";
     if(type == jesAbsoluteStat) return "JESAbsoluteStat";
@@ -520,7 +786,8 @@ TString Systematic::convertType(const Type& type)
     if(type == jesRelativePtEC1) return "JESRelativePtEC1";
     if(type == jesRelativePtEC2) return "JESRelativePtEC2";
     if(type == jesRelativePtHF) return "JESRelativePtHF";
-    if(type == jesRelativeBal) return "JESRelativeBal";    
+    if(type == jesRelativeBal) return "JESRelativeBal";
+    if(type == jesRelativeSample) return "JESRelativeSample";
     if(type == jesRelativeFSR) return "JESRelativeFSR";
     if(type == jesRelativeStatFSR) return "JESRelativeStatFSR";
     if(type == jesRelativeStatEC) return "JESRelativeStatEC";
@@ -550,11 +817,26 @@ TString Systematic::convertType(const Type& type)
     if(type == jesFlavorPureQuark) return "JESFlavorPureQuark";
     if(type == jesFlavorPureCharm) return "JESFlavorPureCharm";
     if(type == jesFlavorPureBottom) return "JESFlavorPureBottom";
+    if(type == jesFlavorRealistic) return "JESFlavorRealistic";
     if(type == jesCorrelationGroupMPFInSitu) return "JESCorrelationGroupMPFInSitu";
     if(type == jesCorrelationGroupIntercalibration) return "JESCorrelationGroupIntercalibration";
     if(type == jesCorrelationGroupbJES) return "JESCorrelationGroupbJES";
     if(type == jesCorrelationGroupFlavor) return "JESCorrelationGroupFlavor";
     if(type == jesCorrelationGroupUncorrelated) return "JESCorrelationGroupUncorrelated";
+    if(type == jesHttEta0to5) return "JESHttEta0to5";
+    if(type == jesHttEta0to3) return "JESHttEta0to3";
+    if(type == jesHttEta3to5) return "JESHttEta3to5";
+    if(type == jesHttEC2) return "JESHttEC2";
+    if(type == jesAbsoluteYear) return "JESAbsoluteYear";
+    if(type == jesAbsolute) return "JESAbsolute";
+    if(type == jesBBEC1Year) return "JESBBEC1Year";
+    if(type == jesBBEC1) return "JESBBEC1";
+    if(type == jesEC2Year) return "JESEC2Year";
+    if(type == jesEC2) return "JESEC2";
+    if(type == jesHFYear) return "JESHFYear";
+    if(type == jesHF) return "JESHF";
+    if(type == jesUserDefinedHEM1516) return "JESUserDefinedHEM1516";
+
     if(type == frac_tthf) return "FRAC_TTHF";
     if(type == frac_ttother) return "FRAC_TTOTHER";
     if(type == lumi) return "LUMI";
@@ -566,7 +848,7 @@ TString Systematic::convertType(const Type& type)
     if(type == xsec_ttZ) return "XSEC_TTZ";
     if(type == xsec_ttW) return "XSEC_TTW";
     if(type == xsec_ttG) return "XSEC_TTG";
-    if(type == xsec_ttV) return "XSEC_TTV";    
+    if(type == xsec_ttV) return "XSEC_TTV";
     if(type == xsec_ttH) return "XSEC_TTH";
     if(type == xsec_ttDM) return "XSEC_TTDM";
     if(type == xsec_tt) return "XSEC_TT";
@@ -576,8 +858,8 @@ TString Systematic::convertType(const Type& type)
     if(type == xsec_w) return "XSEC_W";
     if(type == xsec_z) return "XSEC_Z";
     if(type == topPtTheory) return "TOP_PT_THEORY";
-    if(type == topPtFitparam0) return "TOP_PT_FITPARAM0"; 
-    if(type == topPtFitparam1) return "TOP_PT_FITPARAM1";             
+    if(type == topPtFitparam0) return "TOP_PT_FITPARAM0";
+    if(type == topPtFitparam1) return "TOP_PT_FITPARAM1";
     if(type == topPt) return "TOP_PT";
     if(type == mass) return "MASS";
     if(type == match_ttbb)    return "MATCH_TTBB";
@@ -611,8 +893,8 @@ TString Systematic::convertType(const Type& type)
     if(type == meFacScale_ttg) return "MEFACSCALE_TTG";
     if(type == meFacScale_ttdm) return "MEFACSCALE_TTDM";
     if(type == meFacScale_htott_res) return "MEFACSCALE_HTOTT_RES";
-    if(type == meFacScale_htott_int) return "MEFACSCALE_HTOTT_INT";  
-    if(type == meFacScale) return "MEFACSCALE"; 
+    if(type == meFacScale_htott_int) return "MEFACSCALE_HTOTT_INT";
+    if(type == meFacScale) return "MEFACSCALE";
     if(type == meRenScale_ttbb) return "MERENSCALE_TTBB";
     if(type == meRenScale_ttb) return "MERENSCALE_TTB";
     if(type == meRenScale_tt2b) return "MERENSCALE_TT2B";
@@ -628,9 +910,9 @@ TString Systematic::convertType(const Type& type)
     if(type == meRenScale_ttw) return "MERENSCALE_TTW";
     if(type == meRenScale_ttg) return "MERENSCALE_TTG";
     if(type == meRenScale_ttdm) return "MERENSCALE_TTDM";
-    if(type == meRenScale_htott_res) return "MERENSCALE_HTOTT_RES";  
-    if(type == meRenScale_htott_int) return "MERENSCALE_HTOTT_INT"; 
-    if(type == meRenScale) return "MERENSCALE";       
+    if(type == meRenScale_htott_res) return "MERENSCALE_HTOTT_RES";
+    if(type == meRenScale_htott_int) return "MERENSCALE_HTOTT_INT";
+    if(type == meRenScale) return "MERENSCALE";
     if(type == psScale_ttbb) return "PSSCALE_TTBB";
     if(type == psScale_ttb) return "PSSCALE_TTB";
     if(type == psScale_tt2b) return "PSSCALE_TT2B";
@@ -648,6 +930,7 @@ TString Systematic::convertType(const Type& type)
     if(type == psFSRScale_ttb)     return "PSFSRSCALE_TTB";
     if(type == psFSRScale_ttcc)    return "PSFSRSCALE_TTCC";
     if(type == psFSRScale_ttother) return "PSFSRSCALE_TTOTHER";
+    if(type == psScaleWeight) return "PSSCALE_WEIGHT";
     if(type == psFSRScale) return "PSFSRSCALE";
     if(type == scale_ttbb) return "SCALE_TTBB";
     if(type == scale_ttb) return "SCALE_TTB";
@@ -667,20 +950,24 @@ TString Systematic::convertType(const Type& type)
     if(type == ueTune) return "UETUNE";
     if(type == powhegv2Herwig) return "POWHEGV2HERWIG";
     if(type == powhegHerwig) return "POWHEGHERWIG";
+    if(type == powhegHelac) return "POWHEGHELAC";
+    if(type == powhegOpenloops) return "POWHEGOPENLOOPS";
     if(type == powhegv2) return "POWHEGV2";
     if(type == powheg) return "POWHEG";
     if(type == amcatnlofxfx) return "AMCATNLOFXFX";
     if(type == mcatnlo) return "MCATNLO";
     if(type == madgraphmlm) return "MADGRAPHMLM";
+    if(type == cp5) return "CP5";
     if(type == perugia11NoCR) return "PERUGIA11NoCR";
     if(type == perugia11) return "PERUGIA11";
     if(type == alphasPdf) return "PDF_ALPHAS";
+    if(type == l1prefiring) return "L1PREFIRING";
     if(type == normPdfGg) return "NORMPDFGG";
     if(type == normPdfGq) return "NORMPDFGQ";
     if(type == normPdfQq) return "NORMPDFQQ";
     if(type == normPdfTth) return "NORMPDFTTH";
     if(type == pdf_pca_1) return "PDF_PCA_1";
-    if(type == pdf_pca_2) return "PDF_PCA_2";        
+    if(type == pdf_pca_2) return "PDF_PCA_2";
     if(type == pdf) return "PDF";
     if(type == unclustered) return "UNCLUSTERED";
     if(type == closure) return "closure";
@@ -797,15 +1084,16 @@ std::vector<TString> Systematic::convertVariation(const std::vector<Variation>& 
 
 void Systematic::isValid(const Type& type, const Variation& variation, const int variationNumber)
 {
+
     // Check validity of variationNumber
     if(variationNumber >= 0){
-        if(std::find(centralTypes.begin(), centralTypes.end(), type) == centralTypes.end()){
+        if( (std::find(centralTypes.begin(), centralTypes.end(), type) == centralTypes.end()) && (std::find(uncorrelatedTypes.begin(), uncorrelatedTypes.end(), type) == uncorrelatedTypes.end())){
             std::cerr<<"ERROR in Systematic::isValid()! Given type does not allow variation numbers (type, variationNumber): "
                      <<convertType(type)<<" , "<<variationNumber<<"\n...break\n"<<std::endl;
             exit(7);
         }
     }
-    
+
     // Check validity of variation
     if(variation == undefinedVariation) return;
     else if(variation==up || variation==down){
@@ -835,11 +1123,11 @@ void Systematic::isValid(const Type& type, const Variation& variation, const int
 std::vector<Systematic::Systematic> Systematic::allowedSystematicsAnalysis(const std::vector<Type>& allowedTypes)
 {
     std::vector<Systematic> result;
-    
+
     for(const Type& type : allowedTypes){
         // Exclude non-real types
         if(type==all || type==allAvailable) continue;
-        
+
         if(std::find(centralTypes.begin(), centralTypes.end(), type) != centralTypes.end()){
             // Central types need specific treatment using variation numbers, e.g. PDF variations
             // They require detailed specifications at the place where they are used
@@ -864,7 +1152,7 @@ std::vector<Systematic::Systematic> Systematic::allowedSystematicsAnalysis(const
             result.push_back(Systematic(type, undefinedVariation));
         }
     }
-    
+
     return result;
 }
 
@@ -873,9 +1161,9 @@ std::vector<Systematic::Systematic> Systematic::allowedSystematicsAnalysis(const
 std::vector<Systematic::Systematic> Systematic::setSystematics(const std::vector<std::string>& systematicNames)
 {
     std::vector<Systematic> result;
-    
+
     for(const auto& name : systematicNames) result.push_back(Systematic(name));
-    
+
     return result;
 }
 
@@ -982,6 +1270,7 @@ Channel::Channel Channel::convert(const TString& channel)
     if(channel == "tautau") return tautau;
     if(channel == "se") return se;
     if(channel == "smu") return smu;
+    if(channel == "met") return met;
     if(channel == "") return undefined;
     std::cerr<<"Error in Channel::convert()! Following conversion is not implemented: "<<channel<<"\n...break\n"<<std::endl;
     exit(98);
@@ -999,6 +1288,7 @@ TString Channel::convert(const Channel& channel)
     if(channel == tautau) return "tautau";
     if(channel == se) return "se";
     if(channel == smu) return "smu";
+    if(channel == met) return "met";
     if(channel == undefined) return "";
     std::cerr<<"Error in Channel::convert()! Conversion is not implemented\n...break\n"<<std::endl;
     exit(98);
@@ -1016,6 +1306,7 @@ TString Channel::label(const Channel& channel)
     if(channel == tautau) return "#tau#tau";
     if(channel == se) return "From single e";
     if(channel == smu) return "From single #mu";
+    if(channel == met) return "From MET";
     if(channel == undefined) return "";
     std::cerr<<"Error! Channel label is not implemented,\n...break\n"<<std::endl;
     exit(98);
@@ -1063,18 +1354,18 @@ std::vector<TString> Channel::convert(const std::vector<Channel>& channels)
 TString common::assignFolder(const char* baseDir, const Channel::Channel& channel, const Systematic::Systematic& systematic, const char* subDir)
 {
     TString path("");
-    
+
     // Create all subdirectories contained in baseDir
     TObjArray* a_currentDir = TString(baseDir).Tokenize("/");
-    for(Int_t iCurrentDir = 0; iCurrentDir < a_currentDir->GetEntriesFast(); ++iCurrentDir){
+    for(Int_t iCurrentDir = 0; iCurrentDir < a_currentDir->GetEntriesFast(); ++iCurrentDir)
+    {
         const TString& currentDir = a_currentDir->At(iCurrentDir)->GetName();
         path.Append(currentDir);
         path.Append("/");
-        if(TString(baseDir).BeginsWith("/") && !path.BeginsWith("/"))
-            path.Prepend("/");
+        if(TString(baseDir).BeginsWith("/") && !path.BeginsWith("/")){ path.Prepend("/"); }
         gSystem->MakeDirectory(path);
     }
-    
+
     // Create subdirectories for systematic and channel
     path.Append(systematic.name());
     path.Append("/");
@@ -1082,19 +1373,18 @@ TString common::assignFolder(const char* baseDir, const Channel::Channel& channe
     path.Append(Channel::convert(channel));
     path.Append("/");
     gSystem->MakeDirectory(path);
-    if(TString(subDir) != ""){
-        path.Append(subDir);
-        path.Append("/");
+    if(TString(subDir) != "")
+    {
+      path.Append(subDir);
+      path.Append("/");
     }
+
     gSystem->MakeDirectory(path);
-    
+
     return path;
 }
 
-
-
-TString common::accessFolder(const char* baseDir, const Channel::Channel& channel,
-                             const Systematic::Systematic& systematic, const bool allowNonexisting)
+TString common::accessFolder(const char* baseDir, const Channel::Channel& channel, const Systematic::Systematic& systematic, const bool allowNonexisting)
 {
     // Build directory path
     TString path(baseDir);
@@ -1103,24 +1393,24 @@ TString common::accessFolder(const char* baseDir, const Channel::Channel& channe
     path.Append("/");
     path.Append(Channel::convert(channel));
     path.Append("/");
-    
+
     // Check if directory really exists
-    if(!gSystem->OpenDirectory(path)){
-        if(allowNonexisting){
-            // It is allowed to request a folder which does not exist, so return empty string silently
-            return "";
+    if(gSystem->OpenDirectory(path) == nullptr)
+    {
+        if(allowNonexisting)
+        {
+          // It is allowed to request a folder which does not exist, so return empty string silently
+          return "";
         }
-        else{
-            std::cerr<<"ERROR! Request to access directory is not possible, because it does not exist. Directory name: "
-                     <<path<<"\n...break\n"<<std::endl;
-            exit(237);
+        else
+        {
+          std::cerr << "ERROR! Request to access directory is not possible, because it does not exist. Directory name: " << path << "\n...break\n\n";
+          exit(237);
         }
     }
-    
+
     return path;
 }
-
-
 
 Channel::Channel common::finalState(const TString& filename)
 {
@@ -1143,14 +1433,14 @@ TString common::findFilelist(const TString& filelistDirectory,
                              const Systematic::Systematic& systematic)
 {
     TString result("");
-    
+
     const TString filelistName(filelistDirectory + "/HistoFileList_" + systematic.name() + "_" + Channel::convert(channel) + ".txt");
     std::ifstream fileList(filelistName);
     if(!fileList.fail()){
         result = filelistName;
         fileList.close();
     }
-    
+
     return result;
 }
 
@@ -1161,7 +1451,7 @@ std::vector<Systematic::Systematic> common::findSystematicsFromFilelists(const T
                                                                          const std::vector<Systematic::Systematic>& v_systematic)
 {
     std::vector<Systematic::Systematic> result;
-    
+
     for(const auto& systematic : v_systematic){
         bool foundSystematic(true);
         for(const auto& channel : v_channel){
@@ -1173,7 +1463,7 @@ std::vector<Systematic::Systematic> common::findSystematicsFromFilelists(const T
         }
         if(foundSystematic) result.push_back(systematic);
     }
-    
+
     return result;
 }
 
@@ -1191,7 +1481,7 @@ std::vector<TString> common::readFilelist(const TString& filelistDirectory,
                  <<filelistDirectory<<" , "<<Channel::convert(channel)<<" , "<<systematic.name()<<"\n...break\n"<<std::endl;
         exit(1);
     }
-    
+
     // Read in file list to a vector and return it
     return readFile(filelistName, v_pattern);
 }
@@ -1201,7 +1491,7 @@ std::vector<TString> common::readFilelist(const TString& filelistDirectory,
 std::vector<TString> common::readFile(const TString& filename, const std::vector<TString>& v_pattern)
 {
     std::vector<TString> v_line;
-    
+
     std::cout<<"Reading file: "<<filename<<std::endl;
     std::ifstream file(filename);
     if(!file.is_open()){
@@ -1225,12 +1515,6 @@ std::vector<TString> common::readFile(const TString& filename, const std::vector
         if(!notAllPatternsContained) v_line.push_back(line);
     }
     file.close();
-    
+
     return v_line;
 }
-
-
-
-
-
-

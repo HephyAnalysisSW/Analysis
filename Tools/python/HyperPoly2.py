@@ -13,7 +13,6 @@ import scipy.special
 import itertools
 from functools import reduce
 
-
 class HyperPoly:
 
     @staticmethod

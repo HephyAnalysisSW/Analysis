@@ -19,49 +19,49 @@ class KinematicReconstruction_LSroutines{
 
 public:
     KinematicReconstruction_LSroutines();
-    KinematicReconstruction_LSroutines(const double& mass_Wp, const double& mass_Wm);
-    KinematicReconstruction_LSroutines(const double& mass_top, const double& mass_topbar, 
-                                       const double& mass_b, const double& mass_bbar, 
-                                       const double& mass_w, const double& mass_wbar, 
-                                       const double& mass_al, const double& mass_l);
+    KinematicReconstruction_LSroutines(const float& mass_Wp, const float& mass_Wm);
+    KinematicReconstruction_LSroutines(const float& mass_top, const float& mass_topbar, 
+                                       const float& mass_b, const float& mass_bbar, 
+                                       const float& mass_w, const float& mass_wbar, 
+                                       const float& mass_al, const float& mass_l);
     ~KinematicReconstruction_LSroutines();
     
     void fDelete()const;
     
     
-    void ini(const double& mass_Wp, const double& mass_Wm);
+    void ini(const float& mass_Wp, const float& mass_Wm);
     
     void setConstraints(const TLorentzVector& LV_al, 
                         const TLorentzVector& LV_l, 
                         const TLorentzVector& LV_b, 
                         const TLorentzVector& LV_bbar,
-                        const double& missPx,
-                        const double& missPy
+                        const float& missPx,
+                        const float& missPy
                        );
     
     void setConstraints(const LV& LV_al, 
                         const LV& LV_l, 
                         const LV& LV_b, 
                         const LV& LV_bbar,
-                        const double& missPx,
-                        const double& missPy
+                        const float& missPx,
+                        const float& missPy
                        );
     
     int getNsol()const;
     
     struct TopSolution{
-        double dR;
-        double dN;
+        float dR;
+        float dN;
         TLorentzVector top;
         TLorentzVector topbar;
         TLorentzVector neutrino;
         TLorentzVector neutrinobar;
         TLorentzVector wp;
         TLorentzVector wm;
-        double x1;
-        double x2;
-        double mtt;
-        double weight;
+        float x1;
+        float x2;
+        float mtt;
+        float weight;
         
     };
     const std::vector<TopSolution>* getTtSol()const;
@@ -76,23 +76,23 @@ private:
     void swapTopSol(TopSolution& sol1, TopSolution& sol2)const;
     void sortTopSol(std::vector<TopSolution>& v)const;
     void doAll();
-    void topRec(const double& px_neutrino);
-    void findCoeff(double* const koeficienty);
-    void quartic_equation(const double& h0, const double& h1, const double& h2, const double& h3, const double& h4, std::vector<double>& v)const;
-    void cubic_equation(const double& a, const double& b, const double& c, const double& d, std::vector<double> &v)const;
-    void quadratic_equation(const double& a, const double& b, const double& c, std::vector<double>& v)const;
-    void linear_equation(const double& a, const double& b, std::vector<double>& v)const;
+    void topRec(const float& px_neutrino);
+    void findCoeff(float* const koeficienty);
+    void quartic_equation(const float& h0, const float& h1, const float& h2, const float& h3, const float& h4, std::vector<float>& v)const;
+    void cubic_equation(const float& a, const float& b, const float& c, const float& d, std::vector<float> &v)const;
+    void quadratic_equation(const float& a, const float& b, const float& c, std::vector<float>& v)const;
+    void linear_equation(const float& a, const float& b, std::vector<float>& v)const;
     int sign(const long double& ld)const;
-    double landau2D(const double& x, const double& y)const;
+    float landau2D(const float& x, const float& y)const;
     
     
     //Utility Methods
-    double sqr(const double& x)const;
-    void swap(double& realone, double& realtwo)const;
+    float sqr(const float& x)const;
+    void swap(float& realone, float& realtwo)const;
     
     int nSol_;
-    double coeffs_[5];
-    std::vector<double> vect_pxv_;
+    float coeffs_[5];
+    std::vector<float> vect_pxv_;
     std::vector<TopSolution> ttSol_;
     TLorentzVector al_;
     TLorentzVector l_;
@@ -111,26 +111,26 @@ private:
     TLorentzVector true_neutrino_;
     TLorentzVector true_neutrinobar_;
     
-    double px_miss_;
-    double py_miss_;
+    float px_miss_;
+    float py_miss_;
     
-    double mt_;
-    double mtbar_;
-    double mb_;
-    double mbbar_;
-    double mw_;
-    double mwbar_;
-    double ml_;
-    double mal_;
-    double mv_;
-    double mav_;
+    float mt_;
+    float mtbar_;
+    float mb_;
+    float mbbar_;
+    float mw_;
+    float mwbar_;
+    float ml_;
+    float mal_;
+    float mv_;
+    float mav_;
     
-    double a1_,a2_,a3_,a4_;
-    double b1_,b2_,b3_,b4_;
-    double c22_,c21_,c20_,c11_,c10_,c00_;
-    double d22_,d21_,d20_,d11_,d10_,d00_;
-    double d0_,d1_,d2_;
-    double c0_,c1_,c2_;
+    float a1_,a2_,a3_,a4_;
+    float b1_,b2_,b3_,b4_;
+    float c22_,c21_,c20_,c11_,c10_,c00_;
+    float d22_,d21_,d20_,d11_,d10_,d00_;
+    float d0_,d1_,d2_;
+    float c0_,c1_,c2_;
     
 };
 

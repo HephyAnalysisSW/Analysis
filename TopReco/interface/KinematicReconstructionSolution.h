@@ -31,9 +31,9 @@ public:
                                     const int bjetIndex, const int antiBjetIndex,
                                     const LV& top, const LV& antiTop,
                                     const LV& neutrino, const LV& antiNeutrino,
-                                    const double& reconstructedTopMass,
+                                    const float& reconstructedTopMass,
                                     const int numberOfBtags,
-                                    const std::map<WeightType, double>& m_weight,
+                                    const std::map<WeightType, float>& m_weight,
                                     const bool isNoSmearSol_ = false);
     
     /// Copy constructor
@@ -75,11 +75,11 @@ public:
     int antiLeptonIndex()const{return antiLeptonIndex_;}
     int bjetIndex()const{return bjetIndex_;}
     int antiBjetIndex()const{return antiBjetIndex_;}
-    const double& reconstructedTopMass()const{return reconstructedTopMass_;}
+    const float& reconstructedTopMass()const{return reconstructedTopMass_;}
     int numberOfBtags()const{return numberOfBtags_;}
-    const double& weight(const WeightType weightType =defaultForMethod)const{return m_weight_.at(weightType);}
+    const float& weight(const WeightType weightType =defaultForMethod)const{return m_weight_.at(weightType);}
     
-    const std::map<WeightType, double>& weightMap()const{return m_weight_;}
+    const std::map<WeightType, float>& weightMap()const{return m_weight_;}
     
     bool isNoSmearSol()const{return isNoSmearSol_;}
     
@@ -102,13 +102,13 @@ private:
     const LV neutrino_;
     const LV antiNeutrino_;
     
-    const double reconstructedTopMass_;
+    const float reconstructedTopMass_;
     
     // Number of b-tagged jets for solution
     const int numberOfBtags_;
     
     // Weights
-    const std::map<WeightType, double> m_weight_;
+    const std::map<WeightType, float> m_weight_;
     
     // Is there solution without smearing
     const bool isNoSmearSol_;
@@ -173,11 +173,11 @@ private:
     
     /// Insert solution index for specific weight in vector for all solutions, ranked by weight
     void insertIndex(const size_t solutionIndex,
-                     const double weight, std::vector<size_t>& v_index)const;
+                     const float weight, std::vector<size_t>& v_index)const;
     
     /// Insert solution index for specific weight in vector for b-tag categorised solutions, ranked by weight
     void insertIndexByCategory(const std::vector<size_t>& v_solutionIndex,
-                               const double weight, std::vector<size_t>& v_solutionIndexByCategory)const;
+                               const float weight, std::vector<size_t>& v_solutionIndexByCategory)const;
     
     
     

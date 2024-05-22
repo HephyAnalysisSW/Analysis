@@ -54,9 +54,9 @@ KinematicReconstructionSolution::KinematicReconstructionSolution(const VLV* cons
                                                                  const int bjetIndex, const int antiBjetIndex,
                                                                  const LV& top, const LV& antiTop,
                                                                  const LV& neutrino, const LV& antiNeutrino,
-                                                                 const double& reconstructedTopMass,
+                                                                 const float& reconstructedTopMass,
                                                                  const int numberOfBtags,
-                                                                 const std::map<WeightType, double>& m_weight,
+                                                                 const std::map<WeightType, float>& m_weight,
                                                                  const bool isNoSmearSol):
 allLeptons_(v_allLeptons),
 allJets_(v_allJets),
@@ -183,7 +183,7 @@ void KinematicReconstructionSolutions::addSolution(const KinematicReconstruction
     // Fill for each weight type the indices of solutions, ordered for the weight
     for(const auto weightTypeWeight : solution.weightMap()){
         const KinematicReconstructionSolution::WeightType weightType = weightTypeWeight.first;
-        const double weight = weightTypeWeight.second;
+        const float weight = weightTypeWeight.second;
         this->insertIndex(solutionIndex, weight, m_weightIndex_.at(weightType));
         this->insertIndexByCategory(*v_solutionByCategory, weight, m_weightIndexByCategory->at(weightType));
     }
@@ -192,7 +192,7 @@ void KinematicReconstructionSolutions::addSolution(const KinematicReconstruction
 
 
 void KinematicReconstructionSolutions::insertIndex(const size_t solutionIndex,
-                                                   const double weight, std::vector<size_t>& v_index)const
+                                                   const float weight, std::vector<size_t>& v_index)const
 {
     if(!v_index.size()){
         v_index.push_back(solutionIndex);
@@ -201,7 +201,7 @@ void KinematicReconstructionSolutions::insertIndex(const size_t solutionIndex,
     
     bool isInserted(false);
     for(std::vector<size_t>::iterator i_index = v_index.begin(); i_index != v_index.end(); ++i_index){
-        const double& iWeight = v_solution_.at(*i_index).weight();
+        const float& iWeight = v_solution_.at(*i_index).weight();
         if(iWeight < weight){
             v_index.insert(i_index, solutionIndex);
             isInserted = true;
@@ -214,7 +214,7 @@ void KinematicReconstructionSolutions::insertIndex(const size_t solutionIndex,
 
 
 void KinematicReconstructionSolutions::insertIndexByCategory(const std::vector<size_t>& v_solutionIndex,
-                                                             const double weight, std::vector<size_t>& v_solutionIndexByCategory)const
+                                                             const float weight, std::vector<size_t>& v_solutionIndexByCategory)const
 {
     const size_t solutionIndexByCategory = std::distance(v_solutionIndex.begin(), v_solutionIndex.end()) - 1;
     
@@ -225,7 +225,7 @@ void KinematicReconstructionSolutions::insertIndexByCategory(const std::vector<s
     
     bool isInserted(false);
     for(std::vector<size_t>::iterator i_index = v_solutionIndexByCategory.begin(); i_index != v_solutionIndexByCategory.end(); ++i_index){
-        const double& iWeight = v_solution_.at(v_solutionIndex.at(*i_index)).weight();
+        const float& iWeight = v_solution_.at(v_solutionIndex.at(*i_index)).weight();
         if(iWeight < weight){
             v_solutionIndexByCategory.insert(i_index, solutionIndexByCategory);
             isInserted = true;
