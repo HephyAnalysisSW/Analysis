@@ -276,6 +276,7 @@ void KinematicReconstruction::kinReco(const LV& leptonMinus, const LV& leptonPlu
 {
 
     sols_.clear();
+    foundSolution = false;
 
     //jets selection
     std::vector<int> b1_id;
@@ -423,6 +424,7 @@ void KinematicReconstruction::setSolutions()
                          });
 
         sol_ = sols_[0];
+        foundSolution = true;
     }
 }
 

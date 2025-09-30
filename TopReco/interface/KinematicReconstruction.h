@@ -43,6 +43,7 @@ public:
     std::vector<Struct_KinematicReconstruction> getSols()const;
 
     std::string directory_;
+    bool foundSolution;
 
     void loadData();
     void kinReco(const LV& leptonMinus, const LV& leptonPlus, const VLV* jets, const std::vector<float>* btags, const LV* met);
